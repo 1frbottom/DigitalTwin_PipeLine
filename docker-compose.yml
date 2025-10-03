@@ -1,0 +1,67 @@
+# docker-compose.yml (db 서비스 환경변수 오타 수정 완료)
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: user
+      # ✅ POSTG-RES_PASSWORD -> POSTGRES_PASSWORD 로 오타 수정
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: traffic_db
+    ports:
+      - "6432:5432"
+
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    user: root
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./processor:/opt/spark/work-dir
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    user: root
+    depends_on:
+      - spark-master
+    volumes:
+      - ./processor:/opt/spark/work-dir
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  spark-submit:
+    image: apache/spark:3.5.1
+    container_name: spark-submit
+    user: root
+    depends_on:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ./processor:/opt/spark/work-dir
+    command: /bin/sh -c "sleep 5 && /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 /opt/spark/work-dir/processor.py"
