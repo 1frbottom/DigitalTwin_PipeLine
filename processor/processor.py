@@ -21,9 +21,20 @@ kafka_stream_df = spark.readStream \
 
 parsed_stream_df = kafka_stream_df.select(from_json(col("value").cast("string"), schema).alias("data")).select("data.*")
 
+def write_to_postgres(df, epoch_id):
+    df.write \
+      .format("jdbc") \
+      .option("url", "jdbc:postgresql://db:5432/traffic_db") \
+      .option("dbtable", "traffic_data") \
+      .option("user", "user") \
+      .option("password", "password") \
+      .option("driver", "org.postgresql.Driver") \
+      .mode("append") \
+      .save()
+
+# 스트림 출력 부분을 console 대신 위 함수를 사용하도록 변경
 query = parsed_stream_df.writeStream \
-    .outputMode("append") \
-    .format("console") \
+    .foreachBatch(write_to_postgres) \
     .start()
 
 query.awaitTermination()

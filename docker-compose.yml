@@ -64,4 +64,4 @@ services:
       - spark-worker
     volumes:
       - ./processor:/opt/spark/work-dir
-    command: /bin/sh -c "sleep 5 && /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 /opt/spark/work-dir/processor.py"
+    command: /bin/sh -c "sleep 5 && /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor.py"
