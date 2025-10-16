@@ -1,4 +1,4 @@
-# docker-compose.yml (db 서비스 환경변수 오타 수정 완료)
+# docker-compose.yml
 version: '3.8'
 services:
   zookeeper:
@@ -28,7 +28,6 @@ services:
     container_name: db
     environment:
       POSTGRES_USER: user
-      # ✅ POSTG-RES_PASSWORD -> POSTGRES_PASSWORD 로 오타 수정
       POSTGRES_PASSWORD: password
       POSTGRES_DB: traffic_db
     ports:

@@ -1,12 +1,15 @@
-# producer.py
 import time
 import json
 import random
 from kafka import KafkaProducer
 
+
+
+
 # 카프카 서버 주소
 bootstrap_servers = ['localhost:9092']
-# 카프카 토픽 이름 (데이터가 쌓일 채널)
+
+# 카프카 토픽 이름
 topic_name = 'traffic-data'
 
 producer = KafkaProducer(
@@ -15,6 +18,7 @@ producer = KafkaProducer(
 )
 
 print("Sending messages...")
+
 while True:
     # 가상 데이터 생성 (차량 수)
     vehicle_count = random.randint(1, 50)
