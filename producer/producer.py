@@ -2,12 +2,10 @@ import time
 import json
 import random
 from kafka import KafkaProducer
-
-
-
+from kafka.errors import NoBrokersAvailable
 
 # 카프카 서버 주소
-bootstrap_servers = ['localhost:9092']
+bootstrap_servers = ['kafka:29092']
 
 # 카프카 토픽 이름
 topic_name = 'traffic-data'
@@ -17,15 +15,21 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-print("Sending messages...")
+print("Kafka Producer connected. Sending messages...")
 
 while True:
-    # 가상 데이터 생성 (차량 수)
-    vehicle_count = random.randint(1, 50)
-    message = {'vehicle_count': vehicle_count, 'timestamp': time.time()}
+    message = {
+        'vehicle_count': random.randint(1, 50),
+        'timestamp': time.time()
+    }
+    
+    try:
+        # 메시지 전송 시도
+        producer.send(topic_name, value=message)
+        print(f"Sent: {message}")
 
-    # 'traffic-data' 토픽으로 메시지 전송
-    producer.send(topic_name, value=message)
-    print(f"Sent: {message}")
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        time.sleep(5) 
 
     time.sleep(1)
