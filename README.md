@@ -17,12 +17,12 @@
 - 사용법<br>
 	- [docker terminal] docker compose up -d<br><br>
 
-	- [docker app] check producer's log<br><br>
-	- [docker app] check spark-submit(processor)'s log<br><br>
+	- [docker app] producer 컨테이너의 로그 정상인지 체크<br><br>
+	- [docker app] spark-submit(processor) 컨테이너의 로그 정상인지 체크<br><br>
 
-	- [docker app] go to db's exec and type<br><br>
-		- 'psql -U user -d traffic_db'<br><br>
-		- 'SELECT * FROM traffic_data LIMIT 10;'<br><br>
-		- '\q'<br><br>
+	- [docker app] db 컨테이너의 exec으로 가서 아래의 명령어 입력<br><br>
+		- psql -U user -d traffic_db<br><br>
+		- SELECT * FROM traffic_data LIMIT 10;<br><br>
+		- \q<br><br>
 
 	- [docker terminal] docker compose down<br><br>
