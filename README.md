@@ -12,17 +12,17 @@
 	- backEnd 폴더에서 실제 api 호출 및 kafka로 전송 ( producer 폴더는 삭제 )<br><br>
 	- processor 폴더에서 kafka 데이터 가공 후 postgres DB에 저장<br><br>
 	- frotnEnd 폴더에서 backEnd로 데이터 요청하면 db 조회후 frontEnd로 전달<br><br>
-	- frontEnd에서 받은 데이터로 대시보드 출력<br><br><br>
+	- frontEnd에서 받은 데이터로 대시보드 출력<br><br>
 
 - 사용법<br>
-	- [docker terminal] docker compose up -d<br><br><br>
+	- [docker terminal] docker compose up -d<br><br>
 
 	- [docker app] check producer's log<br><br>
-	- [docker app] check spark-submit(processor)'s log<br><br><br>
+	- [docker app] check spark-submit(processor)'s log<br><br>
 
 	- [docker app] go to db's exec and type<br><br>
 		- 'psql -U user -d traffic_db'<br><br>
 		- 'SELECT * FROM traffic_data LIMIT 10;'<br><br>
-		- '\q'<br><br><br>
+		- '\q'<br><br>
 
 	- [docker terminal] docker compose down<br><br>
