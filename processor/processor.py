@@ -11,7 +11,9 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 schema = StructType([
-    StructField("vehicle_count", IntegerType(), True),
+    StructField("link_id", StringType(), True),
+    StructField("avg_speed", DoubleType(), True),
+    StructField("travel_time", IntegerType(), True),
     StructField("timestamp", DoubleType(), True)
 ])
 
@@ -19,7 +21,7 @@ schema = StructType([
 kafka_stream_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
-    .option("subscribe", "traffic-data") \
+    .option("subscribe", "realtime-traffic") \
     .load()
 
 # 파싱
