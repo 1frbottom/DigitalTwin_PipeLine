@@ -27,8 +27,9 @@
 
 	- [terminal] docker compose down<br><br>
 
-- 발생할만한 문제점<br>
+- 발생할만한 문제점들과 그 트러블슈팅<br>
 	- 각 컨테이너의 로그에 port 관련 문제가 찍혀있는 경우, 프로젝트 루트의 .yml 파일에서 문제되는 컨테이너의 포트를 바꾸면 해결될 가능성이 높습니다.<br><br>
+	- backEnd/startProducers.sh 파일이 윈도우 기반 CRLF로 되어있는 경우 도커가 작동하지 않으니 LF로 바꿔줘야 합니다.<br><br>
 
 - 추후 프로젝트 구성 목표<br>
 	- backEnd 폴더에서 실제 api 여러개 호출 및 저장까지 일련의 테스트<br><br>
