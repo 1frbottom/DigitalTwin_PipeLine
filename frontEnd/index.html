@@ -53,8 +53,32 @@
             <div id="health-status" class="status loading" style="display:none;"></div>
             <div id="health-response" class="response-box"></div>
         </div>
+        <!-- 섹션 5: CCTV 스트리밍 -->
+        <div class="api-section">
+            <h2>5️⃣ 실시간 CCTV 모니터링</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /api/cctv/streams</p>
+            <button onclick="loadCCTVStreams()">CCTV 스트림 로드</button>
+            <div id="cctv-status" class="status loading" style="display:none;"></div>
+            
+            <div class="cctv-grid">
+                <div class="cctv-box">
+                    <h3 id="cctv1-name">CCTV 1</h3>
+                    <video id="cctv1" controls muted></video>
+                </div>
+                <div class="cctv-box">
+                    <h3 id="cctv2-name">CCTV 2</h3>
+                    <video id="cctv2" controls muted></video>
+                </div>
+                <div class="cctv-box">
+                    <h3 id="cctv3-name">CCTV 3</h3>
+                    <video id="cctv3" controls muted></video>
+                </div>
+            </div>
+        </div>
+        
     </div>
     
+    <script src="/js/hls.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

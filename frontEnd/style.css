@@ -738,7 +738,7 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-```css
+css
 * {
     margin: 0;
     padding: 0;
@@ -1007,4 +1007,39 @@ table tr:hover {
         margin-bottom: 0;
     }
 }
-```
+
+.cctv-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-16);
+    margin-top: var(--space-20);
+}
+
+.cctv-box {
+    background-color: var(--color-surface);
+    padding: var(--space-16);
+    border-radius: var(--radius-base);
+    border: 1px solid var(--color-card-border);
+}
+
+.cctv-box h3 {
+    margin: 0 0 var(--space-12) 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+}
+
+.cctv-box video {
+    width: 100%;
+    height: 250px;
+    background-color: var(--color-charcoal-800);
+    border-radius: var(--radius-sm);
+}
+
+@media (max-width: 480px) {
+    .cctv-grid {
+        grid-template-columns: 1fr;
+    }
+    .cctv-box video {
+        height: 180px;
+    }
+}
