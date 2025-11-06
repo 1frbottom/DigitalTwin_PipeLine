@@ -39,5 +39,5 @@ def get_traffic_stats(db: Session):
     return db.query(
         models.TrafficData.link_id,
         func.avg(models.TrafficData.avg_speed).label('avg_speed_mean'),
-        func.count(models.TrafficData.id).label('count')
+        func.count(models.TrafficData.link_id).label('count')
     ).group_by(models.TrafficData.link_id).all()

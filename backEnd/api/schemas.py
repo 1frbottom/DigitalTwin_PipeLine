@@ -8,7 +8,6 @@ class TrafficDataBase(BaseModel):
     timestamp: float
 
 class TrafficDataResponse(TrafficDataBase):
-    id: int
     
     class Config:
         from_attributes = True  # SQLAlchemy 모델과 호환
