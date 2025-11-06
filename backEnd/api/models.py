@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Double, Integer
-from .database import Base
+import database
 
-class TrafficData(Base):
+class TrafficData(database.Base):
     __tablename__ = "traffic_data"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

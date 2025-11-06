@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import traffic
+from routers import traffic
 
 app = FastAPI(
     title="교통 데이터 API",

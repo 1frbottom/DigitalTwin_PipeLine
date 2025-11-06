@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
-from .. import crud, schemas
-from ..database import get_db
+import crud, schemas
+import database
 
 router = APIRouter(
     prefix="/api/traffic",
@@ -14,7 +14,7 @@ def read_recent_traffic(
     minutes: int = Query(default=10, ge=1, le=60),
     skip: int = 0,
     limit: int = Query(default=100, le=500),
-    db: Session = Depends(get_db)
+    db: Session = Depends(database.get_db)
 ):
     """최근 N분간의 교통 데이터 조회"""
     traffic_data = crud.get_recent_traffic_data(
@@ -26,7 +26,7 @@ def read_recent_traffic(
 def read_traffic_by_link(
     link_id: str,
     limit: int = Query(default=50, le=200),
-    db: Session = Depends(get_db)
+    db: Session = Depends(database.get_db)
 ):
     """특정 링크 ID의 교통 데이터 조회"""
     traffic_data = crud.get_traffic_by_link_id(db, link_id=link_id, limit=limit)
@@ -35,7 +35,7 @@ def read_traffic_by_link(
     return traffic_data
 
 @router.get("/stats", response_model=List[schemas.TrafficStats])
-def read_traffic_stats(db: Session = Depends(get_db)):
+def read_traffic_stats(db: Session = Depends(database.get_db)):
     """링크별 평균 속도 통계"""
     stats = crud.get_traffic_stats(db)
     return [
