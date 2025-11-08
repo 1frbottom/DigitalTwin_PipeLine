@@ -124,3 +124,36 @@ async function getHealth() {
         resultDiv.innerHTML = `<span class="error">Error: ${result.error}</span>`;
     }
 }
+
+// 5. CCTV 스트리밍
+async function loadCCTVStreams() {
+    const statusDiv = document.getElementById('cctv-status');
+    
+    statusDiv.innerHTML = '⏳ 로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+    
+    const result = await fetchAPI('/api/cctv/streams');
+    
+    if (result.status === 200) {
+        statusDiv.innerHTML = '✅ 성공';
+        statusDiv.className = 'status success';
+        
+        result.data.forEach((stream, i) => {
+            const video = document.getElementById(`cctv${i + 1}`);
+            const name = document.getElementById(`cctv${i + 1}-name`);
+            
+            if (name) name.textContent = stream.name;
+            
+            if (video && Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(stream.stream_url);
+                hls.attachMedia(video);
+            }
+        });
+    } else {
+        statusDiv.innerHTML = '❌ 실패';
+        statusDiv.className = 'status error';
+        console.error('Error:', result.error || result.data);
+    }
+}
