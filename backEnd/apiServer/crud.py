@@ -4,6 +4,8 @@ import models
 import schemas
 from typing import List, Optional
 
+
+
 # 최근 교통 데이터 조회 (최근 10분)
 def get_recent_traffic_data(
     db: Session, 

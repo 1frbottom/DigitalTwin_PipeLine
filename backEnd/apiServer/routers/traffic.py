@@ -4,6 +4,8 @@ from typing import List
 import crud, schemas
 import database
 
+
+
 router = APIRouter(
     prefix="/api/traffic",
     tags=["traffic"]

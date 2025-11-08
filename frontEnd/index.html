@@ -8,11 +8,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚗 교통 데이터 API 프로토타입</h1>
+        <h1>교통 데이터 API 프로토타입</h1>
         
         <!-- 섹션 1: 최근 교통 데이터 -->
         <div class="api-section">
-            <h2>1️⃣ 최근 교통 데이터 조회</h2>
+            <h2>최근 교통 데이터 조회</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/recent</p>
             <div class="button-group">
                 <button onclick="getRecentTraffic()">조회하기</button>
@@ -25,7 +25,7 @@
         
         <!-- 섹션 2: 특정 링크 데이터 -->
         <div class="api-section">
-            <h2>2️⃣ 특정 링크 ID 데이터 조회</h2>
+            <h2>특정 링크 ID 데이터 조회</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/link/{link_id}</p>
             <div class="button-group">
                 <input type="text" id="linkId" placeholder="링크 ID (예: 101000100)" value="101000100">
@@ -37,7 +37,7 @@
         
         <!-- 섹션 3: 통계 데이터 -->
         <div class="api-section">
-            <h2>3️⃣ 링크별 평균 속도 통계</h2>
+            <h2>링크별 평균 속도 통계</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/stats</p>
             <button onclick="getTrafficStats()">조회하기</button>
             <div id="stats-status" class="status loading" style="display:none;"></div>
@@ -47,7 +47,7 @@
         
         <!-- 섹션 4: 헬스 체크 -->
         <div class="api-section">
-            <h2>4️⃣ 서버 상태 확인</h2>
+            <h2>서버 상태 확인</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /health</p>
             <button onclick="getHealth()">확인하기</button>
             <div id="health-status" class="status loading" style="display:none;"></div>

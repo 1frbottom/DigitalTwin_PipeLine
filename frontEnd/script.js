@@ -20,7 +20,7 @@ async function getRecentTraffic() {
     const statusDiv = document.getElementById('recent-status');
     
     resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '⏳ 로딩 중...';
+    statusDiv.innerHTML = '로딩 중...';
     statusDiv.className = 'status loading';
     statusDiv.style.display = 'inline-block';
     
@@ -30,11 +30,11 @@ async function getRecentTraffic() {
     const result = await fetchAPI('/api/traffic/recent', { minutes, limit, skip: 0 });
     
     if (result.status === 200) {
-        statusDiv.innerHTML = '✅ 성공';
+        statusDiv.innerHTML = '성공';
         statusDiv.className = 'status success';
         resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
     } else {
-        statusDiv.innerHTML = '❌ 실패';
+        statusDiv.innerHTML = '실패';
         statusDiv.className = 'status error';
         resultDiv.innerHTML = `<span class="error">Error: ${result.error || result.data}</span>`;
     }
@@ -52,18 +52,18 @@ async function getTrafficByLink() {
     }
     
     resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '⏳ 로딩 중...';
+    statusDiv.innerHTML = '로딩 중...';
     statusDiv.className = 'status loading';
     statusDiv.style.display = 'inline-block';
     
     const result = await fetchAPI(`/api/traffic/link/${linkId}`, { limit: 50 });
     
     if (result.status === 200) {
-        statusDiv.innerHTML = '✅ 성공';
+        statusDiv.innerHTML = '성공';
         statusDiv.className = 'status success';
         resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
     } else {
-        statusDiv.innerHTML = '❌ 실패';
+        statusDiv.innerHTML = '실패';
         statusDiv.className = 'status error';
         resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
     }
@@ -76,14 +76,14 @@ async function getTrafficStats() {
     const statusDiv = document.getElementById('stats-status');
     
     resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '⏳ 로딩 중...';
+    statusDiv.innerHTML = '로딩 중...';
     statusDiv.className = 'status loading';
     statusDiv.style.display = 'inline-block';
     
     const result = await fetchAPI('/api/traffic/stats');
     
     if (result.status === 200) {
-        statusDiv.innerHTML = '✅ 성공';
+        statusDiv.innerHTML = '성공';
         statusDiv.className = 'status success';
         resultDiv.innerHTML = `<span class="success">링크 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
         
@@ -95,7 +95,7 @@ async function getTrafficStats() {
         tableHTML += '</table>';
         tableDiv.innerHTML = tableHTML;
     } else {
-        statusDiv.innerHTML = '❌ 실패';
+        statusDiv.innerHTML = '실패';
         statusDiv.className = 'status error';
         resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
         tableDiv.innerHTML = '';
@@ -108,18 +108,18 @@ async function getHealth() {
     const statusDiv = document.getElementById('health-status');
     
     resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '⏳ 로딩 중...';
+    statusDiv.innerHTML = '로딩 중...';
     statusDiv.className = 'status loading';
     statusDiv.style.display = 'inline-block';
     
     const result = await fetchAPI('/health');
     
     if (result.status === 200) {
-        statusDiv.innerHTML = '✅ 서버 정상';
+        statusDiv.innerHTML = '서버 정상';
         statusDiv.className = 'status success';
         resultDiv.innerHTML = `<span class="success">${JSON.stringify(result.data, null, 2)}</span>`;
     } else {
-        statusDiv.innerHTML = '❌ 서버 오류';
+        statusDiv.innerHTML = '서버 오류';
         statusDiv.className = 'status error';
         resultDiv.innerHTML = `<span class="error">Error: ${result.error}</span>`;
     }
