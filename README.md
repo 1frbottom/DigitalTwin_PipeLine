@@ -1,6 +1,6 @@
 # DigitalTwin_PipeLine<br><br>
 
-- __현재 목표__<br>
+- __현재 목표__<br><br>
 	- backEnd 폴더에서 실제 api 여러개 호출 및 저장, 프론트엔드까지 일련의 테스트중<br><br>
 	- 현재 백>>>프론트까지 가공없이 바로 db에 쌓는식으로 전달은 성공<br>
 		-> 앞으로 processor.py는 각 api별로 db테이블을 달리해서 저장<br>
