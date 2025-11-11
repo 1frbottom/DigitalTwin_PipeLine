@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
 import logging
-import crud
+import backEnd.apiServer.cctv_crud as cctv_crud
 import schemas
 import database
 
@@ -30,7 +30,7 @@ class CCTVResponse(BaseModel):
 async def get_cctv_streams_endpoint(db: Session = Depends(database.get_db)):
     """CCTV 스트림 URL 목록 조회 (DB에서)"""
     try:
-        streams = crud.get_cctv_streams(db)
+        streams = cctv_crud.get_cctv_streams(db)
 
         if not streams:
             raise HTTPException(
@@ -55,7 +55,7 @@ async def get_cctv_streams_endpoint(db: Session = Depends(database.get_db)):
 async def get_cctv_stream_by_id_endpoint(cctv_id: str, db: Session = Depends(database.get_db)):
     """특정 CCTV 스트림 조회"""
     try:
-        stream = crud.get_cctv_stream_by_id(db, cctv_id)
+        stream = cctv_crud.get_cctv_stream_by_id(db, cctv_id)
 
         if not stream:
             raise HTTPException(
