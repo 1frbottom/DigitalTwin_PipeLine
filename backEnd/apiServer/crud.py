@@ -43,3 +43,13 @@ def get_traffic_stats(db: Session):
         func.avg(models.TrafficData.avg_speed).label('avg_speed_mean'),
         func.count(models.TrafficData.link_id).label('count')
     ).group_by(models.TrafficData.link_id).all()
+
+# CCTV 스트림 목록 조회
+def get_cctv_streams(db: Session):
+    return db.query(models.CCTVStreamModel).all()
+
+# 특정 CCTV 스트림 조회
+def get_cctv_stream_by_id(db: Session, cctv_id: str):
+    return db.query(models.CCTVStreamModel)\
+        .filter(models.CCTVStreamModel.id == cctv_id)\
+        .first()
