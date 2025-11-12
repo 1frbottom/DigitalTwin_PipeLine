@@ -3,9 +3,8 @@ from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
 import logging
-import backEnd.apiServer.cctv_crud as cctv_crud
-import schemas
-import database
+from backEnd.apiServer.crud import cctv_crud
+from backEnd.apiServer import database
 
 logger = logging.getLogger(__name__)
 
@@ -28,47 +27,28 @@ class CCTVResponse(BaseModel):
 
 @router.get("/streams", response_model=CCTVResponse)
 async def get_cctv_streams_endpoint(db: Session = Depends(database.get_db)):
-    """CCTV 스트림 URL 목록 조회 (DB에서)"""
+    """CCTV 스트림 URL 목록 조회"""
     try:
         streams = cctv_crud.get_cctv_streams(db)
-
         if not streams:
-            raise HTTPException(
-                status_code=404,
-                detail="CCTV 스트림 데이터가 없습니다"
-            )
-
-        return CCTVResponse(
-            message="CCTV 스트림 목록 조회 성공",
-            data=streams
-        )
+            raise HTTPException(status_code=404, detail="CCTV 스트림 데이터가 없습니다")
+        return CCTVResponse(message="CCTV 스트림 목록 조회 성공", data=streams)
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"CCTV 스트림 조회 오류: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="서버 오류"
-        )
+        raise HTTPException(status_code=500, detail="서버 오류")
 
 @router.get("/stream/{cctv_id}", response_model=CCTVStream)
 async def get_cctv_stream_by_id_endpoint(cctv_id: str, db: Session = Depends(database.get_db)):
     """특정 CCTV 스트림 조회"""
     try:
         stream = cctv_crud.get_cctv_stream_by_id(db, cctv_id)
-
         if not stream:
-            raise HTTPException(
-                status_code=404,
-                detail=f"ID '{cctv_id}'의 CCTV를 찾을 수 없습니다"
-            )
-
+            raise HTTPException(status_code=404, detail=f"ID '{cctv_id}'의 CCTV를 찾을 수 없습니다")
         return stream
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"CCTV 스트림 조회 오류: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="서버 오류"
-        )
+        raise HTTPException(status_code=500, detail="서버 오류")
