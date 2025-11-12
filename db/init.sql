@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS cctv_streams (
 INSERT INTO cctv_streams (id, name, stream_url) VALUES
     ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8'),
     ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8'),
-    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8')
+    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8'),
+    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8')
 ON CONFLICT (id) DO NOTHING;
