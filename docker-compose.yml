@@ -1,0 +1,130 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka-setup
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for Kafka to be ready...' &&
+        cub kafka-ready -b kafka:29092 1 30 &&
+        echo 'Kafka is ready!' &&
+        for topic in realtime-traffic cctv-stream smart-signal traffic-incidents road-network-updates facility-updates public-transport-updates local-events floating-population weather-forecast; do
+          kafka-topics --create --if-not-exists --topic $$topic --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1;
+        done && echo 'All topics created successfully.'"
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: traffic_db
+    ports:
+      - "6432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    user: root
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    user: root
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  spark-submit:
+    image: apache/spark:3.5.1
+    container_name: spark-submit
+    user: root
+    depends_on:
+      kafka-setup:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_started
+    volumes:
+      - ./backEnd/processor:/opt/spark/work-dir
+    command: /bin/sh -c "echo 'Submitting Spark job' && \
+      /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor.py"
+
+  producer:
+    image: python:3.9-slim
+    container_name: producer
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./backEnd/producer:/app
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1  
+    command: >
+      sh -c "
+        apt-get update && 
+        apt-get install -y netcat-openbsd && 
+        pip install kafka-python requests && 
+        sh /app/startProducers.sh
+      "
+
+  api-server:
+    image: python:3.9-slim
+    container_name: api-server
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+      pip install --no-cache-dir -r backEnd/apiServer/requirements_api.txt &&
+      uvicorn backEnd.apiServer.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - default
+
+
+ 
