@@ -59,9 +59,7 @@ services:
     user: root
     ports:
       - "8080:8080"
-      - "7200:7200"
-    volumes:
-      - ./processor:/opt/spark/work-dir
+      - "8081:8081"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
 
   spark-worker:
@@ -70,8 +68,6 @@ services:
     user: root
     depends_on:
       - spark-master
-    volumes:
-      - ./processor:/opt/spark/work-dir
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
   spark-submit:
@@ -116,14 +112,14 @@ services:
     depends_on:
       - db
     volumes:
-      - ./backEnd/apiServer:/app
+      - .:/app
     working_dir: /app
     ports:
       - "8000:8000"
     command: >
       sh -c "
-      pip install --no-cache-dir -r requirements_api.txt &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      pip install --no-cache-dir -r backEnd/apiServer/requirements_api.txt &&
+      uvicorn backEnd.apiServer.main:app --host 0.0.0.0 --port 8000 --reload
       "
     environment:
       - PYTHONUNBUFFERED=1
