@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import traffic, cctv, city_rt
+from .routers import router_cctv, router_traffic#, city_rt << 파일없는듯
+
+
 
 app = FastAPI(
     title="디지털 트윈 교통 데이터 API",
@@ -18,9 +20,9 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(traffic.router)
-app.include_router(cctv.router)
-app.include_router(city_rt.router)
+app.include_router(router_traffic.router)
+app.include_router(router_cctv.router)
+# app.include_router(city_rt.router)
 
 @app.get("/")
 def read_root():
