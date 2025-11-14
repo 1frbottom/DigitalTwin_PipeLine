@@ -1,4 +1,12 @@
-const API_BASE_URL = 'http://localhost:8000';
+// ========================================
+// 설정
+// ========================================
+const CONFIG = {
+    AUTO_LOAD_CCTV: true,  // CCTV 자동 로드 (false로 변경하면 비활성화)
+    AUTO_PLAY_CCTV: true   // CCTV 자동 재생 (false로 변경하면 비활성화)
+};
+
+const API_BASE_URL = `http://${window.location.hostname}:8000`;
 
 async function fetchAPI(endpoint, params = {}) {
     try {
@@ -128,27 +136,97 @@ async function getHealth() {
 // 5. CCTV 스트리밍
 async function loadCCTVStreams() {
     const statusDiv = document.getElementById('cctv-status');
-    
+
     statusDiv.innerHTML = '⏳ 로딩 중...';
     statusDiv.className = 'status loading';
     statusDiv.style.display = 'inline-block';
-    
-    const result = await fetchAPI('/api/cctv/streams');
-    
+
+    const result = await fetchAPI('/cctv/streams');
+
     if (result.status === 200) {
         statusDiv.innerHTML = '✅ 성공';
         statusDiv.className = 'status success';
-        
-        result.data.forEach((stream, i) => {
+
+        const streams = result.data.data; 
+
+        streams.forEach((stream, i) => {
             const video = document.getElementById(`cctv${i + 1}`);
             const name = document.getElementById(`cctv${i + 1}-name`);
-            
+
             if (name) name.textContent = stream.name;
-            
-            if (video && Hls.isSupported()) {
-                const hls = new Hls();
+
+            if (!video) return;
+
+            // HLS.js 지원 (Chrome, Firefox, Edge 등)
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,          
+                    backBufferLength: 10,         
+                    maxBufferLength: 10,           
+                    maxMaxBufferLength: 20,        
+                    liveSyncDurationCount: 3,      
+                    liveMaxLatencyDurationCount: 5 
+                });
+
                 hls.loadSource(stream.stream_url);
                 hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log(`CCTV ${i + 1} (${stream.name}): 스트림 준비 완료`);
+
+                    if (hls.liveSyncPosition) {
+                        video.currentTime = hls.liveSyncPosition;
+                    }
+                    // hls 지원 자동 재생 
+                    if (CONFIG.AUTO_PLAY_CCTV) {
+                        video.play().catch(function(error) {
+                            console.log(`CCTV ${i + 1} 자동 재생 실패:`, error.message);
+                        });
+                    }
+                });
+
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        console.error(`CCTV ${i + 1} 에러:`, data);
+                        switch(data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('네트워크 에러, 재시도 중...');
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('미디어 에러, 복구 시도 중...');
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.log('치명적 에러, 재생 불가');
+                                break;
+                        }
+                    }
+                });
+            }
+            // macOS, iOS, iPadOS의 Safari 브라우저에서 작동
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = stream.stream_url;
+
+                video.addEventListener('loadedmetadata', function() {
+                    console.log(`CCTV ${i + 1} (${stream.name}): Safari 네이티브 HLS 로드 완료`);
+
+                    if (CONFIG.AUTO_PLAY_CCTV) {
+                        video.play().catch(function(error) {
+                            console.log(`CCTV ${i + 1} 자동 재생 실패:`, error.message);
+                        });
+                    }
+                });
+
+                video.addEventListener('error', function(e) {
+                    console.error(`CCTV ${i + 1} Safari 재생 에러:`, e);
+                });
+            }
+            // HLS 미지원 브라우저
+            else {
+                console.error(`CCTV ${i + 1}: HLS 재생을 지원하지 않는 브라우저입니다.`);
+                if (name) name.textContent = `${stream.name} (미지원)`;
             }
         });
     } else {
@@ -157,3 +235,11 @@ async function loadCCTVStreams() {
         console.error('Error:', result.error || result.data);
     }
 }
+
+// 페이지 로드 시 자동 실행 (설정에 따라)
+window.addEventListener('DOMContentLoaded', function() {
+    if (CONFIG.AUTO_LOAD_CCTV) {
+        console.log('페이지 로드 완료, CCTV 스트림 자동 로드 시작...');
+        loadCCTVStreams();
+    }
+});

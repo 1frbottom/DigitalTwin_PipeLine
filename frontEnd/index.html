@@ -56,33 +56,50 @@
         <!-- 섹션 5: CCTV 스트리밍 -->
         <div class="api-section">
             <h2>5️⃣ 실시간 CCTV 모니터링</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/cctv/streams</p>
+            <p style="margin-bottom: 10px; color: #666;">GET /cctv/streams</p>
             <button onclick="loadCCTVStreams()">CCTV 스트림 로드</button>
             <div id="cctv-status" class="status loading" style="display:none;"></div>
             
             <div class="cctv-grid">
                 <div class="cctv-box">
                     <h3 id="cctv1-name">CCTV 1</h3>
-                    <video id="cctv1" controls muted></video>
+                    <video id="cctv1" controls muted autoplay playsinline></video>
                 </div>
                 <div class="cctv-box">
                     <h3 id="cctv2-name">CCTV 2</h3>
-                    <video id="cctv2" controls muted></video>
+                    <video id="cctv2" controls muted autoplay playsinline></video>
                 </div>
                 <div class="cctv-box">
                     <h3 id="cctv3-name">CCTV 3</h3>
-                    <video id="cctv3" controls muted></video>
+                    <video id="cctv3" controls muted autoplay playsinline></video>
                 </div>
                 <div class="cctv-box">
                     <h3 id="cctv4-name">CCTV 4</h3>
-                    <video id="cctv4" controls muted></video>
+                    <video id="cctv4" controls muted autoplay playsinline></video>
                 </div>
             </div>
         </div>
         
     </div>
     
-    <script src="/js/hls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="script.js"></script>
+    <script>
+        // 페이지 로드 즉시 CCTV 스트림 자동 로드
+        console.log('=== 자동 로드 스크립트 실행 ===');
+
+        // 여러 방법으로 시도
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded 이벤트 발생');
+            setTimeout(function() {
+                console.log('CCTV 자동 로드 시작');
+                if (typeof loadCCTVStreams === 'function') {
+                    loadCCTVStreams();
+                } else {
+                    console.error('loadCCTVStreams 함수를 찾을 수 없습니다');
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
