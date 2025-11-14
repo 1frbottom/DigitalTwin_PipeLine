@@ -1,3 +1,11 @@
+// ========================================
+// 설정
+// ========================================
+const CONFIG = {
+    AUTO_LOAD_CCTV: true,  // CCTV 자동 로드 (false로 변경하면 비활성화)
+    AUTO_PLAY_CCTV: true   // CCTV 자동 재생 (false로 변경하면 비활성화)
+};
+
 const API_BASE_URL = `http://${window.location.hostname}:8000`;
 
 async function fetchAPI(endpoint, params = {}) {
@@ -153,8 +161,12 @@ async function loadCCTVStreams() {
             if (Hls.isSupported()) {
                 const hls = new Hls({
                     enableWorker: true,
-                    lowLatencyMode: false,
-                    backBufferLength: 90
+                    lowLatencyMode: true,          
+                    backBufferLength: 10,         
+                    maxBufferLength: 10,           
+                    maxMaxBufferLength: 20,        
+                    liveSyncDurationCount: 3,      
+                    liveMaxLatencyDurationCount: 5 
                 });
 
                 hls.loadSource(stream.stream_url);
@@ -162,6 +174,16 @@ async function loadCCTVStreams() {
 
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
                     console.log(`CCTV ${i + 1} (${stream.name}): 스트림 준비 완료`);
+
+                    if (hls.liveSyncPosition) {
+                        video.currentTime = hls.liveSyncPosition;
+                    }
+                    // hls 지원 자동 재생 
+                    if (CONFIG.AUTO_PLAY_CCTV) {
+                        video.play().catch(function(error) {
+                            console.log(`CCTV ${i + 1} 자동 재생 실패:`, error.message);
+                        });
+                    }
                 });
 
                 hls.on(Hls.Events.ERROR, function(event, data) {
@@ -189,6 +211,12 @@ async function loadCCTVStreams() {
 
                 video.addEventListener('loadedmetadata', function() {
                     console.log(`CCTV ${i + 1} (${stream.name}): Safari 네이티브 HLS 로드 완료`);
+
+                    if (CONFIG.AUTO_PLAY_CCTV) {
+                        video.play().catch(function(error) {
+                            console.log(`CCTV ${i + 1} 자동 재생 실패:`, error.message);
+                        });
+                    }
                 });
 
                 video.addEventListener('error', function(e) {
@@ -207,3 +235,11 @@ async function loadCCTVStreams() {
         console.error('Error:', result.error || result.data);
     }
 }
+
+// 페이지 로드 시 자동 실행 (설정에 따라)
+window.addEventListener('DOMContentLoaded', function() {
+    if (CONFIG.AUTO_LOAD_CCTV) {
+        console.log('페이지 로드 완료, CCTV 스트림 자동 로드 시작...');
+        loadCCTVStreams();
+    }
+});
