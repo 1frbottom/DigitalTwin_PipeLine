@@ -18,7 +18,7 @@ if not API_KEY:
     print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
     
-API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/AccInfo/1/100/"
+API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/AccInfo/1/1000/"
 
 def connect_kafka_producer():
     """Kafka Producer에 연결을 시도하고, 성공 시 producer 객체를 반환합니다."""

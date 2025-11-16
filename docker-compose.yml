@@ -38,7 +38,7 @@ services:
         echo 'Waiting for Kafka to be ready...' &&
         cub kafka-ready -b kafka:29092 1 30 &&
         echo 'Kafka is ready!' &&
-        for topic in realtime-traffic cctv-stream smart-signal traffic-incidents road-network-updates facility-updates public-transport-updates local-events floating-population weather-forecast; do
+        for topic in realtime-traffic cctv-stream traffic-incidents city-data; do
           kafka-topics --create --if-not-exists --topic $$topic --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1;
         done && echo 'All topics created successfully.'"
   db:
@@ -104,6 +104,26 @@ services:
         apt-get install -y netcat-openbsd && 
         pip install kafka-python requests && 
         bash /app/start_producers.sh
+      "
+
+  producer-citydata:
+    image: python:3.9-slim
+    container_name: producer-citydata
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./back_end/producer:/app
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1  
+    command: >
+      sh -c "
+        apt-get update && 
+        apt-get install -y netcat-openbsd && 
+        pip install kafka-python requests xmltodict && 
+        python /app/producer_city_data.py
       "
 
   api-server:

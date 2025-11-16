@@ -2,9 +2,12 @@
 
 - __현재 목표__<br><br>
 	- backEnd 폴더에서 실제 api 여러개 호출 및 저장, 프론트엔드까지 일련의 테스트중<br><br>
-	- 현재 백>>>프론트까지 가공없이 바로 db에 쌓는식으로 전달은 성공<br><br>
-		-> __앞으로__ processor.py는 각 api별로 db테이블을 달리해서 저장<br><br>
-		-> 이후 해당 테이블들을 대시보드에 알맞게 가공(조인)해서 또다른 융합db테이블에 저장<br><br>
+	- 현재 실시간 도시데이터까지 1차 db 테이블에 받아오기 성공<br><br>
+		-> __이후__
+		-> https://data.seoul.go.kr/dataList/OA-21285/A/1/datasetView.do#
+		-> http://openapi.seoul.go.kr:8088/APIKEY/xml/citydata/1/1000/%EA%B0%95%EB%82%A8%EC%97%AD 직접 확인하여<br><br>
+		-> 위 링크들 열고 직접 필드 확인해서 필드 확정<br><br>
+		-> 확정된 필드로 백엔드 역할 나누기<br><br>
 		-> 프론트엔드의 요청 받은 apiServer가 융합 테이블을 조회 후 전달<br><br>
 
 ***
@@ -18,7 +21,11 @@
 			spark(데이터 가공 / processor.py) -><br>
 			spark(데이터 저장 및 조회 / postgres DB)<br><br>
 
-	- producer_roadComm_se_rt : 서울 열린데이터 'https://data.seoul.go.kr/dataList/OA-13291/A/1/datasetView.do'<br><br>
+	- producer_city_data.py	: https://data.seoul.go.kr/dataList/OA-21285/A/1/datasetView.do#
+
+	- producer_incident.py	: https://data.seoul.go.kr/dataList/OA-13315/A/1/datasetView.do#
+
+	- producer_road_comm.py 및 관련 소스들은 삭제 예정 ( producer_city_data와 중복 )
 
 - 도커 사용법<br>
 	- 루트에 .env 파일을 만들고 "SEOUL_API_KEY=본인의 서울 열린데이터 api key" 한줄 입력후 저장<br><br>
@@ -33,7 +40,8 @@
 
 	- [docker app] db 컨테이너의 exec으로 가서 아래의 명령어 입력<br><br>
 		- psql -U user -d traffic_db<br><br>
-		- SELECT * FROM traffic_data LIMIT 10;<br><br>
+		- \dt
+		- SELECT * FROM 테이블명 LIMIT 10;<br><br>
 		- \q<br><br>
 
 	- [terminal] docker compose down<br><br>

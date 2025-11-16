@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS cctv_streams (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- CCTV 초기 데이터 삽입
 INSERT INTO cctv_streams (id, name, stream_url) VALUES
     ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8'),
     ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8'),
@@ -35,4 +34,22 @@ CREATE TABLE IF NOT EXISTS traffic_incidents (
     acc_info TEXT,
     timestamp DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (acc_id, timestamp)
+);
+
+CREATE TABLE IF NOT EXISTS city_data_raw (
+    area_nm VARCHAR(50) NOT NULL,
+    area_cd VARCHAR(20) NOT NULL,
+    timestamp DOUBLE PRECISION NOT NULL,
+    live_ppltn_stts TEXT,
+    road_traffic_stts TEXT,
+    prk_stts TEXT,
+    sub_stts TEXT,
+    bus_stn_stts TEXT,
+    acdnt_cntrl_stts TEXT,
+    sbike_stts TEXT,
+    weather_stts TEXT,
+    charger_stts TEXT,
+    event_stts TEXT,
+    live_cmrcl_stts TEXT,
+    PRIMARY KEY (area_nm, timestamp)
 );

@@ -17,7 +17,6 @@ db_properties = {
 }
 
 # --- 1. road_comm (traffic_data) 스트림 ---
-# (기존과 동일, "잘되던 기준")
 schema_road_comm = StructType([
     StructField("link_id", StringType(), True),
     StructField("avg_speed", DoubleType(), True),
@@ -44,7 +43,6 @@ query = parsed_stream_df_road_comm.writeStream \
     .start()
 
 # --- 2. incident (traffic_incidents) 스트림 ---
-# [수정] "잘되던 기준" (단순 append)으로 복원
 incident_schema = StructType([
     StructField("acc_id", StringType(), False),
     StructField("occr_date", StringType(), True),
@@ -82,7 +80,6 @@ parsed_incident_df = incident_stream_df.select(from_json(col("value").cast("stri
     col("data.timestamp").alias("timestamp")
 )
 
-# [수정] 'write_to_postgres' 함수를 복사하여 'dbtable'만 변경
 def write_incident_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
@@ -91,10 +88,53 @@ def write_incident_to_postgres(df, epoch_id):
       .mode("append") \
       .save()
 
-# [수정] Staging/psycopg2 로직 대신 단순 append 함수 사용
 query_incident = parsed_incident_df.writeStream \
     .foreachBatch(write_incident_to_postgres) \
     .start()
 
+# --- 3. city_data (city_data_raw) 스트림 ---
+schema_city_data = StructType([
+    StructField("area_nm", StringType(), False),
+    StructField("area_cd", StringType(), False),
+    StructField("timestamp", DoubleType(), True),
+    StructField("live_ppltn_stts", StringType(), True),
+    StructField("road_traffic_stts", StringType(), True),
+    StructField("prk_stts", StringType(), True),
+    StructField("sub_stts", StringType(), True),
+    StructField("bus_stn_stts", StringType(), True),
+    StructField("acdnt_cntrl_stts", StringType(), True),
+    StructField("sbike_stts", StringType(), True),
+    StructField("weather_stts", StringType(), True),
+    StructField("charger_stts", StringType(), True),
+    StructField("event_stts", StringType(), True),
+    StructField("live_cmrcl_stts", StringType(), True)
+])
+
+stream_df_city_data = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "kafka:29092") \
+    .option("subscribe", "city-data") \
+    .option("startingOffsets", "earliest") \
+    .load()
+
+parsed_stream_df_city_data = stream_df_city_data.select(from_json(col("value").cast("string"), schema_city_data).alias("data")).select("data.*")
+
+def write_citydata_to_postgres(df, epoch_id):
+    df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "city_data_raw") \
+      .mode("append") \
+      .save()
+
+query_city_data = parsed_stream_df_city_data.writeStream \
+    .foreachBatch(write_citydata_to_postgres) \
+    .start()
+
+
+
 # ----------------------------------------------------
+
+
+
 spark.streams.awaitAnyTermination()
