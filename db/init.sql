@@ -20,3 +20,19 @@ INSERT INTO cctv_streams (id, name, stream_url) VALUES
     ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8'),
     ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8')
 ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS traffic_incidents (
+    acc_id VARCHAR(50) NOT NULL,
+    occr_date VARCHAR(8),
+    occr_time VARCHAR(6),
+    exp_clr_date VARCHAR(8),
+    exp_clr_time VARCHAR(6),
+    acc_type VARCHAR(10), 
+    acc_dtype VARCHAR(10),
+    link_id VARCHAR(50),
+    grs80tm_x DOUBLE PRECISION,
+    grs80tm_y DOUBLE PRECISION,
+    acc_info TEXT,
+    timestamp DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (acc_id, timestamp)
+);

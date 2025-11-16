@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from backEnd.apiServer.models import model_cctv
+from backEnd.api_server.models import model_cctv
 
 # ========== CCTV 관련 ==========
 # CCTV 스트림 목록 조회
