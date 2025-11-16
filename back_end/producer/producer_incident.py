@@ -93,11 +93,11 @@ def fetch_parse_incident_data():
 def main():
     producer = connect_kafka_producer()
     
-    print("Incident : 수집을 시작합니다.")
+    print("incident : 수집을 시작합니다.")
     processed_ids = set()
 
     while True:
-        print(f"Incident : 새로운 데이터 수집 주기 시작 (처리된 ID: {len(processed_ids)}개)")
+        print(f"incident : 새로운 데이터 수집 주기 시작 (처리된 ID: {len(processed_ids)}개)")
         
         incidents = fetch_parse_incident_data() # 함수 호출 방식 변경
         success_count = 0
@@ -113,12 +113,12 @@ def main():
                     success_count += 1
                 
             producer.flush()
-            print(f"Incident : 주기 완료: {len(incidents)}개 수신, {success_count}개 신규 전송.")
+            print(f"incident : 주기 완료: {len(incidents)}개 수신, {success_count}개 신규 전송.")
         else:
             print("주기 완료: 수신된 데이터 없음.")
 
-        print("Incident : 30초 후 다시 시작합니다.")
-        time.sleep(30)
+        print("incident : 60초 후 다시 시작합니다.")
+        time.sleep(60)
 
 
 

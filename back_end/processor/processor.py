@@ -64,6 +64,7 @@ incident_stream_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "traffic-incidents") \
+    .option("startingOffsets", "earliest") \
     .load()
 
 parsed_incident_df = incident_stream_df.select(from_json(col("value").cast("string"), incident_schema).alias("data")).select(
