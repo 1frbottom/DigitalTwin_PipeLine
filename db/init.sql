@@ -69,9 +69,24 @@ CREATE TABLE IF NOT EXISTS live_ppltn_proc (
 CREATE TABLE IF NOT EXISTS live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
     base_ppltn_time TIMESTAMP NOT NULL,
-    fcst_time TIMESTAMP NOT NULL,   
-    fcst_congest_lvl VARCHAR(50),       
-    fcst_min INTEGER,             
-    fcst_max INTEGER,       
+    fcst_time TIMESTAMP NOT NULL,
+    fcst_congest_lvl VARCHAR(50),
+    fcst_min INTEGER,
+    fcst_max INTEGER,
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
 );
+
+CREATE TABLE IF NOT EXISTS subway_arrival_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    station_nm VARCHAR(100) NOT NULL,
+    line_num VARCHAR(10) NOT NULL,
+    train_line_nm VARCHAR(100),
+    arrival_msg_1 TEXT,
+    arrival_msg_2 TEXT,
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, station_nm, line_num, train_line_nm, ingest_timestamp)
+);
+
+CREATE INDEX idx_subway_station ON subway_arrival_proc(station_nm);
+CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
+CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
