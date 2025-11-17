@@ -5,6 +5,8 @@ import json
 import os
 from kafka import KafkaProducer
 
+
+
 # Kafka
 KAFKA_SERVERS = ['kafka:29092']
 KAFKA_TOPIC = 'city-data'
@@ -16,7 +18,7 @@ if not API_KEY:
     print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
 
-AREA_NM = "강남역"
+AREA_NM = "POI014"
 API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/1000/{AREA_NM}"
 
 def connect_kafka_producer():
@@ -66,6 +68,7 @@ def fetch_and_parse_city_data():
             'area_cd': area_cd,
             'timestamp': time.time(),
             'live_ppltn_stts': json.dumps(citydata.get('LIVE_PPLTN_STTS'), ensure_ascii=False) if citydata.get('LIVE_PPLTN_STTS') else None,
+            'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'road_traffic_stts': json.dumps(citydata.get('ROAD_TRAFFIC_STTS'), ensure_ascii=False) if citydata.get('ROAD_TRAFFIC_STTS') else None,
             'prk_stts': json.dumps(citydata.get('PRK_STTS'), ensure_ascii=False) if citydata.get('PRK_STTS') else None,
             'sub_stts': json.dumps(citydata.get('SUB_STTS'), ensure_ascii=False) if citydata.get('SUB_STTS') else None,
@@ -75,7 +78,8 @@ def fetch_and_parse_city_data():
             'weather_stts': json.dumps(citydata.get('WEATHER_STTS'), ensure_ascii=False) if citydata.get('WEATHER_STTS') else None,
             'charger_stts': json.dumps(citydata.get('CHARGER_STTS'), ensure_ascii=False) if citydata.get('CHARGER_STTS') else None,
             'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None, # XML 태그명 'CULTURALEVENTINFO' 사용
-            'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
+            'live_dst_message': json.dumps(citydata.get('LIVE_DST_MESSAGE'), ensure_ascii=False) if citydata.get('LIVE_DST_MESSAGE') else None,
+            'live_yna_news': json.dumps(citydata.get('LIVE_YNA_NEWS'), ensure_ascii=False) if citydata.get('LIVE_YNA_NEWS') else None,
         }
         return message
 

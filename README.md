@@ -4,6 +4,7 @@
 	- backEnd 폴더에서 실제 api 여러개 호출 및 저장, 프론트엔드까지 일련의 테스트중<br><br>
 	- 현재 실시간 도시데이터까지 1차 db 테이블에 받아오기 성공<br><br>
 		-> __이후__
+		-> 도시데이터 + 돌발정보 둘다 2차가공을 어떤식(집계, 예외처리, 필터링) 으로 할지 정하고
 		-> https://data.seoul.go.kr/dataList/OA-21285/A/1/datasetView.do#
 		-> http://openapi.seoul.go.kr:8088/APIKEY/xml/citydata/1/1000/%EA%B0%95%EB%82%A8%EC%97%AD 직접 확인하여<br><br>
 		-> 위 링크들 열고 직접 필드 확인해서 필드 확정<br><br>
@@ -45,6 +46,12 @@
 		- \q<br><br>
 
 	- [terminal] docker compose down<br><br>
+
+	- .yml이나 .sql 등 코어 소스가 아닌 이상 compose 올려놓고 작업해도 바로바로 반영 됩니다
+
+	- 다만 볼륨( db의 테이블 및 그 튜플들 등등 )같은경우는 자주 지웠다 썼다 하는경우가 많으니,
+
+	- 이런경우는 docker compose down -v 와 docker compose up --build -d 를 자주 사용합니다.
 
 - 발생할만한 에러 및 트러블슈팅<br>
 	- 각 컨테이너의 로그에 port 관련 문제가 찍혀있는 경우, 프로젝트 루트의 .yml 파일에서 문제되는 컨테이너의 포트를 바꾸면 해결될 가능성이 높습니다.<br><br>
