@@ -153,6 +153,8 @@ schema_fcst_parent = StructType([
 schema_inner_ppltn = StructType([
     StructField("AREA_CONGEST_LVL", StringType(), True),
     StructField("AREA_CONGEST_MSG", StringType(), True),
+    StructField("AREA_PPLTN_MIN", StringType(), True),
+    StructField("AREA_PPLTN_MAX", StringType(), True),
     StructField("PPLTN_TIME", StringType(), True),
     StructField("FCST_YN", StringType(), True),
     StructField("FCST_PPLTN", schema_fcst_parent, True) 
@@ -188,6 +190,8 @@ proc_df = parsed_ppltn_df \
         to_timestamp(col("PPLTN_TIME"), "yyyy-MM-dd HH:mm").alias("ppltn_time"),
         col("AREA_CONGEST_LVL").alias("congest_lvl"),
         col("AREA_CONGEST_MSG").alias("congest_msg"),
+        col("AREA_PPLTN_MIN").cast(IntegerType()).alias("ppltn_min"),
+        col("AREA_PPLTN_MAX").cast(IntegerType()).alias("ppltn_max"),
         col("FCST_YN").alias("fcst_yn")
     ) \
     .filter(col("ppltn_time").isNotNull()) # 이상값 제거 (기준 시간이 없는 데이터 제외)
