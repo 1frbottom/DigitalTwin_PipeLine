@@ -6,7 +6,8 @@ const CONFIG = {
     AUTO_PLAY_CCTV: true   // CCTV 자동 재생 (false로 변경하면 비활성화)
 };
 
-const API_BASE_URL = `http://${window.location.hostname}:8000`;
+// const API_BASE_URL = `http://${window.location.hostname}:8000`;
+const API_BASE_URL = `http://localhost:8000`;
 
 async function fetchAPI(endpoint, params = {}) {
     try {
@@ -236,7 +237,157 @@ async function loadCCTVStreams() {
     }
 }
 
-// 페이지 로드 시 자동 실행 (설정에 따라)
+// 6. 실시간 도시 데이터 - 인구 현황 (LIVE_PPLTN_STTS)
+async function getCityPopulationCurrent() {
+    const resultDiv = document.getElementById('city-current-response');
+    const statusDiv = document.getElementById('city-current-status');
+    const areaName = document.getElementById('areaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block'; // 숨겨진 박스 표시
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // FastAPI 라우터(router_city.py)에서 정의한 쿼리 파라미터 'area_name'
+    const result = await fetchAPI('/city/population/current', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        resultDiv.innerHTML = `<span class="success">데이터 수신 완료</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+    }
+}
+
+// 6-1. 실시간 도시 데이터 - 인구 현황 - 인구 예측 (LIVE_PPLTN_STTS)
+async function getCityPopulationForecast() {
+    const resultDiv = document.getElementById('city-forecast-response');
+    const tableDiv = document.getElementById('city-forecast-table');
+    const statusDiv = document.getElementById('city-forecast-status');
+    const areaName = document.getElementById('areaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block'; // 숨겨진 박스 표시
+    tableDiv.innerHTML = ''; // 기존 테이블 초기화
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // FastAPI 라우터(router_city.py)에서 정의한 쿼리 파라미터 'area_name'
+    const result = await fetchAPI('/city/population/forecast', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        
+        if (result.data.length === 0) {
+            resultDiv.innerHTML = `<span class="success">데이터가 없습니다. (예측 데이터가 아직 없거나 지역명 오류)</span>`;
+            return;
+        }
+
+        resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+        
+        // 통계 테이블과 동일한 스타일로 테이블 생성
+        let tableHTML = '<table><tr><th>기준 시각</th><th>예측 시각</th><th>혼잡도</th><th>최소 인구</th><th>최대 인구</th></tr>';
+        
+        result.data.forEach(item => {
+            // 날짜/시간 포맷팅 (YYYY. MM. DD. HH:mm)
+            const baseTime = new Date(item.base_ppltn_time).toLocaleString('ko-KR', { hour12: false });
+            const fcstTime = new Date(item.fcst_time).toLocaleString('ko-KR', { hour12: false });
+
+            tableHTML += `<tr>
+                <td>${baseTime}</td>
+                <td>${fcstTime}</td>
+                <td>${item.fcst_congest_lvl}</td>
+                <td>${item.fcst_min}</td>
+                <td>${item.fcst_max}</td>
+            </tr>`;
+        });
+        tableHTML += '</table>';
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
+
+// 7. 실시간 돌발 정보 조회
+async function getActiveIncidents() {
+    const resultDiv = document.getElementById('incident-response');
+    const tableDiv = document.getElementById('incident-table');
+    const statusDiv = document.getElementById('incident-status');
+
+    // 초기화 및 로딩 표시
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    tableDiv.innerHTML = ''; 
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/incident/active');
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        // 데이터가 없는 경우 처리
+        if (result.data.length === 0) {
+            resultDiv.innerHTML = `<span class="success">현재 진행 중인 돌발 상황이 없습니다. (Clean)</span>`;
+            return;
+        }
+
+        // 1. JSON 원본 표시
+        resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        // 2. 테이블 생성 (사용자가 보기 편하게)
+        let tableHTML = '<table><tr><th>유형</th><th>상세 내용</th><th>위치(X, Y)</th><th>갱신 시간</th></tr>';
+        
+        result.data.forEach(item => {
+            // Unix Timestamp -> 읽기 쉬운 시간 포맷 변환
+            const timeStr = new Date(item.timestamp * 1000).toLocaleString('ko-KR', { hour12: false });
+            
+            tableHTML += `<tr>
+                <td><span class="status error" style="background:rgba(255,0,0,0.1); color:red;">${item.acc_type || '기타'}</span></td>
+                <td>${item.acc_info}</td>
+                <td>${item.grs80tm_x}, ${item.grs80tm_y}</td>
+                <td>${timeStr}</td>
+            </tr>`;
+        });
+        tableHTML += '</table>';
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
+
+
+
+
+
+// 페이지 로드 시 자동 실행 (설정에 따라) ---------------------------
 window.addEventListener('DOMContentLoaded', function() {
     if (CONFIG.AUTO_LOAD_CCTV) {
         console.log('페이지 로드 완료, CCTV 스트림 자동 로드 시작...');

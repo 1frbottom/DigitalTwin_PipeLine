@@ -1,3 +1,4 @@
+-- 실시간 도로소통 (삭제예정)
 CREATE TABLE IF NOT EXISTS traffic_data (
     link_id VARCHAR(50) NOT NULL,
     avg_speed DOUBLE PRECISION,
@@ -20,6 +21,7 @@ INSERT INTO cctv_streams (id, name, stream_url) VALUES
     ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8')
 ON CONFLICT (id) DO NOTHING;
 
+-- 실시간 돌발정보
 CREATE TABLE IF NOT EXISTS traffic_incidents (
     acc_id VARCHAR(50) NOT NULL,
     occr_date VARCHAR(8),
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS traffic_incidents (
     PRIMARY KEY (acc_id, timestamp)
 );
 
+-- 실시간 도시데이터
 CREATE TABLE IF NOT EXISTS city_data_raw (
     area_nm VARCHAR(50) NOT NULL,
     area_cd VARCHAR(20) NOT NULL,
@@ -56,16 +59,20 @@ CREATE TABLE IF NOT EXISTS city_data_raw (
     PRIMARY KEY (area_nm, timestamp)
 );
 
+-- 실시간 도시데이터 : 인구현황
 CREATE TABLE IF NOT EXISTS live_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,    
     congest_lvl VARCHAR(50),              
-    congest_msg TEXT,                    
+    congest_msg TEXT,
+    ppltn_min INTEGER,
+    ppltn_max INTEGER,                    
     ppltn_time TIMESTAMP NOT NULL,
     fcst_yn VARCHAR(1),
     ingest_timestamp DOUBLE PRECISION,
     PRIMARY KEY (area_nm, ppltn_time)
 );
 
+-- 실시간 도시데이터 : 인구현황 -> 예측
 CREATE TABLE IF NOT EXISTS live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
     base_ppltn_time TIMESTAMP NOT NULL,
