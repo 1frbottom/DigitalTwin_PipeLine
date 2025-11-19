@@ -53,9 +53,10 @@
             <div id="health-status" class="status loading" style="display:none;"></div>
             <div id="health-response" class="response-box"></div>
         </div>
+
         <!-- 섹션 5: CCTV 스트리밍 -->
         <div class="api-section">
-            <h2>5️⃣ 실시간 CCTV 모니터링</h2>
+            <h2>실시간 CCTV 모니터링</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /cctv/streams</p>
             <button onclick="loadCCTVStreams()">CCTV 스트림 로드</button>
             <div id="cctv-status" class="status loading" style="display:none;"></div>
@@ -79,9 +80,59 @@
                 </div>
             </div>
         </div>
-        
-    </div>
+
+        <!--섹션 6: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
+        <div class="api-section">
+            <h2>실시간 도시 데이터 (인구)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/population/...</p>
+            
+            <div class="button-group">
+                <input type="text" id="areaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityPopulationCurrent()">실시간 현황 조회</button>
+                <button onclick="getCityPopulationForecast()">인구 예측 조회</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                현황 결과 (current)
+                <span id="city-current-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="city-current-response" class="response-box" style="display: none;"></div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                예측 결과 (forecast)
+                <span id="city-forecast-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="city-forecast-response" class="response-box" style="display: none;"></div>
+            <div id="city-forecast-table"></div>
+        </div>
     
+        <!--섹션 7: 실시간 돌발 정보 -->
+        <div class="api-section">
+            <h2>실시간 돌발 정보 (사고/공사)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /incident/active (최근 30분 내 갱신된 정보)</p>
+            
+            <div class="button-group">
+                <button onclick="getActiveIncidents()">조회하기</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="incident-status" class="status loading" style="display:none;"></span>
+            </h3>
+            
+            <div id="incident-response" class="response-box" style="display: none;"></div>
+            
+            <div id="incident-table"></div>
+        </div>
+    
+    
+    
+    
+    
+    </div>
+
+    
+    <!-- ------------------------------------------------------- -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="script.js"></script>
     <script>

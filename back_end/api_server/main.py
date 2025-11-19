@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router_cctv, router_traffic
+from .routers import router_cctv, router_traffic, router_city, router_incident
 
 
 
 app = FastAPI(
     title="디지털 트윈 교통 데이터 API",
-    description="실시간 교통/CCTV/돌발상황 정보 조회 API",
+    description="실시간 교통/CCTV/돌발상황/도시 정보 조회 API",
     version="1.0.0"
 )
 
@@ -22,6 +22,8 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(router_traffic.router)
 app.include_router(router_cctv.router)
+app.include_router(router_city.router)
+app.include_router(router_incident.router)
 
 @app.get("/")
 def read_root():

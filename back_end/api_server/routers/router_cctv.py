@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
 import logging
-from ..crud import crud_cctv
-from .. import database
+from back_end.api_server.cruds import crud_cctv
+from back_end.api_server import database
 
 logger = logging.getLogger(__name__)
 
