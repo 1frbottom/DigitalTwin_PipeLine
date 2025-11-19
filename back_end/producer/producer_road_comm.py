@@ -21,7 +21,7 @@ if not API_KEY:
 API_URL_TEMPLATE = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/TrafficInfo/1/5/{{link_id}}/"
 
 # 파일
-NODE_ID_FILE = "linkIDs.txt"
+NODE_ID_FILE = "link_IDs.txt"
 
 def connect_kafka_producer():
     """Kafka Producer에 연결을 시도하고, 성공 시 producer 객체를 반환합니다."""
@@ -110,7 +110,7 @@ def main():
 
         producer.flush()
         print(f"주기 완료: 총 {total_links}개 중 {success_count}개 데이터 전송 성공.")
-        print("15초 후 다시 시작합니다.")
+        print("road_comm : 15초 후 다시 시작합니다.")
         time.sleep(15)
 
 if __name__ == "__main__":

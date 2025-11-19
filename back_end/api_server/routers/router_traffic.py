@@ -1,8 +1,9 @@
+from ..schemas import schema_traffic
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
-from .. import database, schemas
-from ..crud import crud_traffic
+from .. import database
+from ..cruds import crud_traffic
 
 
 
@@ -11,7 +12,7 @@ router = APIRouter(
     tags=["traffic"]
 )
 
-@router.get("/recent", response_model=List[schemas.TrafficDataResponse])
+@router.get("/recent", response_model=List[schema_traffic.TrafficDataResponse])
 def read_recent_traffic(
     minutes: int = Query(default=10, ge=1, le=60),
     skip: int = 0,
@@ -24,7 +25,7 @@ def read_recent_traffic(
     )
     return traffic_data
 
-@router.get("/link/{link_id}", response_model=List[schemas.TrafficDataResponse])
+@router.get("/link/{link_id}", response_model=List[schema_traffic.TrafficDataResponse])
 def read_traffic_by_link(
     link_id: str,
     limit: int = Query(default=50, le=200),
@@ -36,12 +37,12 @@ def read_traffic_by_link(
         raise HTTPException(status_code=404, detail="해당 링크 ID의 데이터가 없습니다")
     return traffic_data
 
-@router.get("/stats", response_model=List[schemas.TrafficStats])
+@router.get("/stats", response_model=List[schema_traffic.TrafficStats])
 def read_traffic_stats(db: Session = Depends(database.get_db)):
     """링크별 평균 속도 통계"""
     stats = crud_traffic.get_traffic_stats(db)
     return [
-        schemas.TrafficStats(
+        schema_traffic.TrafficStats(
             link_id=stat.link_id,
             avg_speed_mean=stat.avg_speed_mean,
             count=stat.count
