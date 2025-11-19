@@ -38,7 +38,7 @@ services:
         echo 'Waiting for Kafka to be ready...' &&
         cub kafka-ready -b kafka:29092 1 30 &&
         echo 'Kafka is ready!' &&
-        for topic in realtime-traffic cctv-stream smart-signal traffic-incidents road-network-updates facility-updates public-transport-updates local-events floating-population weather-forecast; do
+        for topic in realtime-traffic cctv-stream traffic-incidents city-data; do
           kafka-topics --create --if-not-exists --topic $$topic --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1;
         done && echo 'All topics created successfully.'"
   db:
@@ -82,7 +82,7 @@ services:
       spark-worker:
         condition: service_started
     volumes:
-      - ./backEnd/processor:/opt/spark/work-dir
+      - ./back_end/processor:/opt/spark/work-dir
     command: /bin/sh -c "echo 'Submitting Spark job' && \
       /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor.py"
 
@@ -93,7 +93,7 @@ services:
       kafka:
         condition: service_healthy
     volumes:
-      - ./backEnd/producer:/app
+      - ./back_end/producer:/app
     env_file:
       - .env
     environment:
@@ -103,7 +103,27 @@ services:
         apt-get update && 
         apt-get install -y netcat-openbsd && 
         pip install kafka-python requests && 
-        sh /app/startProducers.sh
+        bash /app/start_producers.sh
+      "
+
+  producer-citydata:
+    image: python:3.9-slim
+    container_name: producer-citydata
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./back_end/producer:/app
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1  
+    command: >
+      sh -c "
+        apt-get update && 
+        apt-get install -y netcat-openbsd && 
+        pip install kafka-python requests xmltodict && 
+        python /app/producer_city_data.py
       "
 
   api-server:
@@ -118,8 +138,8 @@ services:
       - "8000:8000"
     command: >
       sh -c "
-      pip install --no-cache-dir -r backEnd/apiServer/requirements_api.txt &&
-      uvicorn backEnd.apiServer.main:app --host 0.0.0.0 --port 8000 --reload
+      pip install --no-cache-dir -r back_end/api_server/requirements_api.txt &&
+      uvicorn back_end.api_server.main:app --host 0.0.0.0 --port 8000 --reload
       "
     environment:
       - PYTHONUNBUFFERED=1
