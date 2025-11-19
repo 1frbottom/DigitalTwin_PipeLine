@@ -232,6 +232,10 @@ def write_proc_to_postgres(df, epoch_id):
       .save()
 
 def write_forecast_to_postgres(df, epoch_id):
+    
+    if df.rdd.isEmpty():
+        return
+    
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
