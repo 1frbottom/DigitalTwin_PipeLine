@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -102,6 +102,7 @@ StructField("area_nm", StringType(), False),
     StructField("road_traffic_stts", StringType(), True),
     StructField("prk_stts", StringType(), True),
     StructField("sub_stts", StringType(), True),
+    StructField("live_sub_ppltn", StringType(), True),
     StructField("bus_stn_stts", StringType(), True),
     StructField("acdnt_cntrl_stts", StringType(), True),
     StructField("charger_stts", StringType(), True),
@@ -248,6 +249,171 @@ query_ppltn_forecast = forecast_df.writeStream \
 
 # ----------------------------------------------------
 
+
+# --- 3-2. city_data (city_data_raw)의 sub_stts 스트림 --------
+
+# 1. SUB_DETAIL 배열 내부의 개별 도착 정보 스키마
+schema_sub_detail_item = StructType([
+    StructField("SUB_ROUTE_NM", StringType(), True),
+    StructField("SUB_LINE", StringType(), True),
+    StructField("SUB_ARMG1", StringType(), True),
+    StructField("SUB_ARMG2", StringType(), True),
+])
+
+# 2. SUB_DETAIL 부모 객체 스키마
+schema_sub_detail_parent = StructType([
+    StructField("SUB_DETAIL", ArrayType(schema_sub_detail_item), True)
+])
+
+# 3. 역 정보 스키마 (SUB_STTS 배열의 각 항목)
+schema_sub_station = StructType([
+    StructField("SUB_STN_NM", StringType(), True),
+    StructField("SUB_STN_LINE", StringType(), True),
+    StructField("SUB_DETAIL", schema_sub_detail_parent, True)
+])
+
+# 4. 최상위 SUB_STTS 스키마
+schema_sub_stts_outer = StructType([
+    StructField("SUB_STTS", ArrayType(schema_sub_station), True)
+])
+
+# 5. city_data_raw 스트림에서 sub_stts 필드를 가져와 파싱
+parsed_subway_df = parsed_stream_df_city_data \
+    .filter(col("sub_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("sub_stts"), schema_sub_stts_outer).alias("subway_data_outer")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        explode(col("subway_data_outer.SUB_STTS")).alias("station")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("station.SUB_STN_NM").alias("station_nm"),
+        col("station.SUB_STN_LINE").alias("line_num"),
+        explode(col("station.SUB_DETAIL.SUB_DETAIL")).alias("detail")
+    ) \
+    .select(
+        "area_nm",
+        "station_nm",
+        "line_num",
+        col("detail.SUB_ROUTE_NM").alias("train_line_nm"),
+        col("detail.SUB_ARMG1").alias("arrival_msg_1"),
+        col("detail.SUB_ARMG2").alias("arrival_msg_2"),
+        # 타임스탬프를 초 단위로 truncate - 갱신 시각 통일
+        date_trunc("second", to_timestamp(col("ingest_timestamp"))).alias("ingest_timestamp")
+    )
+
+# 6. 도착 데이터 필터링
+subway_arrival_df = parsed_subway_df \
+    .filter(
+        (col("station_nm").isNotNull()) & \
+        (col("line_num").isNotNull()) & \
+        (col("train_line_nm").isNotNull())
+    ) \
+    .select(
+        "area_nm",
+        "station_nm",
+        "line_num",
+        "train_line_nm",
+        "arrival_msg_1",
+        "arrival_msg_2",
+        "ingest_timestamp"
+    )
+
+# 7. 데이터베이스 쓰기 함수
+def write_subway_arrival_to_postgres(df, epoch_id):
+    # 배치 내 중복 제거: 같은 키의 가장 최신 timestamp만 유지
+    from pyspark.sql.window import Window
+    from pyspark.sql.functions import row_number
+
+    window_spec = Window.partitionBy("area_nm", "station_nm", "line_num", "train_line_nm").orderBy(col("ingest_timestamp").desc())
+    dedup_df = df.withColumn("row_num", row_number().over(window_spec)) \
+                 .filter(col("row_num") == 1) \
+                 .drop("row_num")
+
+    # DB에 저장 (append mode)
+    dedup_df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "subway_arrival_proc") \
+      .mode("append") \
+      .save()
+
+# 8. 스트림 시작
+query_subway_arrival = subway_arrival_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_subway_arrival_to_postgres) \
+    .start()
+
+# ----------------------------------------------------
+
+
+# --- 3-3. city_data (city_data_raw)의 live_sub_ppltn 스트림 --------
+
+# 1. LIVE_SUB_PPLTN JSON 스키마 정의 (5분 데이터만)
+schema_sub_ppltn = StructType([
+    StructField("SUB_5WTHN_GTON_PPLTN_MIN", StringType(), True),
+    StructField("SUB_5WTHN_GTON_PPLTN_MAX", StringType(), True),
+    StructField("SUB_5WTHN_GTOFF_PPLTN_MIN", StringType(), True),
+    StructField("SUB_5WTHN_GTOFF_PPLTN_MAX", StringType(), True),
+    StructField("SUB_STN_CNT", StringType(), True),
+    StructField("SUB_STN_TIME", StringType(), True)
+])
+
+# 2. city_data_raw 스트림에서 live_sub_ppltn 필드를 가져와 파싱
+parsed_sub_ppltn_df = parsed_stream_df_city_data \
+    .filter(col("live_sub_ppltn").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("live_sub_ppltn"), schema_sub_ppltn).alias("sub_ppltn_data")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        "sub_ppltn_data.*"
+    )
+
+# 3. subway_ppltn_proc 테이블에 저장할 데이터 준비 (5분 데이터만)
+subway_ppltn_proc_df = parsed_sub_ppltn_df \
+    .select(
+        "area_nm",
+        # 5분 이내 승하차 데이터
+        col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()).alias("wthn_5_gton_min"),
+        col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType()).alias("wthn_5_gton_max"),
+        col("SUB_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()).alias("wthn_5_gtoff_min"),
+        col("SUB_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType()).alias("wthn_5_gtoff_max"),
+        # 메타 데이터
+        col("SUB_STN_CNT").cast(IntegerType()).alias("stn_cnt"),
+        col("SUB_STN_TIME").alias("stn_time"),
+        to_timestamp(col("ingest_timestamp")).alias("ingest_timestamp")
+    ) \
+    .filter(
+        (col("wthn_5_gton_min").isNotNull()) & \
+        (col("stn_time").isNotNull())
+    )
+
+# 4. 데이터베이스 쓰기 함수
+def write_subway_ppltn_to_postgres(df, epoch_id):
+    df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "subway_ppltn_proc") \
+      .mode("append") \
+      .save()
+
+# 5. 스트림 시작
+query_subway_ppltn = subway_ppltn_proc_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_subway_ppltn_to_postgres) \
+    .start()
+
+# ----------------------------------------------------
 
 
 spark.streams.awaitAnyTermination()

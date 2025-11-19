@@ -72,6 +72,7 @@ def fetch_and_parse_city_data():
             'road_traffic_stts': json.dumps(citydata.get('ROAD_TRAFFIC_STTS'), ensure_ascii=False) if citydata.get('ROAD_TRAFFIC_STTS') else None,
             'prk_stts': json.dumps(citydata.get('PRK_STTS'), ensure_ascii=False) if citydata.get('PRK_STTS') else None,
             'sub_stts': json.dumps(citydata.get('SUB_STTS'), ensure_ascii=False) if citydata.get('SUB_STTS') else None,
+            'live_sub_ppltn': json.dumps(citydata.get('LIVE_SUB_PPLTN'), ensure_ascii=False) if citydata.get('LIVE_SUB_PPLTN') else None,
             'bus_stn_stts': json.dumps(citydata.get('BUS_STN_STTS'), ensure_ascii=False) if citydata.get('BUS_STN_STTS') else None,
             'acdnt_cntrl_stts': json.dumps(citydata.get('ACDNT_CNTRL_STTS'), ensure_ascii=False) if citydata.get('ACDNT_CNTRL_STTS') else None,
             'sbike_stts': json.dumps(citydata.get('SBIKE_STTS'), ensure_ascii=False) if citydata.get('SBIKE_STTS') else None,

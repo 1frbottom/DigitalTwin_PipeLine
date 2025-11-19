@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS city_data_raw (
     road_traffic_stts TEXT,
     prk_stts TEXT,
     sub_stts TEXT,
+    live_sub_ppltn TEXT,
     bus_stn_stts TEXT,
     acdnt_cntrl_stts TEXT,
     charger_stts TEXT,
@@ -80,7 +81,7 @@ CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,
     line_num VARCHAR(10) NOT NULL,
-    train_line_nm VARCHAR(100),
+    train_line_nm VARCHAR(100) NOT NULL,
     arrival_msg_1 TEXT,
     arrival_msg_2 TEXT,
     ingest_timestamp TIMESTAMP NOT NULL,
@@ -90,3 +91,37 @@ CREATE TABLE IF NOT EXISTS subway_arrival_proc (
 CREATE INDEX idx_subway_station ON subway_arrival_proc(station_nm);
 CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
 CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
+CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
+
+CREATE TABLE IF NOT EXISTS subway_ppltn_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    -- 5분 이내 승하차 데이터만
+    wthn_5_gton_min INTEGER,
+    wthn_5_gton_max INTEGER,
+    wthn_5_gtoff_min INTEGER,
+    wthn_5_gtoff_max INTEGER,
+    -- 메타 데이터
+    stn_cnt INTEGER,
+    stn_time VARCHAR(14),
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, ingest_timestamp)
+);
+
+CREATE INDEX idx_subway_ppltn_area ON subway_ppltn_proc(area_nm);
+CREATE INDEX idx_subway_ppltn_time ON subway_ppltn_proc(ingest_timestamp);
+
+-- 24시간 이전 데이터 자동 삭제 함수
+CREATE OR REPLACE FUNCTION delete_old_subway_ppltn()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM subway_ppltn_proc
+    WHERE ingest_timestamp < NOW() - INTERVAL '24 hours';
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- INSERT 시마다 24시간 이전 데이터 삭제 트리거
+CREATE TRIGGER trigger_delete_old_subway_ppltn
+AFTER INSERT ON subway_ppltn_proc
+FOR EACH STATEMENT
+EXECUTE FUNCTION delete_old_subway_ppltn();
