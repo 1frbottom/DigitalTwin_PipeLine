@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -383,23 +383,26 @@ parsed_sub_ppltn_df = parsed_stream_df_city_data \
         "sub_ppltn_data.*"
     )
 
-# 3. subway_ppltn_proc 테이블에 저장할 데이터 준비 (5분 데이터만)
+# 3. subway_ppltn_proc 테이블에 저장할 데이터 준비 (평균값 + 시간 슬롯)
+# 10분 오프셋 적용: 14:10 ~ 15:10 → 14시 슬롯
 subway_ppltn_proc_df = parsed_sub_ppltn_df \
     .select(
         "area_nm",
-        # 5분 이내 승하차 데이터
-        col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()).alias("wthn_5_gton_min"),
-        col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType()).alias("wthn_5_gton_max"),
-        col("SUB_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()).alias("wthn_5_gtoff_min"),
-        col("SUB_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType()).alias("wthn_5_gtoff_max"),
+        # 시간 슬롯 계산 (10분 오프셋 적용)
+        to_date(to_timestamp(col("ingest_timestamp")) - expr("INTERVAL 10 MINUTES")).alias("data_date"),
+        hour(to_timestamp(col("ingest_timestamp")) - expr("INTERVAL 10 MINUTES")).alias("hour_slot"),
+        # 5분 이내 승하차 평균 데이터
+        ((col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gton_avg"),
+        ((col("SUB_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gtoff_avg"),
         # 메타 데이터
         col("SUB_STN_CNT").cast(IntegerType()).alias("stn_cnt"),
-        col("SUB_STN_TIME").alias("stn_time"),
         to_timestamp(col("ingest_timestamp")).alias("ingest_timestamp")
     ) \
     .filter(
-        (col("wthn_5_gton_min").isNotNull()) & \
-        (col("stn_time").isNotNull())
+        (col("gton_avg").isNotNull()) & \
+        (col("hour_slot").isNotNull())
     )
 
 # 4. 데이터베이스 쓰기 함수

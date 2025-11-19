@@ -102,27 +102,27 @@ CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
 
 CREATE TABLE IF NOT EXISTS subway_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,
-    -- 5분 이내 승하차 데이터만
-    wthn_5_gton_min INTEGER,
-    wthn_5_gton_max INTEGER,
-    wthn_5_gtoff_min INTEGER,
-    wthn_5_gtoff_max INTEGER,
+    data_date DATE NOT NULL,
+    hour_slot INTEGER NOT NULL,
+    -- 5분 이내 승하차 평균 데이터
+    gton_avg INTEGER,
+    gtoff_avg INTEGER,
     -- 메타 데이터
     stn_cnt INTEGER,
-    stn_time VARCHAR(14),
     ingest_timestamp TIMESTAMP NOT NULL,
-    PRIMARY KEY (area_nm, ingest_timestamp)
+    PRIMARY KEY (area_nm, data_date, hour_slot)
 );
 
 CREATE INDEX idx_subway_ppltn_area ON subway_ppltn_proc(area_nm);
-CREATE INDEX idx_subway_ppltn_time ON subway_ppltn_proc(ingest_timestamp);
+CREATE INDEX idx_subway_ppltn_date ON subway_ppltn_proc(data_date);
+CREATE INDEX idx_subway_ppltn_hour ON subway_ppltn_proc(hour_slot);
 
 -- 24시간 이전 데이터 자동 삭제 함수
 CREATE OR REPLACE FUNCTION delete_old_subway_ppltn()
 RETURNS TRIGGER AS $$
 BEGIN
     DELETE FROM subway_ppltn_proc
-    WHERE ingest_timestamp < NOW() - INTERVAL '24 hours';
+    WHERE data_date < CURRENT_DATE - INTERVAL '1 day';
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
