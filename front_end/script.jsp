@@ -141,3 +141,26 @@ function initDashboard() {
 
 initDashboard();
 setInterval(initDashboard, 10000); // 10초마다 갱신
+
+/* ---------------- Google Map 초기화 ---------------- */
+
+const CCTV_LOCATIONS = [
+  { id: 1, name: "강남역 10번 출구", lat: 37.498006, lng: 127.027620 },
+  { id: 2, name: "강남역 11번 출구", lat: 37.497720, lng: 127.028450 },
+  { id: 3, name: "강남대로 횡단보도 앞", lat: 37.498500, lng: 127.026800 },
+];
+
+let map;
+
+function initMap() {
+  // 강남역 대략 좌표
+  const gangnam = { lat: 37.4979, lng: 127.0276 };
+
+  map = new google.maps.Map(document.getElementById("google-map"), {
+    center: gangnam,
+    zoom: 16,
+    disableDefaultUI: true, // 줌 버튼, 지도 타입 버튼 등 기본 UI 숨김
+  });
+}
+
+
