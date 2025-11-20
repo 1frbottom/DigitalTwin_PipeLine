@@ -86,7 +86,24 @@ services:
     command: /bin/sh -c "echo 'Submitting Spark job' && \
       /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor.py"
 
-  roducer:
+  spark-subway-bus-ppltn:
+    image: apache/spark:3.5.1
+    container_name: spark-subway-bus-ppltn
+    user: root
+    depends_on:
+      kafka-setup:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_started
+    volumes:
+      - ./back_end/processor:/opt/spark/work-dir
+    command: /bin/sh -c "echo 'Submitting Subway & Bus Population Processor' && \
+      /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor_subway_bus_ppltn.py"
+    restart: unless-stopped
+
+  producer:
     image: python:3.9-slim
     container_name: producer
     depends_on:

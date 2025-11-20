@@ -109,14 +109,50 @@
             
             <div id="city-road-table"></div>
         </div>
-    
-    
 
+        <!--섹션 6: 지하철 실시간 도착 정보 현황판 -->
+        <div class="api-section">
+            <h2>지하철 실시간 도착 정보 현황판</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/arrival/board</p>
 
-    
+            <div class="button-group">
+                <input type="text" id="subwayAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getSubwayArrivalBoard()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                현황판
+                <span id="subway-arrival-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="subway-arrival-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <div id="subway-arrival-board"></div>
+        </div>
+
+        <!--섹션 7: 지하철 시간별 승하차 누적 현황 -->
+        <div class="api-section">
+            <h2>지하철 시간별 승하차 누적 현황</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/passenger/cumulative</p>
+
+            <div class="button-group">
+                <input type="text" id="subwayPassengerAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getSubwayPassengerCumulative()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                승하차 현황
+                <span id="subway-passenger-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="subway-passenger-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <div id="subway-passenger-table"></div>
+        </div>
+
     </div>
 
-    
+
     <!-- ------------------------------------------------------- -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="test_script.js"></script>
