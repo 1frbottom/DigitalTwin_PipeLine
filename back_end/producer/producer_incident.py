@@ -89,8 +89,8 @@ def fetch_parse_incident_data():
     
     return []
 
-# --- 메인 실행 로직 (Main Execution) ---
-def main():
+# --- 메인 실행 로직 구버전 (Main Execution) ---
+# def main():
     producer = connect_kafka_producer()
     
     print("incident : 수집을 시작합니다.")
@@ -120,6 +120,33 @@ def main():
         print("incident : 60초 후 다시 시작합니다.")
         time.sleep(60)
 
+# --- 메인 실행 로직 (Main Execution) ---
+def main():
+    producer = connect_kafka_producer()
+    
+    print("incident : 수집을 시작합니다.")
+    # processed_ids = set()  <-- [삭제] 더 이상 필요 없음
+
+    while True:
+        # print(f"incident : ... (처리된 ID: {len(processed_ids)}개)") <-- [삭제] 로그 메시지 단순화
+        print(f"incident : 새로운 데이터 수집 주기 시작")
+        
+        incidents = fetch_parse_incident_data()
+        success_count = 0
+        
+        if incidents:
+            for message in incidents:
+                # [수정] 중복 체크 없이 무조건 전송해야 '생존 신고(Heartbeat)'가 됨
+                producer.send(KAFKA_TOPIC, value=message)
+                success_count += 1
+                
+            producer.flush()
+            print(f"incident : 주기 완료: {len(incidents)}개 수신, {success_count}개 전송(갱신) 완료.")
+        else:
+            print("주기 완료: 수신된 데이터 없음.")
+
+        print("incident : 60초 후 다시 시작합니다.")
+        time.sleep(60)
 
 
 if __name__ == "__main__":
