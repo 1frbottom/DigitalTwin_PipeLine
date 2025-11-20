@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>교통 데이터 API 연동 프로토타입</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="test_style.css">
 </head>
 <body>
     <div class="container">
@@ -125,16 +125,36 @@
             <div id="incident-table"></div>
         </div>
     
+        <!--섹션 8: 실시간 도로소통 정보 -->
+        <div class="api-section">
+            <h2>실시간 도로 소통 현황 (AVG)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/traffic/road</p>
+            
+            <div class="button-group">
+                <input type="text" id="roadAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityRoadTraffic()">조회하기</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="city-road-status" class="status loading" style="display:none;"></span>
+            </h3>
+            
+            <div id="city-road-response" class="response-box" style="display: none;"></div>
+            
+            <div id="city-road-table"></div>
+        </div>
     
     
-    
+
+
     
     </div>
 
     
     <!-- ------------------------------------------------------- -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="script.js"></script>
+    <script src="test_script.js"></script>
     <script>
         // 페이지 로드 즉시 CCTV 스트림 자동 로드
         console.log('=== 자동 로드 스크립트 실행 ===');

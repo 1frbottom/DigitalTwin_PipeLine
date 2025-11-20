@@ -16,7 +16,7 @@ db_properties = {
     "driver": "org.postgresql.Driver"
 }
 
-# --- 1. road_comm (traffic_data) 스트림 ---
+# --- 1. road_comm (traffic_data) 스트림 (삭제예정) ---------------
 schema_road_comm = StructType([
     StructField("link_id", StringType(), True),
     StructField("avg_speed", DoubleType(), True),
@@ -42,7 +42,7 @@ query = parsed_stream_df_road_comm.writeStream \
     .foreachBatch(write_to_postgres) \
     .start()
 
-# --- 2. incident (traffic_incidents) 스트림 ---
+# --- 2. traffic_incidents 스트림 -----------------------------
 incident_schema = StructType([
     StructField("acc_id", StringType(), False),
     StructField("occr_date", StringType(), True),
@@ -92,7 +92,7 @@ query_incident = parsed_incident_df.writeStream \
     .foreachBatch(write_incident_to_postgres) \
     .start()
 
-# --- 3. city_data (city_data_raw) 스트림 -----------------
+# --- 3. city_data_raw 스트림 ------------------------------
 schema_city_data = StructType([
     StructField("area_nm", StringType(), False),
     StructField("area_cd", StringType(), False),
@@ -136,9 +136,9 @@ query_city_data = parsed_stream_df_city_data.writeStream \
     .start()
 
 
-# --- 3-1. city_data (city_data_raw)의 live_ppltn_stts 스트림 --------
+# --- 3-1. city_data_raw의 live_ppltn_stts 스트림 --------
 
-# 1-1. FCST_PPLTN (N) 부분의 스키마
+    # 1-1. FCST_PPLTN (N) 부분의 스키마
 schema_fcst_item = StructType([
     StructField("FCST_TIME", StringType(), True),
     StructField("FCST_CONGEST_LVL", StringType(), True),
@@ -146,12 +146,12 @@ schema_fcst_item = StructType([
     StructField("FCST_PPLTN_MAX", StringType(), True)
 ])
 
-# 1-2. FCST_PPLTN 부모 객체의 스키마
+    # 1-2. FCST_PPLTN 부모 객체의 스키마
 schema_fcst_parent = StructType([
     StructField("FCST_PPLTN", ArrayType(schema_fcst_item), True)
 ])
 
-# 1-3. LIVE_PPLTN_STTS (1) 부분의 "내부" 스키마
+    # 1-3. LIVE_PPLTN_STTS (1) 부분의 "내부" 스키마
 schema_inner_ppltn = StructType([
     StructField("AREA_CONGEST_LVL", StringType(), True),
     StructField("AREA_CONGEST_MSG", StringType(), True),
@@ -162,12 +162,12 @@ schema_inner_ppltn = StructType([
     StructField("FCST_PPLTN", schema_fcst_parent, True) 
 ])
 
-# 1-4. NEW: LIVE_PPLTN_STTS (1) 부분의 "외부" 스키마
+    # 1-4. LIVE_PPLTN_STTS (1) 부분의 "외부" 스키마
 schema_outer_ppltn = StructType([
     StructField("LIVE_PPLTN_STTS", schema_inner_ppltn, True)
 ])
 
-# 2. `city_data_raw` 스트림에서 `live_ppltn_stts`(JSON 문자열) 필드를 가져와 파싱합니다.
+    # 2. `city_data_raw` 스트림에서 `live_ppltn_stts`(JSON 문자열) 필드를 가져와 파싱합니다.
 parsed_ppltn_df = parsed_stream_df_city_data \
     .filter(col("live_ppltn_stts").isNotNull()) \
     .select(
@@ -183,8 +183,8 @@ parsed_ppltn_df = parsed_stream_df_city_data \
         col("ppltn_data_outer.LIVE_PPLTN_STTS.*") 
     )
 
-# 3. (테이블 1) 1:1 현황 데이터 (live_ppltn_proc) 준비
-# PPLTN_TIME (문자열)을 PostgreSQL TIMESTAMP 타입으로 변환
+    # 3. (테이블 1) 1:1 현황 데이터 (city_live_ppltn_proc) 준비
+    # PPLTN_TIME (문자열)을 PostgreSQL TIMESTAMP 타입으로 변환
 proc_df = parsed_ppltn_df \
     .select(
         "area_nm",
@@ -199,8 +199,8 @@ proc_df = parsed_ppltn_df \
     .filter(col("ppltn_time").isNotNull()) # 이상값 제거 (기준 시간이 없는 데이터 제외)
 
 
-# 4. (테이블 2) 1:N 예측 데이터 (live_ppltn_forecast) 준비
-# `explode` 함수로 FCST_PPLTN 배열을 여러 개의 행으로 펼칩니다.
+    # 4. (테이블 2) 1:N 예측 데이터 (city_live_ppltn_forecast) 준비
+    # `explode` 함수로 FCST_PPLTN 배열을 여러 개의 행으로 펼칩니다.
 forecast_df = parsed_ppltn_df \
     .filter(col("FCST_YN") == 'Y') \
     .select(
@@ -224,12 +224,12 @@ forecast_df = parsed_ppltn_df \
     )
 
 
-# 5. 두 테이블에 대한 DB Write 함수 정의
+    # 5. 두 테이블에 대한 DB Write 함수 정의
 def write_proc_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "live_ppltn_proc") \
+      .option("dbtable", "city_live_ppltn_proc") \
       .mode("append") \
       .save()
 
@@ -241,11 +241,11 @@ def write_forecast_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "live_ppltn_forecast") \
+      .option("dbtable", "city_live_ppltn_forecast") \
       .mode("append") \
       .save()
 
-# 6. 두 개의 새로운 스트림 시작
+    # 6. 두 개의 새로운 스트림 시작
 query_ppltn_proc = proc_df.writeStream \
     .outputMode("append") \
     .foreachBatch(write_proc_to_postgres) \
@@ -256,8 +256,68 @@ query_ppltn_forecast = forecast_df.writeStream \
     .foreachBatch(write_forecast_to_postgres) \
     .start()
 
+# --- 3-2. city_data(city_data_raw)의 road_traffic_stts (AVG_ROAD_DATA) 스트림 --------
+
+    # 1. 스키마 정의
+    # 가장 안쪽 데이터 (AVG_ROAD_DATA)
+schema_avg_road_data = StructType([
+    StructField("ROAD_MSG", StringType(), True),
+    StructField("ROAD_TRAFFIC_IDX", StringType(), True),
+    StructField("ROAD_TRAFFIC_SPD", StringType(), True),
+    StructField("ROAD_TRAFFIC_TIME", StringType(), True)
+])
+
+schema_road_raw = StructType([
+    StructField("AVG_ROAD_DATA", schema_avg_road_data, True)
+])
+
+    # 2. 파싱 및 데이터 추출
+parsed_road_df = parsed_stream_df_city_data \
+    .filter(col("road_traffic_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("road_traffic_stts"), schema_road_raw).alias("road_data_outer")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("road_data_outer.AVG_ROAD_DATA.*") 
+    )
+
+    # 3. 타입 변환 및 컬럼 매핑 (city_live_road_traffic_avg 테이블 구조에 맞춤)
+road_proc_df = parsed_road_df \
+    .select(
+        col("area_nm"),
+        col("ROAD_MSG").alias("road_msg"),
+        col("ROAD_TRAFFIC_IDX").alias("road_traffic_idx"),
+        col("ROAD_TRAFFIC_SPD").cast(IntegerType()).alias("road_traffic_spd"),
+        to_timestamp(col("ROAD_TRAFFIC_TIME"), "yyyy-MM-dd HH:mm").alias("road_traffic_time"),
+        col("ingest_timestamp")
+    ) \
+    .filter(col("road_traffic_time").isNotNull())
+
+    # 4. DB 적재 함수 정의
+def write_road_avg_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+        
+    df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "city_road_traffic_stts_avg") \
+      .mode("append") \
+      .save()
+
+    # 5. 스트림 시작
+query_road_avg = road_proc_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_road_avg_to_postgres) \
+    .start()
+
+
+
+
 # ----------------------------------------------------
-
-
 
 spark.streams.awaitAnyTermination()

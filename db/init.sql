@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS city_data_raw (
 );
 
 -- 실시간 도시데이터 : 인구현황
-CREATE TABLE IF NOT EXISTS live_ppltn_proc (
+CREATE TABLE IF NOT EXISTS city_live_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,    
     congest_lvl VARCHAR(50),              
     congest_msg TEXT,
@@ -74,8 +74,8 @@ CREATE TABLE IF NOT EXISTS live_ppltn_proc (
     PRIMARY KEY (area_nm, ppltn_time)
 );
 
--- 실시간 도시데이터 : 인구현황 -> 예측
-CREATE TABLE IF NOT EXISTS live_ppltn_forecast (
+-- 실시간 도시데이터 : 인구현황(예측)
+CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
     base_ppltn_time TIMESTAMP NOT NULL,
     fcst_time TIMESTAMP NOT NULL,   
@@ -83,4 +83,15 @@ CREATE TABLE IF NOT EXISTS live_ppltn_forecast (
     fcst_min INTEGER,             
     fcst_max INTEGER,       
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
+);
+
+-- 실시간 도시데이터 : 도로소통 현황(평균)
+CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
+    area_nm VARCHAR(50) NOT NULL,
+    road_msg TEXT,
+    road_traffic_idx VARCHAR(50),
+    road_traffic_spd INTEGER,
+    road_traffic_time TIMESTAMP NOT NULL,
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, road_traffic_time)
 );
