@@ -20,7 +20,7 @@ def read_current_population(area_name: str, db: Session = Depends(get_db)):
     """
     특정 지역의 가장 최신 실시간 인구 현황 정보를 조회합니다.
     """
-    proc_data = crud_city.get_live_ppltn_proc(db, area_name=area_name, limit=1)
+    proc_data = crud_city.get_city_live_ppltn_proc(db, area_name=area_name, limit=1)
     if not proc_data:
         raise HTTPException(status_code=404, detail=f"{area_name}의 인구 현황 데이터를 찾을 수 없습니다.")
     return proc_data[0]
@@ -32,8 +32,20 @@ def read_population_forecast(area_name: str, db: Session = Depends(get_db)):
     """
     특정 지역의 가장 최신 기준 시각에 대한 인구 예측 정보를 조회합니다.
     """
-    forecast_data = crud_city.get_live_ppltn_forecast(db, area_name=area_name)
+    forecast_data = crud_city.get_city_live_ppltn_forecast(db, area_name=area_name)
     if not forecast_data:
         # 최신 기준 시각이 없거나 예측 데이터가 없는 경우
         raise HTTPException(status_code=404, detail=f"{area_name}의 인구 예측 데이터를 찾을 수 없습니다.")
     return forecast_data
+
+# (3) 도로 소통 현황 조회 API
+@router.get("/traffic/road", response_model=model_city.LiveRoadTrafficAvgBase)
+def read_road_traffic(area_name: str, db: Session = Depends(get_db)):
+    """
+    특정 지역의 가장 최신 도로 소통 현황(평균) 정보를 조회합니다.
+    """
+    traffic_data = crud_city.get_city_road_traffic(db, area_name=area_name)
+    if not traffic_data:
+        raise HTTPException(status_code=404, detail=f"{area_name}의 도로 소통 데이터를 찾을 수 없습니다.")
+    return traffic_data
+
