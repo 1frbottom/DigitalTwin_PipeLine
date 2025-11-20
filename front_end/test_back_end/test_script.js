@@ -23,95 +23,7 @@ async function fetchAPI(endpoint, params = {}) {
     }
 }
 
-// 1. 최근 교통 데이터
-async function getRecentTraffic() {
-    const resultDiv = document.getElementById('recent-response');
-    const statusDiv = document.getElementById('recent-status');
-    
-    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '로딩 중...';
-    statusDiv.className = 'status loading';
-    statusDiv.style.display = 'inline-block';
-    
-    const minutes = document.getElementById('minutes').value || 10;
-    const limit = document.getElementById('limit').value || 100;
-    
-    const result = await fetchAPI('/api/traffic/recent', { minutes, limit, skip: 0 });
-    
-    if (result.status === 200) {
-        statusDiv.innerHTML = '성공';
-        statusDiv.className = 'status success';
-        resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
-    } else {
-        statusDiv.innerHTML = '실패';
-        statusDiv.className = 'status error';
-        resultDiv.innerHTML = `<span class="error">Error: ${result.error || result.data}</span>`;
-    }
-}
-
-// 2. 특정 링크 데이터
-async function getTrafficByLink() {
-    const resultDiv = document.getElementById('link-response');
-    const statusDiv = document.getElementById('link-status');
-    const linkId = document.getElementById('linkId').value;
-    
-    if (!linkId) {
-        alert('링크 ID를 입력하세요');
-        return;
-    }
-    
-    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '로딩 중...';
-    statusDiv.className = 'status loading';
-    statusDiv.style.display = 'inline-block';
-    
-    const result = await fetchAPI(`/api/traffic/link/${linkId}`, { limit: 50 });
-    
-    if (result.status === 200) {
-        statusDiv.innerHTML = '성공';
-        statusDiv.className = 'status success';
-        resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
-    } else {
-        statusDiv.innerHTML = '실패';
-        statusDiv.className = 'status error';
-        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
-    }
-}
-
-// 3. 통계 데이터
-async function getTrafficStats() {
-    const resultDiv = document.getElementById('stats-response');
-    const tableDiv = document.getElementById('stats-table');
-    const statusDiv = document.getElementById('stats-status');
-    
-    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
-    statusDiv.innerHTML = '로딩 중...';
-    statusDiv.className = 'status loading';
-    statusDiv.style.display = 'inline-block';
-    
-    const result = await fetchAPI('/api/traffic/stats');
-    
-    if (result.status === 200) {
-        statusDiv.innerHTML = '성공';
-        statusDiv.className = 'status success';
-        resultDiv.innerHTML = `<span class="success">링크 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
-        
-        // 테이블로도 표시
-        let tableHTML = '<table><tr><th>링크 ID</th><th>평균 속도</th><th>데이터 수</th></tr>';
-        result.data.forEach(item => {
-            tableHTML += `<tr><td>${item.link_id}</td><td>${item.avg_speed_mean.toFixed(2)} km/h</td><td>${item.count}</td></tr>`;
-        });
-        tableHTML += '</table>';
-        tableDiv.innerHTML = tableHTML;
-    } else {
-        statusDiv.innerHTML = '실패';
-        statusDiv.className = 'status error';
-        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
-        tableDiv.innerHTML = '';
-    }
-}
-
-// 4. 헬스 체크
+// 1. 헬스 체크
 async function getHealth() {
     const resultDiv = document.getElementById('health-response');
     const statusDiv = document.getElementById('health-status');
@@ -134,7 +46,7 @@ async function getHealth() {
     }
 }
 
-// 5. CCTV 스트리밍
+// 2. CCTV 스트리밍
 async function loadCCTVStreams() {
     const statusDiv = document.getElementById('cctv-status');
 
@@ -237,7 +149,7 @@ async function loadCCTVStreams() {
     }
 }
 
-// 6. 실시간 도시 데이터 - 인구 현황 (LIVE_PPLTN_STTS)
+// 3. 실시간 도시 데이터 - 인구 현황 (LIVE_PPLTN_STTS)
 async function getCityPopulationCurrent() {
     const resultDiv = document.getElementById('city-current-response');
     const statusDiv = document.getElementById('city-current-status');
@@ -268,7 +180,7 @@ async function getCityPopulationCurrent() {
     }
 }
 
-// 6-1. 실시간 도시 데이터 - 인구 현황 - 인구 예측 (LIVE_PPLTN_STTS)
+// 3-1. 실시간 도시 데이터 - 인구 현황 - 인구 예측 (LIVE_PPLTN_STTS)
 async function getCityPopulationForecast() {
     const resultDiv = document.getElementById('city-forecast-response');
     const tableDiv = document.getElementById('city-forecast-table');
@@ -328,7 +240,7 @@ async function getCityPopulationForecast() {
     }
 }
 
-// 7. 실시간 돌발 정보 조회
+// 4. 실시간 돌발 정보 조회
 async function getActiveIncidents() {
     const resultDiv = document.getElementById('incident-response');
     const tableDiv = document.getElementById('incident-table');
@@ -383,6 +295,81 @@ async function getActiveIncidents() {
     }
 }
 
+// 5. 실시간 도시 데이터 - 도로 소통 현황 (ROAD_TRAFFIC_STTS)
+async function getCityRoadTraffic() {
+    const resultDiv = document.getElementById('city-road-response');
+    const tableDiv = document.getElementById('city-road-table');
+    const statusDiv = document.getElementById('city-road-status');
+    const areaName = document.getElementById('roadAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    tableDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/city/traffic/road', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        resultDiv.innerHTML = `<span class="success">데이터 수신 완료</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        // 테이블 생성
+        const item = result.data;
+        const timeStr = new Date(item.road_traffic_time).toLocaleString('ko-KR', { hour12: false });
+        
+        // 소통 상태에 따른 색상 클래스 (간단하게 구현)
+        let statusClass = 'status';
+        if (item.road_traffic_idx === '정체') statusClass += ' error';
+        else if (item.road_traffic_idx === '서행') statusClass += ' loading'; // 노란색 계열 재사용
+        else statusClass += ' success';
+
+        let tableHTML = `
+            <table>
+                <tr>
+                    <th style="width: 20%;">항목</th>
+                    <th>내용</th>
+                </tr>
+                <tr>
+                    <td>지역명</td>
+                    <td>${item.area_nm}</td>
+                </tr>
+                <tr>
+                    <td>소통 상태</td>
+                    <td><span class="${statusClass}">${item.road_traffic_idx}</span></td>
+                </tr>
+                <tr>
+                    <td>평균 속도</td>
+                    <td><strong>${item.road_traffic_spd} km/h</strong></td>
+                </tr>
+                <tr>
+                    <td>상세 메시지</td>
+                    <td>${item.road_msg}</td>
+                </tr>
+                <tr>
+                    <td>기준 시간</td>
+                    <td>${timeStr}</td>
+                </tr>
+            </table>`;
+            
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
 
 
 
