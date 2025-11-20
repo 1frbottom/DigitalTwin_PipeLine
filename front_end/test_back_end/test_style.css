@@ -1043,3 +1043,233 @@ table tr:hover {
         height: 180px;
     }
 }
+
+/* Subway Board Styles */
+.subway-board {
+    margin-top: var(--space-16);
+    overflow-x: auto;
+}
+
+.subway-board-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-base);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-sm);
+}
+
+.subway-board-table thead {
+    background-color: var(--color-primary);
+    color: var(--color-btn-primary-text);
+}
+
+.subway-board-table th {
+    padding: var(--space-12);
+    font-weight: var(--font-weight-medium);
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.subway-board-table td {
+    padding: var(--space-10) var(--space-12);
+    border: 1px solid var(--color-border);
+}
+
+.subway-board-table tbody tr:nth-child(even) {
+    background-color: var(--color-secondary);
+}
+
+.subway-board-table tbody tr:hover {
+    background-color: var(--color-secondary-hover);
+}
+
+/* 호선 뱃지 스타일 */
+.subway-line {
+    display: inline-block;
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    color: white;
+    text-align: center;
+    min-width: 40px;
+}
+
+/* 서울 지하철 호선별 색상 */
+.subway-line.line-1 { background-color: #0052A4; }
+.subway-line.line-2 { background-color: #00A84D; }
+.subway-line.line-3 { background-color: #EF7C1C; }
+.subway-line.line-4 { background-color: #00A5DE; }
+.subway-line.line-5 { background-color: #996CAC; }
+.subway-line.line-6 { background-color: #CD7C2F; }
+.subway-line.line-7 { background-color: #747F00; }
+.subway-line.line-8 { background-color: #E6186C; }
+.subway-line.line-9 { background-color: #BDB092; }
+.subway-line.line-신분당선 { background-color: #D31145; }
+.subway-line.line-경의중앙선 { background-color: #77C4A3; }
+.subway-line.line-공항철도 { background-color: #0090D2; }
+.subway-line.line-경춘선 { background-color: #0C8E72; }
+.subway-line.line-수인분당선 { background-color: #FABE00; color: #333; }
+.subway-line.line-우이신설선 { background-color: #B7C450; }
+
+/* 방향 정보 스타일 */
+.train-direction {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    max-width: 300px;
+}
+
+/* 도착 정보 스타일 */
+.arrival-info {
+    font-size: var(--font-size-base);
+    color: var(--color-primary);
+}
+
+/* 모바일 대응 */
+@media (max-width: 480px) {
+    .subway-board-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .subway-board-table th,
+    .subway-board-table td {
+        padding: var(--space-6) var(--space-8);
+    }
+
+    .train-direction {
+        font-size: 10px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .arrival-info {
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* Passenger Table Styles */
+.passenger-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-16);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-base);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-sm);
+}
+
+.passenger-table thead {
+    background-color: var(--color-primary);
+    color: var(--color-btn-primary-text);
+}
+
+.passenger-table th {
+    padding: var(--space-12);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.passenger-table td {
+    padding: var(--space-10) var(--space-12);
+    border: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.passenger-table tbody tr:nth-child(even) {
+    background-color: var(--color-secondary);
+}
+
+.passenger-table tbody tr:hover {
+    background-color: var(--color-secondary-hover);
+}
+
+/* 승하차 인원 스타일 */
+.passenger-count {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    font-family: var(--font-family-mono);
+}
+
+/* 승하차 집중도 뱃지 스타일 */
+.concentration-badge {
+    display: inline-block;
+    padding: var(--space-4) var(--space-10);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-align: center;
+    min-width: 70px;
+}
+
+.concentration-badge.concentration-on {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.concentration-badge.concentration-off {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.concentration-badge.concentration-equal {
+    background-color: rgba(var(--color-info-rgb), 0.15);
+    color: var(--color-info);
+    border: 1px solid rgba(var(--color-info-rgb), 0.3);
+}
+
+/* Dark mode support for concentration badges */
+@media (prefers-color-scheme: dark) {
+    .concentration-badge.concentration-on {
+        background-color: rgba(96, 165, 250, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.4);
+    }
+
+    .concentration-badge.concentration-off {
+        background-color: rgba(248, 113, 113, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.4);
+    }
+}
+
+[data-color-scheme="dark"] .concentration-badge.concentration-on {
+    background-color: rgba(96, 165, 250, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.4);
+}
+
+[data-color-scheme="dark"] .concentration-badge.concentration-off {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+/* 모바일 대응 - 승하차 테이블 */
+@media (max-width: 480px) {
+    .passenger-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .passenger-table th,
+    .passenger-table td {
+        padding: var(--space-6) var(--space-8);
+    }
+
+    .passenger-count {
+        font-size: var(--font-size-xs);
+    }
+
+    .concentration-badge {
+        padding: var(--space-2) var(--space-6);
+        font-size: 10px;
+        min-width: 60px;
+    }
+}
