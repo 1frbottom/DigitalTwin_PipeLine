@@ -2,6 +2,8 @@ from sqlalchemy import Column, String, Text, DateTime
 from datetime import datetime, timezone
 from back_end.api_server import database
 
+
+
 class CCTVStreamModel(database.Base):
     __tablename__ = "cctv_streams"
 

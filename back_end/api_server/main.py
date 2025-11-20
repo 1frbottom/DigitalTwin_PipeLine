@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router_cctv, router_traffic, router_city, router_incident
+from .routers import router_cctv, router_city, router_incident
 
 
 
@@ -20,7 +20,6 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(router_traffic.router)
 app.include_router(router_cctv.router)
 app.include_router(router_city.router)
 app.include_router(router_incident.router)
