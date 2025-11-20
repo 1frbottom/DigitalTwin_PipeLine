@@ -68,16 +68,18 @@ def fetch_and_parse_city_data():
             'area_cd': area_cd,
             'timestamp': time.time(),
             'live_ppltn_stts': json.dumps(citydata.get('LIVE_PPLTN_STTS'), ensure_ascii=False) if citydata.get('LIVE_PPLTN_STTS') else None,
-            'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'road_traffic_stts': json.dumps(citydata.get('ROAD_TRAFFIC_STTS'), ensure_ascii=False) if citydata.get('ROAD_TRAFFIC_STTS') else None,
             'prk_stts': json.dumps(citydata.get('PRK_STTS'), ensure_ascii=False) if citydata.get('PRK_STTS') else None,
             'sub_stts': json.dumps(citydata.get('SUB_STTS'), ensure_ascii=False) if citydata.get('SUB_STTS') else None,
+            'live_sub_ppltn': json.dumps(citydata.get('LIVE_SUB_PPLTN'), ensure_ascii=False) if citydata.get('LIVE_SUB_PPLTN') else None, # [추가됨]
             'bus_stn_stts': json.dumps(citydata.get('BUS_STN_STTS'), ensure_ascii=False) if citydata.get('BUS_STN_STTS') else None,
+            'live_bus_ppltn': json.dumps(citydata.get('LIVE_BUS_PPLTN'), ensure_ascii=False) if citydata.get('LIVE_BUS_PPLTN') else None, # [추가됨]
             'acdnt_cntrl_stts': json.dumps(citydata.get('ACDNT_CNTRL_STTS'), ensure_ascii=False) if citydata.get('ACDNT_CNTRL_STTS') else None,
             'sbike_stts': json.dumps(citydata.get('SBIKE_STTS'), ensure_ascii=False) if citydata.get('SBIKE_STTS') else None,
             'weather_stts': json.dumps(citydata.get('WEATHER_STTS'), ensure_ascii=False) if citydata.get('WEATHER_STTS') else None,
             'charger_stts': json.dumps(citydata.get('CHARGER_STTS'), ensure_ascii=False) if citydata.get('CHARGER_STTS') else None,
-            'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None, # XML 태그명 'CULTURALEVENTINFO' 사용
+            'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None,
+            'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'live_dst_message': json.dumps(citydata.get('LIVE_DST_MESSAGE'), ensure_ascii=False) if citydata.get('LIVE_DST_MESSAGE') else None,
             'live_yna_news': json.dumps(citydata.get('LIVE_YNA_NEWS'), ensure_ascii=False) if citydata.get('LIVE_YNA_NEWS') else None,
         }
