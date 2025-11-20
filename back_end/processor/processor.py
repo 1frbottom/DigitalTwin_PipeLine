@@ -93,6 +93,7 @@ query_incident = parsed_incident_df.writeStream \
     .start()
 
 # --- 3. city_data (city_data_raw) 스트림 -----------------
+# 주의: 프로듀서의 JSON 키 순서와 동일하게 유지해야 함
 schema_city_data = StructType([
     StructField("area_nm", StringType(), False),
     StructField("area_cd", StringType(), False),
@@ -118,7 +119,7 @@ stream_df_city_data = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "city-data") \
-    .option("startingOffsets", "earliest") \
+    .option("startingOffsets", "latest") \
     .load()
 
 parsed_stream_df_city_data = stream_df_city_data.select(from_json(col("value").cast("string"), schema_city_data).alias("data")).select("data.*")
@@ -388,39 +389,45 @@ parsed_sub_ppltn_df = parsed_stream_df_city_data \
         "sub_ppltn_data.*"
     )
 
-# 3. subway_ppltn_proc 테이블에 저장할 데이터 준비 (평균값 + 시간 슬롯)
-# 10분 오프셋 적용: 14:10 ~ 15:10 → 14시 슬롯
-subway_ppltn_proc_df = parsed_sub_ppltn_df \
+# 3. subway_ppltn_raw 테이블에 저장할 데이터 준비 (5분 단위 원본 데이터)
+subway_ppltn_raw_df = parsed_sub_ppltn_df \
     .select(
         "area_nm",
-        # 시간 슬롯 계산 (10분 오프셋 적용)
-        to_date(to_timestamp(col("ingest_timestamp")) - expr("INTERVAL 10 MINUTES")).alias("data_date"),
-        hour(to_timestamp(col("ingest_timestamp")) - expr("INTERVAL 10 MINUTES")).alias("hour_slot"),
+        to_timestamp(col("ingest_timestamp")).alias("data_time"),
         # 5분 이내 승하차 평균 데이터
         ((col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
             .cast(IntegerType()).alias("gton_avg"),
         ((col("SUB_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType())) / 2)
             .cast(IntegerType()).alias("gtoff_avg"),
-        # 메타 데이터
-        col("SUB_STN_CNT").cast(IntegerType()).alias("stn_cnt"),
-        to_timestamp(col("ingest_timestamp")).alias("ingest_timestamp")
+        col("SUB_STN_CNT").cast(IntegerType()).alias("stn_cnt")
     ) \
-    .filter(
-        (col("gton_avg").isNotNull()) & \
-        (col("hour_slot").isNotNull())
-    )
+    .filter(col("gton_avg").isNotNull())
 
-# 4. 데이터베이스 쓰기 함수
+# 4. 데이터베이스 쓰기 함수 (Raw 데이터만 저장)
 def write_subway_ppltn_to_postgres(df, epoch_id):
-    df.write \
+    if df.rdd.isEmpty():
+        return
+
+    # Raw 데이터 저장 (중복 제거)
+    from pyspark.sql.window import Window
+    from pyspark.sql.functions import row_number
+
+    window_spec = Window.partitionBy("area_nm", "data_time").orderBy(col("data_time").desc())
+    dedup_raw_df = df.withColumn("row_num", row_number().over(window_spec)) \
+                     .filter(col("row_num") == 1) \
+                     .drop("row_num")
+
+    dedup_raw_df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "subway_ppltn_proc") \
+      .option("dbtable", "subway_ppltn_raw") \
       .mode("append") \
       .save()
 
+    # 집계는 PostgreSQL Trigger가 자동으로 처리합니다
+
 # 5. 스트림 시작
-query_subway_ppltn = subway_ppltn_proc_df.writeStream \
+query_subway_ppltn = subway_ppltn_raw_df.writeStream \
     .outputMode("append") \
     .foreachBatch(write_subway_ppltn_to_postgres) \
     .start()
