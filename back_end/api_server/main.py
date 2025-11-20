@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router_cctv, router_traffic, router_city, router_incident, router_subway
+from .routers import router_cctv, router_city, router_incident, router_subway
 
 
 
