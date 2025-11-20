@@ -8,44 +8,9 @@
 </head>
 <body>
     <div class="container">
-        <h1>교통 데이터 API 프로토타입</h1>
+        <h1>교통 데이터 API call test</h1>
         
-        <!-- 섹션 1: 최근 교통 데이터 -->
-        <div class="api-section">
-            <h2>최근 교통 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/recent</p>
-            <div class="button-group">
-                <button onclick="getRecentTraffic()">조회하기</button>
-                <input type="number" id="minutes" placeholder="분 (기본: 10)" value="10" min="1" max="60">
-                <input type="number" id="limit" placeholder="개수 (기본: 100)" value="100" min="1" max="500">
-            </div>
-            <div id="recent-status" class="status loading" style="display:none;"></div>
-            <div id="recent-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 2: 특정 링크 데이터 -->
-        <div class="api-section">
-            <h2>특정 링크 ID 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/link/{link_id}</p>
-            <div class="button-group">
-                <input type="text" id="linkId" placeholder="링크 ID (예: 101000100)" value="101000100">
-                <button onclick="getTrafficByLink()">조회하기</button>
-            </div>
-            <div id="link-status" class="status loading" style="display:none;"></div>
-            <div id="link-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 3: 통계 데이터 -->
-        <div class="api-section">
-            <h2>링크별 평균 속도 통계</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/stats</p>
-            <button onclick="getTrafficStats()">조회하기</button>
-            <div id="stats-status" class="status loading" style="display:none;"></div>
-            <div id="stats-response" class="response-box"></div>
-            <div id="stats-table"></div>
-        </div>
-        
-        <!-- 섹션 4: 헬스 체크 -->
+        <!-- 섹션 1: 헬스 체크 -->
         <div class="api-section">
             <h2>서버 상태 확인</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /health</p>
@@ -54,7 +19,7 @@
             <div id="health-response" class="response-box"></div>
         </div>
 
-        <!-- 섹션 5: CCTV 스트리밍 -->
+        <!-- 섹션 2: CCTV 스트리밍 -->
         <div class="api-section">
             <h2>실시간 CCTV 모니터링</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /cctv/streams</p>
@@ -81,7 +46,7 @@
             </div>
         </div>
 
-        <!--섹션 6: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
+        <!--섹션 3: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
         <div class="api-section">
             <h2>실시간 도시 데이터 (인구)</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /city/population/...</p>
@@ -106,7 +71,7 @@
             <div id="city-forecast-table"></div>
         </div>
     
-        <!--섹션 7: 실시간 돌발 정보 -->
+        <!--섹션 4: 실시간 돌발 정보 -->
         <div class="api-section">
             <h2>실시간 돌발 정보 (사고/공사)</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /incident/active (최근 30분 내 갱신된 정보)</p>
@@ -125,7 +90,7 @@
             <div id="incident-table"></div>
         </div>
     
-        <!--섹션 8: 실시간 도로소통 정보 -->
+        <!--섹션 5: 실시간 도로소통 정보 -->
         <div class="api-section">
             <h2>실시간 도로 소통 현황 (AVG)</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /city/traffic/road</p>

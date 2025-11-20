@@ -1,12 +1,3 @@
--- 실시간 도로소통 (삭제예정)
-CREATE TABLE IF NOT EXISTS traffic_data (
-    link_id VARCHAR(50) NOT NULL,
-    avg_speed DOUBLE PRECISION,
-    travel_time INTEGER,
-    timestamp DOUBLE PRECISION,
-    PRIMARY KEY (link_id, timestamp)
-);
-
 CREATE TABLE IF NOT EXISTS cctv_streams (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
