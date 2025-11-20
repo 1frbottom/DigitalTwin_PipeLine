@@ -23,4 +23,4 @@ class SubwayPpltn(Base):
     gton_avg = Column(Integer)
     gtoff_avg = Column(Integer)
     stn_cnt = Column(Integer)
-    ingest_timestamp = Column(DateTime)
+    last_updated = Column(DateTime)

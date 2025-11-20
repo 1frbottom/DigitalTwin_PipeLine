@@ -74,3 +74,22 @@ def get_subway_ppltn_by_hour(db: Session, area_name: str, hour_slot: int):
                      schema_subway.SubwayPpltn.data_date == date.today(),
                      schema_subway.SubwayPpltn.hour_slot == hour_slot) \
              .first()
+
+def get_subway_ppltn_cumulative(db: Session, area_name: str):
+    """특정 지역의 가장 최신 날짜의 모든 시간대 승하차 인원을 조회합니다 (누적 계산용)."""
+    # 가장 최신 날짜 찾기
+    from sqlalchemy import func
+
+    latest_date_subquery = db.query(
+        func.max(schema_subway.SubwayPpltn.data_date).label('max_date')
+    ).filter(
+        schema_subway.SubwayPpltn.area_nm == area_name
+    ).subquery()
+
+    # 해당 날짜의 모든 시간대 데이터 조회 (시간순 정렬)
+    return db.query(schema_subway.SubwayPpltn) \
+             .join(latest_date_subquery,
+                   schema_subway.SubwayPpltn.data_date == latest_date_subquery.c.max_date) \
+             .filter(schema_subway.SubwayPpltn.area_nm == area_name) \
+             .order_by(schema_subway.SubwayPpltn.hour_slot) \
+             .all()

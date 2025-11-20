@@ -15,6 +15,16 @@ class SubwayArrivalBase(BaseModel):
     class Config:
         from_attributes = True
 
+# (1-1) 현황판용 간소화 모델 - 실시간 도착 정보
+class SubwayArrivalDisplay(BaseModel):
+    station_nm: str
+    line_num: str
+    train_line_nm: str
+    arrival_msg_1: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # (2) subway_ppltn_proc 테이블 모델 - 승하차 평균 인원
 class SubwayPpltnBase(BaseModel):
     area_nm: str
@@ -23,7 +33,7 @@ class SubwayPpltnBase(BaseModel):
     gton_avg: Optional[int] = None
     gtoff_avg: Optional[int] = None
     stn_cnt: Optional[int] = None
-    ingest_timestamp: datetime
+    last_updated: datetime
 
     class Config:
         from_attributes = True
