@@ -2,14 +2,7 @@
 
 - __현재 목표__<br><br>
 	- back_end 폴더에서 실제 api 여러개 호출 및 저장, 프론트엔드까지 일련의 테스트중<br><br>
-	- 현재 실시간 도시데이터까지 1차 db 테이블에 받아오기 성공<br><br>
-		-> __이후__
-		-> 도시데이터 + 돌발정보 둘다 2차가공을 어떤식(집계, 예외처리, 필터링) 으로 할지 정하고
-		-> https://data.seoul.go.kr/dataList/OA-21285/A/1/datasetView.do#
-		-> http://openapi.seoul.go.kr:8088/APIKEY/xml/citydata/1/1000/%EA%B0%95%EB%82%A8%EC%97%AD 직접 확인하여<br><br>
-		-> 위 링크들 열고 직접 필드 확인해서 필드 확정<br><br>
-		-> 확정된 필드로 백엔드 역할 나누기<br><br>
-		-> 프론트엔드의 요청 받은 apiServer가 융합 테이블을 조회 후 전달<br><br>
+
 
 ***
 

@@ -94,21 +94,22 @@ query_incident = parsed_incident_df.writeStream \
 
 # --- 3. city_data (city_data_raw) 스트림 -----------------
 schema_city_data = StructType([
-StructField("area_nm", StringType(), False),
+    StructField("area_nm", StringType(), False),
     StructField("area_cd", StringType(), False),
     StructField("timestamp", DoubleType(), True),
     StructField("live_ppltn_stts", StringType(), True),
-    StructField("live_cmrcl_stts", StringType(), True),
     StructField("road_traffic_stts", StringType(), True),
     StructField("prk_stts", StringType(), True),
     StructField("sub_stts", StringType(), True),
     StructField("live_sub_ppltn", StringType(), True),
     StructField("bus_stn_stts", StringType(), True),
+    StructField("live_bus_ppltn", StringType(), True),
     StructField("acdnt_cntrl_stts", StringType(), True),
-    StructField("charger_stts", StringType(), True),
     StructField("sbike_stts", StringType(), True),
     StructField("weather_stts", StringType(), True),
+    StructField("charger_stts", StringType(), True),
     StructField("event_stts", StringType(), True),
+    StructField("live_cmrcl_stts", StringType(), True),
     StructField("live_dst_message", StringType(), True),
     StructField("live_yna_news", StringType(), True)
 ])
@@ -233,6 +234,10 @@ def write_proc_to_postgres(df, epoch_id):
       .save()
 
 def write_forecast_to_postgres(df, epoch_id):
+    
+    if df.rdd.isEmpty():
+        return
+    
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
