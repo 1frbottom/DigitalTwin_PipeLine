@@ -1,12 +1,3 @@
--- 실시간 도로소통 (삭제예정)
-CREATE TABLE IF NOT EXISTS traffic_data (
-    link_id VARCHAR(50) NOT NULL,
-    avg_speed DOUBLE PRECISION,
-    travel_time INTEGER,
-    timestamp DOUBLE PRECISION,
-    PRIMARY KEY (link_id, timestamp)
-);
-
 CREATE TABLE IF NOT EXISTS cctv_streams (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -62,7 +53,7 @@ CREATE TABLE IF NOT EXISTS city_data_raw (
 );
 
 -- 실시간 도시데이터 : 인구현황
-CREATE TABLE IF NOT EXISTS live_ppltn_proc (
+CREATE TABLE IF NOT EXISTS city_live_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,    
     congest_lvl VARCHAR(50),              
     congest_msg TEXT,
@@ -74,8 +65,8 @@ CREATE TABLE IF NOT EXISTS live_ppltn_proc (
     PRIMARY KEY (area_nm, ppltn_time)
 );
 
--- 실시간 도시데이터 : 인구현황 -> 예측
-CREATE TABLE IF NOT EXISTS live_ppltn_forecast (
+-- 실시간 도시데이터 : 인구현황(예측)
+CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
     base_ppltn_time TIMESTAMP NOT NULL,
     fcst_time TIMESTAMP NOT NULL,

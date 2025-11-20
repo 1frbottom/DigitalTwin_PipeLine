@@ -22,7 +22,7 @@ function getColorByLevel(level) {
 
 // 백엔드 API 호출 함수 -----------------------------------------
 
-  // 실시간 도시데이터 - 인구현황 (live_ppltn_proc)
+  // 실시간 도시데이터 - 인구현황 (city_live_ppltn_proc)
 async function fetchPopulationData() {
   try {
     const response = await fetch("http://localhost:8000/city/population/current?area_name=강남역");
@@ -62,7 +62,7 @@ async function fetchPopulationData() {
   }
 }
 
-  // 실시간 도시데이터 : 인구현황 -> 예측 (live_ppltn_forecast)
+  // 실시간 도시데이터 : 인구현황 -> 예측 (city_live_ppltn_forecast)
 async function fetchForecastData() {
   try {
     const response = await fetch("http://localhost:8000/city/population/forecast?area_name=강남역");

@@ -20,7 +20,6 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(router_traffic.router)
 app.include_router(router_cctv.router)
 app.include_router(router_city.router)
 app.include_router(router_incident.router)
