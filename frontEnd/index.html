@@ -1,88 +1,1183 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교통 데이터 API 연동 프로토타입</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>교통 데이터 API 프로토타입</h1>
-        
-        <!-- 섹션 1: 최근 교통 데이터 -->
-        <div class="api-section">
-            <h2>최근 교통 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/recent</p>
-            <div class="button-group">
-                <button onclick="getRecentTraffic()">조회하기</button>
-                <input type="number" id="minutes" placeholder="분 (기본: 10)" value="10" min="1" max="60">
-                <input type="number" id="limit" placeholder="개수 (기본: 100)" value="100" min="1" max="500">
+  <head>
+    <meta charset="UTF-8" />
+    <title>디지털트윈 대시보드 - 강남역</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 구글 웹폰트 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #e5e7ec;
+        --bg-soft: #f2f4f8;
+        --card: #ffffff;
+        --card-muted: #f3f4fa;
+        --accent: #2f80ed;
+        --accent-soft: #e3f2ff;
+        --text-main: #111827;
+        --text-sub: #6b7280;
+        --border-soft: #d1d5db;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --safe: #10b981;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #eef2ff 0, var(--bg) 45%);
+        color: var(--text-main);
+      }
+
+      .app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ---------- HEADER ---------- */
+
+      .header {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-soft);
+      }
+
+      .header-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 12px 16px 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .header-pill {
+        width: 6px;
+        height: 32px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, var(--accent), #4f46e5);
+      }
+
+      .header-title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .header-title small {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-sub);
+        font-weight: 600;
+      }
+
+      .header-title h1 {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 13px;
+      }
+
+      .weather-block {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .weather-icon {
+        font-size: 24px;
+      }
+
+      .weather-text p {
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      .weather-text .temp {
+        font-weight: 600;
+      }
+
+      .weather-text .desc {
+        font-size: 11px;
+        color: var(--text-sub);
+      }
+
+      .divider-vert {
+        width: 1px;
+        height: 32px;
+        background: var(--border-soft);
+      }
+
+      .time-block {
+        text-align: right;
+        font-size: 11px;
+        color: var(--text-sub);
+      }
+
+      .time-block .label {
+        margin-bottom: 2px;
+      }
+
+      .time-block .value {
+        font-weight: 500;
+        color: #374151;
+      }
+
+      .header-bar {
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), #4f46e5);
+      }
+
+      /* ---------- LAYOUT ---------- */
+
+      .layout {
+        flex: 1 0 auto;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px 16px 24px 16px;
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .col-left {
+        grid-column: span 12;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .col-center {
+        grid-column: span 12;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .col-right {
+        grid-column: span 12;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      @media (min-width: 960px) {
+        /* 데스크톱에서 2 : 8 : 2 비율 */
+        .col-left {
+          grid-column: span 2;
+        }
+
+        .col-center {
+          grid-column: span 8;
+        }
+
+        .col-right {
+          grid-column: span 2;
+        }
+      }
+
+      /* ---------- CARD BASE ---------- */
+
+      .card {
+        background: var(--card);
+        border-radius: 18px;
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+        padding: 10px 14px 12px 14px;
+      }
+
+      .card-muted {
+        background: var(--card-muted);
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .card-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-sub);
+        font-weight: 600;
+      }
+
+      .tag {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: #1d4ed8;
+        font-weight: 500;
+      }
+
+      .tag-amber {
+        background: #fef3c7;
+        color: #b45309;
+      }
+
+      .tag-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      .card-body {
+        font-size: 12px;
+        color: var(--text-sub);
+      }
+
+      .card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ---------- LEFT COLUMN CARDS ---------- */
+
+      .people-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .people-main .range-label {
+        font-size: 11px;
+        color: var(--text-sub);
+      }
+
+      .people-main .range-value {
+        margin-top: 4px;
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+
+      .people-main .range-value span {
+        font-size: 14px;
+        font-weight: 400;
+        color: #9ca3af;
+      }
+
+      .people-main .info-sub {
+        margin-top: 6px;
+        font-size: 11px;
+      }
+
+      .icon-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: var(--accent-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+      }
+
+      .people-footer {
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(209, 213, 219, 0.7);
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-sub);
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .traffic-bar-wrap {
+        margin-top: 10px;
+      }
+
+      .traffic-bar-bg {
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.3);
+        overflow: hidden;
+      }
+
+      .traffic-bar-fg {
+        height: 100%;
+        width: 50%;
+        background: linear-gradient(
+          90deg,
+          var(--safe),
+          var(--warn),
+          var(--danger)
+        );
+      }
+
+      .public-row {
+        margin-top: 8px;
+        display: flex;
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .public-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .public-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      .public-icon.bus {
+        background: #e0f2fe;
+      }
+
+      .public-icon.metro {
+        background: #dcfce7;
+      }
+
+      .public-meta {
+        font-size: 11px;
+        color: var(--text-sub);
+      }
+
+      /* ---------- CENTER: DIGITAL TWIN VIEW ---------- */
+
+      .dt-card {
+        background: #020617f5;
+        border-radius: 20px;
+        border: 1px solid rgba(30, 64, 175, 0.6);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.6);
+        color: #e5e7eb;
+        padding: 10px 14px 14px 14px;
+      }
+
+      .dt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+      }
+
+      .dt-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dt-pill {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        font-size: 10px;
+        color: #e5e7eb;
+      }
+
+      .badge-sync {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(22, 163, 74, 0.12);
+        color: #bbf7d0;
+        font-size: 10px;
+      }
+
+      .badge-sync span.dot {
+        background: #22c55e;
+      }
+
+      .dt-map {
+        position: relative;
+        margin-top: 10px;
+        border-radius: 16px;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        height: 280px;
+        overflow: hidden;
+      }
+
+      .dt-grid {
+        position: absolute;
+        inset: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+      }
+
+      .dt-grid::before,
+      .dt-grid::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+            90deg,
+            rgba(75, 85, 99, 0.35) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            180deg,
+            rgba(75, 85, 99, 0.35) 1px,
+            transparent 1px
+          );
+        background-size: 40px 40px;
+        opacity: 0.55;
+      }
+
+      .dt-legend {
+        position: absolute;
+        left: 18px;
+        bottom: 12px;
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #e5e7eb;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+      }
+
+      .legend-dot.car {
+        background: #38bdf8;
+      }
+
+      .legend-dot.person {
+        background: #4ade80;
+      }
+
+      .legend-dot.crowd {
+        background: #fb923c;
+      }
+
+      .dt-btn {
+        position: absolute;
+        right: 18px;
+        top: 14px;
+        font-size: 11px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        color: #e5e7eb;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+
+      .dt-dot {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        transform: translate(-50%, -50%);
+      }
+
+      .dt-dot.car {
+        background: #38bdf8;
+      }
+
+      .dt-dot.person {
+        background: #4ade80;
+      }
+
+      .dt-dot.crowd {
+        background: #fb923c;
+        box-shadow: 0 0 12px rgba(248, 171, 84, 0.8);
+        animation: pulse 1.4s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        70% {
+          transform: translate(-50%, -50%) scale(1.4);
+          opacity: 0;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* ---------- CENTER BOTTOM: 안전지수 & 예측 ---------- */
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      @media (min-width: 640px) {
+        .grid-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .safety-graph-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 64px;
+        margin-top: 10px;
+      }
+
+      .safety-bar {
+        flex: 1;
+        border-radius: 999px;
+        background: #fed7aa;
+      }
+
+      .safety-caption {
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--text-sub);
+      }
+
+      .predict-bar-bg {
+        margin-top: 12px;
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        overflow: hidden;
+      }
+
+      .predict-bar-fg {
+        height: 100%;
+        width: 75%;
+        background: linear-gradient(
+          90deg,
+          var(--safe),
+          var(--warn),
+          var(--danger)
+        );
+      }
+
+      /* ---------- RIGHT COLUMN ---------- */
+
+      .event-item {
+        border-radius: 14px;
+        padding: 8px 10px;
+        background: var(--bg-soft);
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11px;
+      }
+
+      .event-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .event-chip.warn {
+        background: #fffbeb;
+        color: #b45309;
+      }
+
+      .event-chip.danger {
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        padding: 4px 0;
+      }
+
+      .status-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+      }
+
+      .badge-soft {
+        border-radius: 12px;
+        padding: 6px 8px;
+        background: var(--bg-soft);
+        margin-top: 10px;
+        font-size: 11px;
+        color: var(--text-sub);
+      }
+
+      /* 주변 문화행사 카드 */
+      .culture-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .culture-item {
+        border-radius: 14px;
+        padding: 8px 10px;
+        background: var(--bg-soft);
+        font-size: 11px;
+      }
+
+      .culture-title {
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .culture-meta {
+        margin-top: 2px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        font-size: 10px;
+        color: var(--text-sub);
+      }
+
+      /* small helpers */
+      .text-strong {
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .mt-4 {
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-inner">
+          <div class="header-left">
+            <div class="header-pill"></div>
+            <div class="header-title">
+              <small>Digital Twin Dashboard</small>
+              <h1>강남역 부근 실시간 모니터링</h1>
             </div>
-            <div id="recent-status" class="status loading" style="display:none;"></div>
-            <div id="recent-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 2: 특정 링크 데이터 -->
-        <div class="api-section">
-            <h2>특정 링크 ID 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/link/{link_id}</p>
-            <div class="button-group">
-                <input type="text" id="linkId" placeholder="링크 ID (예: 101000100)" value="101000100">
-                <button onclick="getTrafficByLink()">조회하기</button>
+          </div>
+          <div class="header-right">
+            <div class="weather-block">
+              <div class="weather-icon">🌙</div>
+              <div class="weather-text">
+                <p class="temp">5.0℃</p>
+                <p class="desc">미세 · 초미세 보통</p>
+              </div>
             </div>
-            <div id="link-status" class="status loading" style="display:none;"></div>
-            <div id="link-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 3: 통계 데이터 -->
-        <div class="api-section">
-            <h2>링크별 평균 속도 통계</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/stats</p>
-            <button onclick="getTrafficStats()">조회하기</button>
-            <div id="stats-status" class="status loading" style="display:none;"></div>
-            <div id="stats-response" class="response-box"></div>
-            <div id="stats-table"></div>
-        </div>
-        
-        <!-- 섹션 4: 헬스 체크 -->
-        <div class="api-section">
-            <h2>서버 상태 확인</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /health</p>
-            <button onclick="getHealth()">확인하기</button>
-            <div id="health-status" class="status loading" style="display:none;"></div>
-            <div id="health-response" class="response-box"></div>
-        </div>
-        <!-- 섹션 5: CCTV 스트리밍 -->
-        <div class="api-section">
-            <h2>5️⃣ 실시간 CCTV 모니터링</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/cctv/streams</p>
-            <button onclick="loadCCTVStreams()">CCTV 스트림 로드</button>
-            <div id="cctv-status" class="status loading" style="display:none;"></div>
-            
-            <div class="cctv-grid">
-                <div class="cctv-box">
-                    <h3 id="cctv1-name">CCTV 1</h3>
-                    <video id="cctv1" controls muted></video>
-                </div>
-                <div class="cctv-box">
-                    <h3 id="cctv2-name">CCTV 2</h3>
-                    <video id="cctv2" controls muted></video>
-                </div>
-                <div class="cctv-box">
-                    <h3 id="cctv3-name">CCTV 3</h3>
-                    <video id="cctv3" controls muted></video>
-                </div>
-                <div class="cctv-box">
-                    <h3 id="cctv4-name">CCTV 4</h3>
-                    <video id="cctv4" controls muted></video>
-                </div>
+            <div class="divider-vert"></div>
+            <div class="time-block">
+              <p class="label">실시간 동기화 기준</p>
+              <p id="timestamp" class="value">---</p>
             </div>
+          </div>
         </div>
-        
+        <div class="header-bar"></div>
+      </header>
+
+      <!-- MAIN LAYOUT -->
+      <main class="layout">
+        <!-- LEFT COLUMN : 인구 / 도로 / 대중교통 -->
+        <section class="col-left">
+          <!-- 실시간 인구수 (좌측 하단 - 인구 수/연령대) -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">실시간 인구수</div>
+            </div>
+            <div class="people-main">
+              <div>
+                <div class="range-label">추정 범위</div>
+                <div class="range-value">
+                  <span id="pop-min">86,000</span>
+                  <span> ~ </span>
+                  <span id="pop-max">88,000</span>
+                  <span> 명</span>
+                </div>
+                <div class="info-sub">
+                  가장 많은 연령대 <span class="text-strong">30대 (26.8%)</span>
+                </div>
+                <div class="info-sub" style="margin-top:4px;font-size:10px;">
+                  남성 비율 51.2% · 여성 비율 48.8%
+                </div>
+              </div>
+              <div class="icon-badge">👥</div>
+            </div>
+            <div class="people-footer">
+              <span class="dot"></span>
+              <span>최근 10분 기준 변동률 <span id="pop-change">+3.2%</span></span>
+            </div>
+          </article>
+
+          <!-- 도로 소통 단계 (중앙 - 도로 소통) -->
+          <article class="card card-muted">
+            <div class="card-header">
+              <div class="card-title">도로 소통 단계</div>
+              <div class="tag">강남역 사거리 기준</div>
+            </div>
+            <div class="card-body">
+              <div class="card-row">
+                <div>
+                  <div style="font-size: 11px; color: var(--text-sub)">
+                    현재 단계
+                  </div>
+                  <div style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                    서행
+                  </div>
+                  <div style="font-size: 11px; margin-top: 2px">
+                    전체 평균 속도
+                    <span class="text-strong">34km/h</span>
+                  </div>
+                </div>
+                <div class="icon-badge" style="background: #eff6ff">🚗</div>
+              </div>
+              <div class="traffic-bar-wrap">
+                <div class="traffic-bar-bg">
+                  <div class="traffic-bar-fg"></div>
+                </div>
+                <div
+                  style="
+                    margin-top: 4px;
+                    font-size: 11px;
+                    color: var(--text-sub);
+                  "
+                >
+                  1시간 내 <span class="text-strong">정체 가능성 높음</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 대중교통 (지하철/버스) -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">대중교통</div>
+              <button
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 11px;
+                  color: var(--accent);
+                  cursor: pointer;
+                  padding: 0;
+                "
+              >
+                상세보기 &rsaquo;
+              </button>
+            </div>
+            <div class="card-body">
+              <!-- 지하철 -->
+              <div class="public-row">
+                <div class="public-item">
+                  <div class="public-icon metro">🚇</div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      지하철 (2, 9호선)
+                    </div>
+                    <div class="public-meta">
+                      배차 간격 <span class="text-strong">평균 3분</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 버스 -->
+              <div class="public-row">
+                <div class="public-item">
+                  <div class="public-icon bus">🚌</div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">버스</div>
+                    <div class="public-meta">
+                      실시간 혼잡도
+                      <span class="text-strong" style="color: #b45309">중간</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  margin-top: 8px;
+                  font-size: 11px;
+                  color: var(--text-sub);
+                  text-align: right;
+                "
+              >
+                평균 지연 2~3분
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- CENTER COLUMN : 디지털트윈 뷰 + 안전지수 -->
+        <section class="col-center">
+          <!-- 디지털트윈 뷰 -->
+          <article class="dt-card">
+            <div class="dt-header">
+              <div class="dt-header-left">
+                <div class="card-title" style="color: #e5e7eb">
+                  디지털트윈 뷰
+                </div>
+                <div class="dt-pill">강남역 반경 500m</div>
+              </div>
+              <div class="badge-sync">
+                <span class="dot"></span>
+                <span id="sync-lag">동기화 지연 &lt; 3초</span>
+              </div>
+            </div>
+
+            <div class="dt-map">
+              <div class="dt-grid"></div>
+
+              <!-- 차량/보행자/혼잡 점 -->
+              <div class="dt-dot car" style="left: 32%; top: 36%"></div>
+              <div class="dt-dot car" style="left: 65%; top: 48%"></div>
+              <div class="dt-dot car" style="left: 44%; top: 72%"></div>
+
+              <div class="dt-dot person" style="left: 55%; top: 30%"></div>
+              <div class="dt-dot person" style="left: 22%; top: 63%"></div>
+
+              <div class="dt-dot crowd" style="left: 50%; top: 50%"></div>
+
+              <button class="dt-btn" type="button">3D 보기 전환</button>
+
+              <div class="dt-legend">
+                <div class="legend-item">
+                  <div class="legend-dot car"></div>
+                  <span>차량</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot person"></div>
+                  <span>보행자</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot crowd"></div>
+                  <span>혼잡</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 안전지수 & 예측 -->
+          <div class="grid-2 mt-4">
+            <!-- 안전지수 -->
+            <article class="card">
+              <div class="card-header">
+                <div class="card-title">실시간 안전지수</div>
+                <div class="tag-amber tag">경계 단계</div>
+              </div>
+              <div class="card-body">
+                <div style="font-size: 22px; font-weight: 600; color: #111827">
+                  73<span style="font-size: 13px; color: #9ca3af"> / 120</span>
+                </div>
+                <div style="font-size: 11px; margin-top: 4px">
+                  80 이상 시 <span class="text-strong" style="color: #b91c1c"
+                    >위험 단계</span
+                  >
+                  로 전환
+                </div>
+                <div class="safety-graph-bars">
+                  <div
+                    class="safety-bar"
+                    style="height: calc(50% * 0.8)"
+                  ></div>
+                  <div
+                    class="safety-bar"
+                    style="height: calc(55% * 0.8)"
+                  ></div>
+                  <div
+                    class="safety-bar"
+                    style="height: calc(60% * 0.8)"
+                  ></div>
+                  <div
+                    class="safety-bar"
+                    style="height: calc(68% * 0.8)"
+                  ></div>
+                  <div
+                    class="safety-bar"
+                    style="height: calc(73% * 0.8)"
+                  ></div>
+                </div>
+                <div class="safety-caption">
+                  <span>5분 전</span>
+                  <span>현재</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- 30분 후 혼잡 예측 -->
+            <article class="card">
+              <div class="card-header">
+                <div class="card-title">30분 후 혼잡 예측</div>
+                <div class="tag">AI 예측</div>
+              </div>
+              <div class="card-body">
+                <div style="font-size: 13px">
+                  향후 20~40분 사이
+                  <span class="text-strong" style="color: #b45309"
+                    >도로 소통 단계 &ldquo;정체&rdquo; 가능성</span
+                  >
+                  이 있습니다.
+                </div>
+                <div style="margin-top: 6px; font-size: 11px">
+                  버스 배차 간격 조정 및 보행자 안내 메시지 송출에 활용 가능합니다.
+                </div>
+                <div class="predict-bar-bg">
+                  <div class="predict-bar-fg"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- RIGHT COLUMN : 기상 / 돌발 / 문화행사 / 시스템 -->
+        <section class="col-right">
+          <!-- 기상·환경 정보 (우측 상단 - 온도/습도) -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">기상·환경 정보</div>
+              <div style="font-size: 18px">🌡️</div>
+            </div>
+            <div class="card-body">
+              <div class="card-row">
+                <span>기온 (TEMP)</span>
+                <span class="text-strong">17.2℃</span>
+              </div>
+              <div class="card-row" style="margin-top: 4px">
+                <span>습도 (HUMIDITY)</span>
+                <span class="text-strong">48%</span>
+              </div>
+              <div class="card-row" style="margin-top: 4px">
+                <span>체감온도 (SENSIBLE_TEMP)</span>
+                <span class="text-strong">15.8℃</span>
+              </div>
+              <div class="card-row" style="margin-top: 4px">
+                <span>풍속 (WIND_SPD)</span>
+                <span class="text-strong">3.1 m/s</span>
+              </div>
+              <div class="card-row" style="margin-top: 4px">
+                <span>강수량 (PRECIPITATION)</span>
+                <span class="text-strong">0.0 mm</span>
+              </div>
+              <div class="badge-soft">
+                <div style="font-weight: 500; color: #374151">참고</div>
+                <div style="margin-top: 2px">
+                  기상 정보는 10분 단위로 갱신되며, 혼잡도·안전지수 계산에 함께
+                  활용됩니다.
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 실시간 이벤트 (돌발정보) -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">실시간 이벤트</div>
+              <div class="tag-danger tag">2건</div>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
+              <div class="event-item">
+                <div>
+                  <div class="event-chip danger">경계</div>
+                  <div style="margin-top: 4px">
+                    2번 출구 인근 보행자 밀집
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-sub)">1분 전</div>
+              </div>
+
+              <div class="event-item">
+                <div>
+                  <div class="event-chip warn">주의</div>
+                  <div style="margin-top: 4px">
+                    버스 정류장 대기 인원 증가
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-sub)">4분 전</div>
+              </div>
+            </div>
+          </article>
+
+          <!-- 주변 문화·행사 정보 (새 카드) -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">주변 문화·행사 정보</div>
+              <div style="font-size: 18px">🎭</div>
+            </div>
+            <div class="card-body">
+              <div class="culture-list">
+                <div class="culture-item">
+                  <div class="culture-title">강남역 버스킹 공연</div>
+                  <div class="culture-meta">
+                    <span>오늘 19:00 ~ 21:00</span>
+                    <span>2번 출구 광장</span>
+                  </div>
+                </div>
+                <div class="culture-item">
+                  <div class="culture-title">도심 야간 플리마켓</div>
+                  <div class="culture-meta">
+                    <span>토요일 17:00 ~ 22:00</span>
+                    <span>역삼 문화의 거리</span>
+                  </div>
+                </div>
+                <div class="culture-item">
+                  <div class="culture-title">지하철 갤러리 전시 &lt;디지털 강남&gt;</div>
+                  <div class="culture-meta">
+                    <span>상시 전시</span>
+                    <span>강남역 지하상가 G-1 전시장</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:8px;font-size:10px;color:var(--text-sub);text-align:right;">
+                * 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.
+              </div>
+            </div>
+          </article>
+
+          <!-- 시스템 상태 -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title">시스템 상태</div>
+            </div>
+            <div class="card-body">
+              <div class="status-row">
+                <div class="status-left">
+                  <div
+                    class="status-dot"
+                    style="background: var(--safe)"
+                  ></div>
+                  <span>데이터 스트림</span>
+                </div>
+                <span class="text-strong">정상</span>
+              </div>
+              <div class="status-row">
+                <div class="status-left">
+                  <div
+                    class="status-dot"
+                    style="background: var(--accent)"
+                  ></div>
+                  <span>API 응답 속도</span>
+                </div>
+                <span class="text-strong">평균 210ms</span>
+              </div>
+              <div class="status-row">
+                <div class="status-left">
+                  <div
+                    class="status-dot"
+                    style="background: var(--warn)"
+                  ></div>
+                  <span>동기화 지연</span>
+                </div>
+                <span class="text-strong">최대 3.2초</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
     </div>
-    
-    <script src="/js/hls.js"></script>
-    <script src="script.js"></script>
-</body>
+
+    <!-- JS: 시간 업데이트 & 예시용 랜덤 변화 -->
+    <script>
+      function updateTimestamp() {
+        const el = document.getElementById("timestamp");
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mi = String(now.getMinutes()).padStart(2, "0");
+        const ss = String(now.getSeconds()).padStart(2, "0");
+        el.textContent = `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+      }
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function updateFakeData() {
+        // 인구수 예시 변화
+        const base = 86000 + randomInt(-300, 400);
+        const max = base + randomInt(1200, 2200);
+        document.getElementById("pop-min").textContent =
+          base.toLocaleString("ko-KR");
+        document.getElementById("pop-max").textContent =
+          max.toLocaleString("ko-KR");
+
+        const change = (Math.random() * 4 - 1).toFixed(1); // -1.0 ~ 3.0
+        const changeEl = document.getElementById("pop-change");
+        const sign = change >= 0 ? "+" : "";
+        changeEl.textContent = sign + change + "%";
+        changeEl.style.color = change >= 0 ? "#16a34a" : "#dc2626";
+
+        // 동기화 지연 텍스트 (0.8 ~ 4.0초)
+        const lagSec = (Math.random() * 3.2 + 0.8).toFixed(1);
+        document.getElementById(
+          "sync-lag"
+        ).textContent = `동기화 지연 ${lagSec}초`;
+      }
+
+      updateTimestamp();
+      updateFakeData();
+      setInterval(updateTimestamp, 1000);
+      setInterval(updateFakeData, 8000);
+    </script>
+  </body>
 </html>
