@@ -49,7 +49,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: traffic_db
     ports:
-      - "6432:5432"
+      - "8300:5432"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
