@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -16,33 +16,7 @@ db_properties = {
     "driver": "org.postgresql.Driver"
 }
 
-# --- 1. road_comm (traffic_data) 스트림 ---
-schema_road_comm = StructType([
-    StructField("link_id", StringType(), True),
-    StructField("avg_speed", DoubleType(), True),
-    StructField("travel_time", IntegerType(), True),
-    StructField("timestamp", DoubleType(), True)
-])
-stream_df_road_comm = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:29092") \
-    .option("subscribe", "realtime-traffic") \
-    .load()
-parsed_stream_df_road_comm = stream_df_road_comm.select(from_json(col("value").cast("string"), schema_road_comm).alias("data")).select("data.*")
-
-def write_to_postgres(df, epoch_id):
-    df.write \
-      .format("jdbc") \
-      .options(**db_properties) \
-      .option("dbtable", "traffic_data") \
-      .mode("append") \
-      .save()
-
-query = parsed_stream_df_road_comm.writeStream \
-    .foreachBatch(write_to_postgres) \
-    .start()
-
-# --- 2. incident (traffic_incidents) 스트림 ---
+# --- 1. traffic_incidents 스트림 -----------------------------
 incident_schema = StructType([
     StructField("acc_id", StringType(), False),
     StructField("occr_date", StringType(), True),
@@ -81,33 +55,42 @@ parsed_incident_df = incident_stream_df.select(from_json(col("value").cast("stri
 )
 
 def write_incident_to_postgres(df, epoch_id):
-    df.write \
-      .format("jdbc") \
-      .options(**db_properties) \
-      .option("dbtable", "traffic_incidents") \
-      .mode("append") \
-      .save()
+    
+    if df.rdd.isEmpty():
+            return
+    
+    # [수정] 배치 내 중복 데이터 제거 (PK 충돌 방지)
+    df_dedup = df.dropDuplicates(['acc_id', 'timestamp'])
+        
+    df_dedup.write \
+        .format("jdbc") \
+        .options(**db_properties) \
+        .option("dbtable", "traffic_incidents") \
+        .mode("append") \
+        .save()
 
 query_incident = parsed_incident_df.writeStream \
     .foreachBatch(write_incident_to_postgres) \
     .start()
 
-# --- 3. city_data (city_data_raw) 스트림 -----------------
+# --- 2. city_data_raw 스트림 ------------------------------
 schema_city_data = StructType([
-StructField("area_nm", StringType(), False),
+    StructField("area_nm", StringType(), False),
     StructField("area_cd", StringType(), False),
     StructField("timestamp", DoubleType(), True),
     StructField("live_ppltn_stts", StringType(), True),
-    StructField("live_cmrcl_stts", StringType(), True),
     StructField("road_traffic_stts", StringType(), True),
     StructField("prk_stts", StringType(), True),
     StructField("sub_stts", StringType(), True),
+    StructField("live_sub_ppltn", StringType(), True),
     StructField("bus_stn_stts", StringType(), True),
+    StructField("live_bus_ppltn", StringType(), True),
     StructField("acdnt_cntrl_stts", StringType(), True),
-    StructField("charger_stts", StringType(), True),
     StructField("sbike_stts", StringType(), True),
     StructField("weather_stts", StringType(), True),
+    StructField("charger_stts", StringType(), True),
     StructField("event_stts", StringType(), True),
+    StructField("live_cmrcl_stts", StringType(), True),
     StructField("live_dst_message", StringType(), True),
     StructField("live_yna_news", StringType(), True)
 ])
@@ -122,7 +105,14 @@ stream_df_city_data = spark.readStream \
 parsed_stream_df_city_data = stream_df_city_data.select(from_json(col("value").cast("string"), schema_city_data).alias("data")).select("data.*")
 
 def write_citydata_to_postgres(df, epoch_id):
-    df.write \
+    
+    if df.rdd.isEmpty():
+        return
+    
+    # [수정] 중복 제거
+    df_dedup = df.dropDuplicates(['area_nm', 'timestamp'])
+    
+    df_dedup.write \
       .format("jdbc") \
       .options(**db_properties) \
       .option("dbtable", "city_data_raw") \
@@ -134,9 +124,9 @@ query_city_data = parsed_stream_df_city_data.writeStream \
     .start()
 
 
-# --- 3-1. city_data (city_data_raw)의 live_ppltn_stts 스트림 --------
+# --- 2-1. city_data_raw의 live_ppltn_stts 스트림 --------
 
-# 1-1. FCST_PPLTN (N) 부분의 스키마
+    # FCST_PPLTN (N) 부분의 스키마
 schema_fcst_item = StructType([
     StructField("FCST_TIME", StringType(), True),
     StructField("FCST_CONGEST_LVL", StringType(), True),
@@ -144,12 +134,12 @@ schema_fcst_item = StructType([
     StructField("FCST_PPLTN_MAX", StringType(), True)
 ])
 
-# 1-2. FCST_PPLTN 부모 객체의 스키마
+    # FCST_PPLTN 부모 객체의 스키마
 schema_fcst_parent = StructType([
     StructField("FCST_PPLTN", ArrayType(schema_fcst_item), True)
 ])
 
-# 1-3. LIVE_PPLTN_STTS (1) 부분의 "내부" 스키마
+    # LIVE_PPLTN_STTS (1) 부분의 "내부" 스키마
 schema_inner_ppltn = StructType([
     StructField("AREA_CONGEST_LVL", StringType(), True),
     StructField("AREA_CONGEST_MSG", StringType(), True),
@@ -160,12 +150,12 @@ schema_inner_ppltn = StructType([
     StructField("FCST_PPLTN", schema_fcst_parent, True) 
 ])
 
-# 1-4. NEW: LIVE_PPLTN_STTS (1) 부분의 "외부" 스키마
+    # LIVE_PPLTN_STTS (1) 부분의 "외부" 스키마
 schema_outer_ppltn = StructType([
     StructField("LIVE_PPLTN_STTS", schema_inner_ppltn, True)
 ])
 
-# 2. `city_data_raw` 스트림에서 `live_ppltn_stts`(JSON 문자열) 필드를 가져와 파싱합니다.
+    # `city_data_raw` 스트림에서 `live_ppltn_stts`(JSON 문자열) 필드를 가져와 파싱합니다.
 parsed_ppltn_df = parsed_stream_df_city_data \
     .filter(col("live_ppltn_stts").isNotNull()) \
     .select(
@@ -181,8 +171,8 @@ parsed_ppltn_df = parsed_stream_df_city_data \
         col("ppltn_data_outer.LIVE_PPLTN_STTS.*") 
     )
 
-# 3. (테이블 1) 1:1 현황 데이터 (live_ppltn_proc) 준비
-# PPLTN_TIME (문자열)을 PostgreSQL TIMESTAMP 타입으로 변환
+    # (테이블 1) 1:1 현황 데이터 (city_live_ppltn_proc) 준비
+    # PPLTN_TIME (문자열)을 PostgreSQL TIMESTAMP 타입으로 변환
 proc_df = parsed_ppltn_df \
     .select(
         "area_nm",
@@ -197,8 +187,8 @@ proc_df = parsed_ppltn_df \
     .filter(col("ppltn_time").isNotNull()) # 이상값 제거 (기준 시간이 없는 데이터 제외)
 
 
-# 4. (테이블 2) 1:N 예측 데이터 (live_ppltn_forecast) 준비
-# `explode` 함수로 FCST_PPLTN 배열을 여러 개의 행으로 펼칩니다.
+    # (테이블 2) 1:N 예측 데이터 (city_live_ppltn_forecast) 준비
+    # `explode` 함수로 FCST_PPLTN 배열을 여러 개의 행으로 펼칩니다.
 forecast_df = parsed_ppltn_df \
     .filter(col("FCST_YN") == 'Y') \
     .select(
@@ -222,12 +212,12 @@ forecast_df = parsed_ppltn_df \
     )
 
 
-# 5. 두 테이블에 대한 DB Write 함수 정의
+    # 두 테이블에 대한 DB Write 함수 정의
 def write_proc_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "live_ppltn_proc") \
+      .option("dbtable", "city_live_ppltn_proc") \
       .mode("append") \
       .save()
 
@@ -239,11 +229,11 @@ def write_forecast_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "live_ppltn_forecast") \
+      .option("dbtable", "city_live_ppltn_forecast") \
       .mode("append") \
       .save()
 
-# 6. 두 개의 새로운 스트림 시작
+    # 두 개의 새로운 스트림 시작
 query_ppltn_proc = proc_df.writeStream \
     .outputMode("append") \
     .foreachBatch(write_proc_to_postgres) \
@@ -254,8 +244,241 @@ query_ppltn_forecast = forecast_df.writeStream \
     .foreachBatch(write_forecast_to_postgres) \
     .start()
 
+# --- 2-2. city_data(city_data_raw)의 road_traffic_stts (AVG_ROAD_DATA) 스트림 --------
+
+    # 스키마 정의
+    # 가장 안쪽 데이터 (AVG_ROAD_DATA)
+schema_avg_road_data = StructType([
+    StructField("ROAD_MSG", StringType(), True),
+    StructField("ROAD_TRAFFIC_IDX", StringType(), True),
+    StructField("ROAD_TRAFFIC_SPD", StringType(), True),
+    StructField("ROAD_TRAFFIC_TIME", StringType(), True)
+])
+
+schema_road_raw = StructType([
+    StructField("AVG_ROAD_DATA", schema_avg_road_data, True)
+])
+
+    # 파싱 및 데이터 추출
+parsed_road_df = parsed_stream_df_city_data \
+    .filter(col("road_traffic_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("road_traffic_stts"), schema_road_raw).alias("road_data_outer")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("road_data_outer.AVG_ROAD_DATA.*") 
+    )
+
+    # 타입 변환 및 컬럼 매핑 (city_live_road_traffic_avg 테이블 구조에 맞춤)
+road_proc_df = parsed_road_df \
+    .select(
+        col("area_nm"),
+        col("ROAD_MSG").alias("road_msg"),
+        col("ROAD_TRAFFIC_IDX").alias("road_traffic_idx"),
+        col("ROAD_TRAFFIC_SPD").cast(IntegerType()).alias("road_traffic_spd"),
+        to_timestamp(col("ROAD_TRAFFIC_TIME"), "yyyy-MM-dd HH:mm").alias("road_traffic_time"),
+        col("ingest_timestamp")
+    ) \
+    .filter(col("road_traffic_time").isNotNull())
+
+    # DB 적재 함수 정의
+def write_road_avg_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+        
+    df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "city_road_traffic_stts_avg") \
+      .mode("append") \
+      .save()
+
+    # 스트림 시작
+query_road_avg = road_proc_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_road_avg_to_postgres) \
+    .start()
+
+# --- 2-3. city_data (city_data_raw)의 sub_stts 스트림 --------
+
+    # SUB_DETAIL 배열 내부의 개별 도착 정보 스키마
+schema_sub_detail_item = StructType([
+    StructField("SUB_ROUTE_NM", StringType(), True),
+    StructField("SUB_LINE", StringType(), True),
+    StructField("SUB_ARMG1", StringType(), True),
+    StructField("SUB_ARMG2", StringType(), True),
+])
+
+    # SUB_DETAIL 부모 객체 스키마
+schema_sub_detail_parent = StructType([
+    StructField("SUB_DETAIL", ArrayType(schema_sub_detail_item), True)
+])
+
+    # 역 정보 스키마 (SUB_STTS 배열의 각 항목)
+schema_sub_station = StructType([
+    StructField("SUB_STN_NM", StringType(), True),
+    StructField("SUB_STN_LINE", StringType(), True),
+    StructField("SUB_DETAIL", schema_sub_detail_parent, True)
+])
+
+    # 최상위 SUB_STTS 스키마
+schema_sub_stts_outer = StructType([
+    StructField("SUB_STTS", ArrayType(schema_sub_station), True)
+])
+
+    # city_data_raw 스트림에서 sub_stts 필드를 가져와 파싱
+parsed_subway_df = parsed_stream_df_city_data \
+    .filter(col("sub_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("sub_stts"), schema_sub_stts_outer).alias("subway_data_outer")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        explode(col("subway_data_outer.SUB_STTS")).alias("station")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("station.SUB_STN_NM").alias("station_nm"),
+        col("station.SUB_STN_LINE").alias("line_num"),
+        explode(col("station.SUB_DETAIL.SUB_DETAIL")).alias("detail")
+    ) \
+    .select(
+        "area_nm",
+        "station_nm",
+        "line_num",
+        col("detail.SUB_ROUTE_NM").alias("train_line_nm"),
+        col("detail.SUB_ARMG1").alias("arrival_msg_1"),
+        col("detail.SUB_ARMG2").alias("arrival_msg_2"),
+        # 타임스탬프를 초 단위로 truncate - 갱신 시각 통일
+        date_trunc("second", to_timestamp(col("ingest_timestamp"))).alias("ingest_timestamp")
+    )
+
+    # 도착 데이터 필터링
+subway_arrival_df = parsed_subway_df \
+    .filter(
+        (col("station_nm").isNotNull()) & \
+        (col("line_num").isNotNull()) & \
+        (col("train_line_nm").isNotNull())
+    ) \
+    .select(
+        "area_nm",
+        "station_nm",
+        "line_num",
+        "train_line_nm",
+        "arrival_msg_1",
+        "arrival_msg_2",
+        "ingest_timestamp"
+    )
+
+    # 데이터베이스 쓰기 함수
+def write_subway_arrival_to_postgres(df, epoch_id):
+    
+    if df.rdd.isEmpty(): 
+        return
+
+    # 배치 내 중복 제거: 같은 키의 가장 최신 timestamp만 유지
+    from pyspark.sql.window import Window
+    from pyspark.sql.functions import row_number
+
+    window_spec = Window.partitionBy("area_nm", "station_nm", "line_num", "train_line_nm").orderBy(col("ingest_timestamp").desc())
+    dedup_df = df.withColumn("row_num", row_number().over(window_spec)) \
+                 .filter(col("row_num") == 1) \
+                 .drop("row_num")
+
+    # DB에 저장 (append mode)
+    dedup_df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "subway_arrival_proc") \
+      .mode("append") \
+      .save()
+
+    # 스트림 시작
+query_subway_arrival = subway_arrival_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_subway_arrival_to_postgres) \
+    .start()
+
+# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 --------
+
+    # LIVE_SUB_PPLTN JSON 스키마 정의 (5분 데이터만)
+schema_sub_ppltn = StructType([
+    StructField("SUB_5WTHN_GTON_PPLTN_MIN", StringType(), True),
+    StructField("SUB_5WTHN_GTON_PPLTN_MAX", StringType(), True),
+    StructField("SUB_5WTHN_GTOFF_PPLTN_MIN", StringType(), True),
+    StructField("SUB_5WTHN_GTOFF_PPLTN_MAX", StringType(), True),
+    StructField("SUB_STN_CNT", StringType(), True),
+    StructField("SUB_STN_TIME", StringType(), True)
+])
+
+    # city_data_raw 스트림에서 live_sub_ppltn 필드를 가져와 파싱
+parsed_sub_ppltn_df = parsed_stream_df_city_data \
+    .filter(col("live_sub_ppltn").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("live_sub_ppltn"), schema_sub_ppltn).alias("sub_ppltn_data")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        "sub_ppltn_data.*"
+    )
+
+    # subway_ppltn_raw 테이블에 저장할 데이터 준비 (5분 단위 원본 데이터)
+subway_ppltn_raw_df = parsed_sub_ppltn_df \
+    .select(
+        "area_nm",
+        to_timestamp(col("ingest_timestamp")).alias("data_time"),
+        # 5분 이내 승하차 평균 데이터
+        ((col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gton_avg"),
+        ((col("SUB_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gtoff_avg"),
+        col("SUB_STN_CNT").cast(IntegerType()).alias("stn_cnt")
+    ) \
+    .filter(col("gton_avg").isNotNull())
+
+    # 데이터베이스 쓰기 함수 (Raw 데이터만 저장)
+def write_subway_ppltn_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+
+    # Raw 데이터 저장 (중복 제거)
+    from pyspark.sql.window import Window
+    from pyspark.sql.functions import row_number
+
+    window_spec = Window.partitionBy("area_nm", "data_time").orderBy(col("data_time").desc())
+    dedup_raw_df = df.withColumn("row_num", row_number().over(window_spec)) \
+                     .filter(col("row_num") == 1) \
+                     .drop("row_num")
+
+    dedup_raw_df.write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "subway_ppltn_raw") \
+      .mode("append") \
+      .save()
+
+    # 집계는 PostgreSQL Trigger가 자동으로 처리합니다
+
+# 5. 스트림 시작
+query_subway_ppltn = subway_ppltn_raw_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_subway_ppltn_to_postgres) \
+    .start()
+
+
+
+
+
 # ----------------------------------------------------
-
-
-
 spark.streams.awaitAnyTermination()

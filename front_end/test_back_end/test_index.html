@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교통 데이터 API call test</title>
+    <link rel="stylesheet" href="test_style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>교통 데이터 API call test</h1>
+        
+        <!-- 섹션 1: 헬스 체크 -->
+        <div class="api-section">
+            <h2>서버 상태 확인</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /health</p>
+            <button onclick="getHealth()">확인하기</button>
+            <div id="health-status" class="status loading" style="display:none;"></div>
+            <div id="health-response" class="response-box"></div>
+        </div>
+
+        <!-- 섹션 2: CCTV 스트리밍 -->
+        <div class="api-section">
+            <h2>실시간 CCTV 모니터링</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /cctv/streams</p>
+            <button onclick="loadCCTVStreams()">CCTV 스트림 로드</button>
+            <div id="cctv-status" class="status loading" style="display:none;"></div>
+            
+            <div class="cctv-grid">
+                <div class="cctv-box">
+                    <h3 id="cctv1-name">CCTV 1</h3>
+                    <video id="cctv1" controls muted autoplay playsinline></video>
+                </div>
+                <div class="cctv-box">
+                    <h3 id="cctv2-name">CCTV 2</h3>
+                    <video id="cctv2" controls muted autoplay playsinline></video>
+                </div>
+                <div class="cctv-box">
+                    <h3 id="cctv3-name">CCTV 3</h3>
+                    <video id="cctv3" controls muted autoplay playsinline></video>
+                </div>
+                <div class="cctv-box">
+                    <h3 id="cctv4-name">CCTV 4</h3>
+                    <video id="cctv4" controls muted autoplay playsinline></video>
+                </div>
+            </div>
+        </div>
+
+        <!--섹션 3: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
+        <div class="api-section">
+            <h2>실시간 도시 데이터 (인구)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/population/...</p>
+            
+            <div class="button-group">
+                <input type="text" id="areaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityPopulationCurrent()">실시간 현황 조회</button>
+                <button onclick="getCityPopulationForecast()">인구 예측 조회</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                현황 결과 (current)
+                <span id="city-current-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="city-current-response" class="response-box" style="display: none;"></div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                예측 결과 (forecast)
+                <span id="city-forecast-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="city-forecast-response" class="response-box" style="display: none;"></div>
+            <div id="city-forecast-table"></div>
+        </div>
+    
+        <!--섹션 4: 실시간 돌발 정보 -->
+        <div class="api-section">
+            <h2>실시간 돌발 정보 (사고/공사)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /incident/active (최근 30분 내 갱신된 정보)</p>
+            
+            <div class="button-group">
+                <button onclick="getActiveIncidents()">조회하기</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="incident-status" class="status loading" style="display:none;"></span>
+            </h3>
+            
+            <div id="incident-response" class="response-box" style="display: none;"></div>
+            
+            <div id="incident-table"></div>
+        </div>
+    
+        <!--섹션 5: 실시간 도로소통 정보 -->
+        <div class="api-section">
+            <h2>실시간 도로 소통 현황 (AVG)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/traffic/road</p>
+            
+            <div class="button-group">
+                <input type="text" id="roadAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityRoadTraffic()">조회하기</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="city-road-status" class="status loading" style="display:none;"></span>
+            </h3>
+            
+            <div id="city-road-response" class="response-box" style="display: none;"></div>
+            
+            <div id="city-road-table"></div>
+        </div>
+
+        <!--섹션 6: 지하철 실시간 도착 정보 현황판 -->
+        <div class="api-section">
+            <h2>지하철 실시간 도착 정보 현황판</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/arrival/board</p>
+
+            <div class="button-group">
+                <input type="text" id="subwayAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getSubwayArrivalBoard()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                현황판
+                <span id="subway-arrival-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="subway-arrival-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <div id="subway-arrival-board"></div>
+        </div>
+
+        <!--섹션 7: 지하철 시간별 승하차 누적 현황 -->
+        <div class="api-section">
+            <h2>지하철 시간별 승하차 누적 현황</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/passenger/cumulative</p>
+
+            <div class="button-group">
+                <input type="text" id="subwayPassengerAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getSubwayPassengerCumulative()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                승하차 현황
+                <span id="subway-passenger-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="subway-passenger-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <div id="subway-passenger-table"></div>
+        </div>
+
+    </div>
+
+
+    <!-- ------------------------------------------------------- -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="test_script.js"></script>
+    <script>
+        // 페이지 로드 즉시 CCTV 스트림 자동 로드
+        console.log('=== 자동 로드 스크립트 실행 ===');
+
+        // 여러 방법으로 시도
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded 이벤트 발생');
+            setTimeout(function() {
+                console.log('CCTV 자동 로드 시작');
+                if (typeof loadCCTVStreams === 'function') {
+                    loadCCTVStreams();
+                } else {
+                    console.error('loadCCTVStreams 함수를 찾을 수 없습니다');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
