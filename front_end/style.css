@@ -41,24 +41,33 @@ body {
 }
 
 .header-inner {
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 12px 16px 8px 16px;
+  padding: 24px 40px 20px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+  margin-left: -120px; /* 날씨 블록 너비만큼 왼쪽으로 이동하여 중앙 정렬 */
 }
 
 .header-pill {
   width: 6px;
-  height: 32px;
+  height: 50px;
   border-radius: 999px;
   background: linear-gradient(180deg, var(--accent), #4f46e5);
 }
@@ -66,7 +75,7 @@ body {
 .header-title {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .header-title small {
@@ -78,61 +87,60 @@ body {
 }
 
 .header-title h1 {
-  font-size: 18px;
+  font-size: 25px;
   margin: 0;
-  font-weight: 600;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .weather-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .weather-icon {
-  font-size: 24px;
+  font-size: 40px;
+  line-height: 1;
 }
 
-.weather-text p {
-  margin: 0;
-  line-height: 1.2;
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.weather-text .temp {
+.weather-temp {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.weather-air {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.air-label {
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.air-value {
+  color: var(--accent);
   font-weight: 600;
 }
 
-.weather-text .desc {
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-.divider-vert {
-  width: 1px;
-  height: 32px;
-  background: var(--border-soft);
-}
-
-.time-block {
-  text-align: right;
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-.time-block .label {
-  margin-bottom: 2px;
-}
-
-.time-block .value {
-  font-weight: 500;
-  color: #374151;
+.air-divider {
+  color: var(--border-soft);
+  margin: 0 2px;
 }
 
 .header-bar {
@@ -144,9 +152,9 @@ body {
 
 .layout {
   flex: 1 0 auto;
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px 16px 24px 16px;
+  padding: 20px 40px 28px 40px;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 16px;
@@ -174,7 +182,6 @@ body {
 }
 
 @media (min-width: 960px) {
-  /* 데스크톱에서 2 : 8 : 2 비율 */
   .col-left {
     grid-column: span 2;
   }
@@ -196,6 +203,7 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.04);
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
   padding: 10px 14px 12px 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card-muted {
@@ -252,6 +260,53 @@ body {
   gap: 8px;
 }
 
+/* ---------- 카드 갱신 애니메이션 ---------- */
+
+.card-update {
+  animation: cardFlash 0.6s ease-out;
+}
+
+@keyframes cardFlash {
+  0% {
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    box-shadow: 0 0 30px rgba(47, 128, 237, 0.5), 0 10px 35px rgba(15, 23, 42, 0.1);
+    transform: translateY(-2px) scale(1.005);
+  }
+  100% {
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- 카드 갱신 시간 표시 ---------- */
+
+.card-timestamp-row {
+  border-top: 1px solid rgba(209, 213, 219, 0.5);
+  padding-top: 6px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+.card-timestamp-row .last-refresh,
+.card-timestamp-row .next-refresh {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.card-timestamp-row .last-refresh span,
+.card-timestamp-row .next-refresh span {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
 /* ---------- LEFT COLUMN CARDS ---------- */
 
 .people-main {
@@ -278,11 +333,6 @@ body {
   font-size: 14px;
   font-weight: 400;
   color: #9ca3af;
-}
-
-.people-main .info-sub {
-  margin-top: 6px;
-  font-size: 11px;
 }
 
 .icon-badge {
@@ -329,12 +379,7 @@ body {
 .traffic-bar-fg {
   height: 100%;
   width: 50%;
-  background: linear-gradient(
-    90deg,
-    var(--safe),
-    var(--warn),
-    var(--danger)
-  );
+  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
 }
 
 .public-row {
@@ -373,115 +418,88 @@ body {
   color: var(--text-sub);
 }
 
+/* ---------- 생활인구 통계 ---------- */
 
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
 
-/* dt-map 안에 들어가는 구글맵 div가 영역 전체를 채우도록 */
+.stat-item {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* ---------- 버튼 스타일 ---------- */
+
+.link-button {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+/* ---------- CENTER: 디지털트윈 풀사이즈 지도 ---------- */
+
+.dt-map-full {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
 #google-map {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
 
-
-.dt-grid {
+.dt-btn-overlay {
   position: absolute;
-  inset: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-}
-
-.dt-grid::before,
-.dt-grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(
-      90deg,
-      rgba(75, 85, 99, 0.35) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      180deg,
-      rgba(75, 85, 99, 0.35) 1px,
-      transparent 1px
-    );
-  background-size: 40px 40px;
-  opacity: 0.55;
-}
-
-.dt-legend {
-  position: absolute;
-  left: 18px;
-  bottom: 12px;
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: #e5e7eb;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-
-.legend-dot.car {
-  background: #38bdf8;
-}
-
-.legend-dot.person {
-  background: #4ade80;
-}
-
-.legend-dot.crowd {
-  background: #fb923c;
-}
-
-.dt-btn {
-  position: absolute;
-  right: 18px;
-  top: 14px;
-  font-size: 11px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 5px 10px;
+  right: 16px;
+  top: 16px;
+  font-size: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-main);
+  border: 1px solid var(--border-soft);
+  padding: 8px 14px;
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
-
-.dt-dot.car {
-  background: #38bdf8;
-}
-
-.dt-dot.person {
-  background: #4ade80;
-}
-
-.dt-dot.crowd {
-  background: #fb923c;
-  box-shadow: 0 0 12px rgba(248, 171, 84, 0.8);
-  animation: pulse 1.4s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1.4);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
+.dt-btn-overlay:hover {
+  background: white;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 /* ---------- CENTER BOTTOM: 안전지수 & 예측 ---------- */
@@ -532,12 +550,54 @@ body {
 .predict-bar-fg {
   height: 100%;
   width: 75%;
-  background: linear-gradient(
-    90deg,
-    var(--safe),
-    var(--warn),
-    var(--danger)
-  );
+  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
+}
+
+/* ---------- 소매업 매출 현황 ---------- */
+
+.retail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.retail-item {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+
+.retail-category {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.retail-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.retail-change {
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.retail-change.positive {
+  color: #10b981;
+}
+
+.retail-change.negative {
+  color: #ef4444;
 }
 
 /* ---------- RIGHT COLUMN ---------- */
@@ -571,36 +631,6 @@ body {
   color: #b91c1c;
 }
 
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  padding: 4px 0;
-}
-
-.status-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-}
-
-.badge-soft {
-  border-radius: 12px;
-  padding: 6px 8px;
-  background: var(--bg-soft);
-  margin-top: 10px;
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
 /* 주변 문화행사 카드 */
 .culture-list {
   display: flex;
@@ -629,38 +659,133 @@ body {
   color: var(--text-sub);
 }
 
-/* small helpers */
-.text-strong {
-  font-weight: 600;
-  color: #111827;
-}
+/* ---------- 공중화장실 위치 ---------- */
 
-.mt-4 {
-  margin-top: 16px;
-}
-
-.card-timestamp-row {
-  border-top: 1px solid rgba(209, 213, 219, 0.5); /* 구분선 */
-  padding-top: 8px;
-  margin-top: 4px;
+.toilet-list {
   display: flex;
-  justify-content: flex-end; /* 우측 정렬 */
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.toilet-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.toilet-icon {
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  border-radius: 999px;
+}
+
+.toilet-info {
+  flex: 1;
+}
+
+.toilet-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.toilet-meta {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+.view-map-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--card);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-map-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* ---------- 실시간 돌발정보 ---------- */
+
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.incident-item {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--warn);
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.incident-type {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.incident-time {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+.incident-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.incident-location {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.incident-detail {
   font-size: 11px;
   color: var(--text-sub);
-  font-weight: 500;
+  line-height: 1.4;
 }
 
-/* 예측 그래프 컨테이너 */
+/* ---------- 예측 그래프 ---------- */
+
 .forecast-wrap {
   margin-top: 14px;
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
-  height: 50px; 
+  height: 50px;
   padding: 0 4px;
 }
 
-/* 개별 막대 아이템 (막대 + 시간텍스트) */
 .forecast-item {
   display: flex;
   flex-direction: column;
@@ -671,7 +796,6 @@ body {
   height: 100%;
 }
 
-/* 막대 (Bar) 디자인 */
 .bar-graph {
   width: 8px;
   border-radius: 4px;
@@ -680,7 +804,6 @@ body {
   min-height: 4px;
 }
 
-/* X축 시간 라벨 */
 .time-label {
   font-size: 10px;
   color: var(--text-sub);
@@ -688,14 +811,13 @@ body {
   height: 12px;
 }
 
-/* 가운데 구글맵 – 카드 컨테이너 없이 바로 col-center를 채움 */
-.map-main {
-  width: 100%;
-  height: 420px;      /* 여기서 크기 조절 – 더 키우고 싶으면 480px, 520px 등으로 */
-  border-radius: 16px;
-  overflow: hidden;
-  /* 필요하면 아래 두 줄로 약간 그림자 줄 수도 있음 */
-  /* box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-     background: #000; */
-  margin-bottom: 16px; /* 아래 grid-2 카드랑 간격 */
+/* ---------- HELPERS ---------- */
+
+.text-strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.mt-4 {
+  margin-top: 16px;
 }
