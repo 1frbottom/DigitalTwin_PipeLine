@@ -76,6 +76,16 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
 );
 
+-- 실시간 도시데이터 : 도로소통(평균)
+CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
+    area_nm VARCHAR(50) NOT NULL,
+    road_msg TEXT,
+    road_traffic_idx VARCHAR(50),
+    road_traffic_spd INTEGER,
+    road_traffic_time TIMESTAMP,
+    ingest_timestamp DOUBLE PRECISION
+);
+
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,
@@ -92,22 +102,25 @@ CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
 CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
 CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
 
--- 5분 단위 Raw 데이터 테이블
-CREATE TABLE IF NOT EXISTS subway_ppltn_raw (
+-- 5분 단위 Raw 데이터 테이블 (대중교통 통합: 지하철 + 버스)
+CREATE TABLE IF NOT EXISTS transit_ppltn_raw (
     area_nm VARCHAR(50) NOT NULL,
+    transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
     data_time TIMESTAMP NOT NULL,
     gton_avg INTEGER,
     gtoff_avg INTEGER,
     stn_cnt INTEGER,
-    PRIMARY KEY (area_nm, data_time)
+    PRIMARY KEY (area_nm, transport_type, data_time)
 );
 
-CREATE INDEX idx_subway_ppltn_raw_area ON subway_ppltn_raw(area_nm);
-CREATE INDEX idx_subway_ppltn_raw_time ON subway_ppltn_raw(data_time);
+CREATE INDEX idx_transit_ppltn_raw_area ON transit_ppltn_raw(area_nm);
+CREATE INDEX idx_transit_ppltn_raw_type ON transit_ppltn_raw(transport_type);
+CREATE INDEX idx_transit_ppltn_raw_time ON transit_ppltn_raw(data_time);
 
--- 시간별 집계 테이블
-CREATE TABLE IF NOT EXISTS subway_ppltn_proc (
+-- 시간별 집계 테이블 (대중교통 통합)
+CREATE TABLE IF NOT EXISTS transit_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,
+    transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
     data_date DATE NOT NULL,
     hour_slot INTEGER NOT NULL,
     gton_sum INTEGER,
@@ -119,28 +132,32 @@ CREATE TABLE IF NOT EXISTS subway_ppltn_proc (
 
     stn_cnt INTEGER,
     last_updated TIMESTAMP NOT NULL,
-    PRIMARY KEY (area_nm, data_date, hour_slot)
+    PRIMARY KEY (area_nm, transport_type, data_date, hour_slot)
 );
 
-CREATE INDEX idx_subway_ppltn_area ON subway_ppltn_proc(area_nm);
-CREATE INDEX idx_subway_ppltn_date ON subway_ppltn_proc(data_date);
-CREATE INDEX idx_subway_ppltn_hour ON subway_ppltn_proc(hour_slot);
+CREATE INDEX idx_transit_ppltn_area ON transit_ppltn_proc(area_nm);
+CREATE INDEX idx_transit_ppltn_type ON transit_ppltn_proc(transport_type);
+CREATE INDEX idx_transit_ppltn_date ON transit_ppltn_proc(data_date);
+CREATE INDEX idx_transit_ppltn_hour ON transit_ppltn_proc(hour_slot);
 
 -- Raw 데이터 INSERT 시 자동 집계 트리거 함수
-CREATE OR REPLACE FUNCTION aggregate_subway_ppltn()
+CREATE OR REPLACE FUNCTION aggregate_transit_ppltn()
 RETURNS TRIGGER AS $$
 DECLARE
     v_data_date DATE;
     v_hour_slot INTEGER;
+    v_adjusted_time TIMESTAMP;
 BEGIN
     -- 10분 오프셋 적용하여 날짜와 시간 슬롯 계산
-    v_data_date := (NEW.data_time - INTERVAL '10 minutes')::DATE;
-    v_hour_slot := EXTRACT(HOUR FROM (NEW.data_time - INTERVAL '10 minutes'));
+    v_adjusted_time := NEW.data_time - INTERVAL '10 minutes';
+    v_data_date := v_adjusted_time::DATE;
+    v_hour_slot := EXTRACT(HOUR FROM v_adjusted_time);
 
     -- UPSERT: 기존 데이터가 있으면 누적, 없으면 새로 생성
-    INSERT INTO subway_ppltn_proc (area_nm, data_date, hour_slot, gton_sum, gtoff_sum, data_count, gton_avg, gtoff_avg, stn_cnt, last_updated)
+    INSERT INTO transit_ppltn_proc (area_nm, transport_type, data_date, hour_slot, gton_sum, gtoff_sum, data_count, gton_avg, gtoff_avg, stn_cnt, last_updated)
     VALUES (
         NEW.area_nm,
+        NEW.transport_type,
         v_data_date,
         v_hour_slot,
         NEW.gton_avg,
@@ -151,13 +168,13 @@ BEGIN
         NEW.stn_cnt,
         NEW.data_time
     )
-    ON CONFLICT (area_nm, data_date, hour_slot)
+    ON CONFLICT (area_nm, transport_type, data_date, hour_slot)
     DO UPDATE SET
-        gton_sum = subway_ppltn_proc.gton_sum + NEW.gton_avg,
-        gtoff_sum = subway_ppltn_proc.gtoff_sum + NEW.gtoff_avg,
-        data_count = subway_ppltn_proc.data_count + 1,
-        gton_avg = (subway_ppltn_proc.gton_sum + NEW.gton_avg) / (subway_ppltn_proc.data_count + 1),
-        gtoff_avg = (subway_ppltn_proc.gtoff_sum + NEW.gtoff_avg) / (subway_ppltn_proc.data_count + 1),
+        gton_sum = transit_ppltn_proc.gton_sum + NEW.gton_avg,
+        gtoff_sum = transit_ppltn_proc.gtoff_sum + NEW.gtoff_avg,
+        data_count = transit_ppltn_proc.data_count + 1,
+        gton_avg = (transit_ppltn_proc.gton_sum + NEW.gton_avg) / (transit_ppltn_proc.data_count + 1),
+        gtoff_avg = (transit_ppltn_proc.gtoff_sum + NEW.gtoff_avg) / (transit_ppltn_proc.data_count + 1),
         stn_cnt = NEW.stn_cnt,
         last_updated = NEW.data_time;
 
@@ -166,23 +183,23 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Raw 데이터 INSERT 시 자동 집계 트리거
-CREATE TRIGGER trigger_aggregate_subway_ppltn
-AFTER INSERT ON subway_ppltn_raw
+CREATE TRIGGER trigger_aggregate_transit_ppltn
+AFTER INSERT ON transit_ppltn_raw
 FOR EACH ROW
-EXECUTE FUNCTION aggregate_subway_ppltn();
+EXECUTE FUNCTION aggregate_transit_ppltn();
 
 -- 24시간 이전 데이터 자동 삭제 함수
-CREATE OR REPLACE FUNCTION delete_old_subway_ppltn()
+CREATE OR REPLACE FUNCTION delete_old_transit_ppltn()
 RETURNS TRIGGER AS $$
 BEGIN
-    DELETE FROM subway_ppltn_proc
+    DELETE FROM transit_ppltn_proc
     WHERE data_date < CURRENT_DATE - INTERVAL '1 day';
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- INSERT 시마다 24시간 이전 데이터 삭제 트리거
-CREATE TRIGGER trigger_delete_old_subway_ppltn
-AFTER INSERT ON subway_ppltn_proc
+CREATE TRIGGER trigger_delete_old_transit_ppltn
+AFTER INSERT ON transit_ppltn_proc
 FOR EACH STATEMENT
-EXECUTE FUNCTION delete_old_subway_ppltn();
+EXECUTE FUNCTION delete_old_transit_ppltn();

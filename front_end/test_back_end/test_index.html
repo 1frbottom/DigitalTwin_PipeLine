@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교통 데이터 API 연동 프로토타입</title>
+    <title>교통 데이터 API call test</title>
     <link rel="stylesheet" href="test_style.css">
 </head>
 <body>
@@ -130,24 +130,30 @@
             <div id="subway-arrival-board"></div>
         </div>
 
-        <!--섹션 7: 지하철 시간별 승하차 누적 현황 -->
+        <!--섹션 7: 대중교통 승하차 누적 현황 (버스/지하철 분리) -->
         <div class="api-section">
-            <h2>지하철 시간별 승하차 누적 현황</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /subway/passenger/cumulative</p>
+            <h2>대중교통 승하차 누적 현황</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/passenger/cumulative/chart</p>
 
             <div class="button-group">
-                <input type="text" id="subwayPassengerAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
-                <button onclick="getSubwayPassengerCumulative()">조회하기</button>
+                <input type="text" id="transitChartAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getTransitPassengerChart()">조회하기</button>
             </div>
 
             <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
-                승하차 현황
-                <span id="subway-passenger-status" class="status loading" style="display:none;"></span>
+                승하차 누적 그래프
+                <span id="transit-chart-status" class="status loading" style="display:none;"></span>
             </h3>
 
-            <div id="subway-passenger-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+            <div id="transit-chart-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
 
-            <div id="subway-passenger-table"></div>
+            <!-- 차트 -->
+            <div style="margin-top: var(--space-16); background: var(--color-bg-secondary); padding: var(--space-16); border-radius: 8px;">
+                <canvas id="transitChart" width="800" height="400"></canvas>
+            </div>
+
+            <!-- 표 -->
+            <div id="transit-chart-table" style="margin-top: var(--space-16);"></div>
         </div>
 
     </div>
@@ -155,6 +161,7 @@
 
     <!-- ------------------------------------------------------- -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="test_script.js"></script>
     <script>
         // 페이지 로드 즉시 CCTV 스트림 자동 로드
