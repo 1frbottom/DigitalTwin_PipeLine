@@ -25,9 +25,10 @@ class SubwayArrivalDisplay(BaseModel):
     class Config:
         from_attributes = True
 
-# (2) subway_ppltn_proc 테이블 모델 - 승하차 평균 인원
-class SubwayPpltnBase(BaseModel):
+# (2) transit_ppltn_proc 테이블 모델 - 대중교통 승하차 평균 인원 (지하철 + 버스)
+class TransitPpltnBase(BaseModel):
     area_nm: str
+    transport_type: str  # 'subway' or 'bus'
     data_date: date
     hour_slot: int
     gton_avg: Optional[int] = None
