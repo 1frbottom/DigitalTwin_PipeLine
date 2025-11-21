@@ -142,10 +142,12 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_data_date DATE;
     v_hour_slot INTEGER;
+    v_adjusted_time TIMESTAMP;
 BEGIN
     -- 10분 오프셋 적용하여 날짜와 시간 슬롯 계산
-    v_data_date := (NEW.data_time - INTERVAL '10 minutes')::DATE;
-    v_hour_slot := EXTRACT(HOUR FROM (NEW.data_time - INTERVAL '10 minutes'));
+    v_adjusted_time := NEW.data_time - INTERVAL '10 minutes';
+    v_data_date := v_adjusted_time::DATE;
+    v_hour_slot := EXTRACT(HOUR FROM v_adjusted_time);
 
     -- UPSERT: 기존 데이터가 있으면 누적, 없으면 새로 생성
     INSERT INTO subway_ppltn_proc (area_nm, data_date, hour_slot, gton_sum, gtoff_sum, data_count, gton_avg, gtoff_avg, stn_cnt, last_updated)

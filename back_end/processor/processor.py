@@ -357,8 +357,8 @@ parsed_subway_df = parsed_stream_df_city_data \
         col("detail.SUB_ROUTE_NM").alias("train_line_nm"),
         col("detail.SUB_ARMG1").alias("arrival_msg_1"),
         col("detail.SUB_ARMG2").alias("arrival_msg_2"),
-        # 타임스탬프를 초 단위로 truncate - 갱신 시각 통일
-        date_trunc("second", to_timestamp(col("ingest_timestamp"))).alias("ingest_timestamp")
+        # UTC+9 (KST) 변환 후 초 단위로 truncate - 갱신 시각 통일
+        date_trunc("second", to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("ingest_timestamp")
     )
 
     # 도착 데이터 필터링
@@ -437,7 +437,8 @@ parsed_sub_ppltn_df = parsed_stream_df_city_data \
 subway_ppltn_raw_df = parsed_sub_ppltn_df \
     .select(
         "area_nm",
-        to_timestamp(col("ingest_timestamp")).alias("data_time"),
+        # UTC+9 (KST) 변환하여 저장
+        (to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("data_time"),
         # 5분 이내 승하차 평균 데이터
         ((col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
             .cast(IntegerType()).alias("gton_avg"),

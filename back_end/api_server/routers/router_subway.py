@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
-from datetime import timezone, timedelta
 
 from ..database import get_db
-
-KST = timezone(timedelta(hours=9))
 from ..cruds import crud_subway
 from ..models import model_subway
 
@@ -70,10 +67,8 @@ def read_subway_arrival_board(
     if not arrivals:
         raise HTTPException(status_code=404, detail=f"{area_name}의 지하철 도착 정보를 찾을 수 없습니다.")
 
-    # 갱신 시점 추출
+    # 갱신 시점 추출 (이미 KST로 저장됨)
     latest_timestamp = max(arrival.ingest_timestamp for arrival in arrivals) if arrivals else None
-    if latest_timestamp:
-        latest_timestamp = latest_timestamp.replace(tzinfo=timezone.utc).astimezone(KST)
 
     # 필요한 필드만 추출
     board_data = [
@@ -148,10 +143,8 @@ def read_subway_passenger_cumulative(
     if not ppltn_list:
         raise HTTPException(status_code=404, detail=f"{area_name}의 승하차 데이터를 찾을 수 없습니다.")
 
-    # 갱신 시점 추출 (가장 최신 timestamp)
+    # 갱신 시점 추출 (가장 최신 timestamp, 이미 KST로 저장됨)
     latest_timestamp = max(ppltn.last_updated for ppltn in ppltn_list) if ppltn_list else None
-    if latest_timestamp:
-        latest_timestamp = latest_timestamp.replace(tzinfo=timezone.utc).astimezone(KST)
 
     # 시간별 누적 데이터 생성
     cumulative_data = []
