@@ -476,6 +476,15 @@ query_subway_ppltn = subway_ppltn_raw_df.writeStream \
     .foreachBatch(write_subway_ppltn_to_postgres) \
     .start()
 
+# --- 2-5. city_data (city_data_raw)의 WEATHER_STTS 스트림 --------
+
+
+
+
+
+
+
+
 
 
 
