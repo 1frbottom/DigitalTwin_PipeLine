@@ -580,6 +580,176 @@ async function getSubwayPassengerCumulative() {
 
 
 
+// 8. 대중교통 승하차 누적 현황 차트 (버스/지하철 분리)
+let transitChartInstance = null;
+
+async function getTransitPassengerChart() {
+    const statusDiv = document.getElementById('transit-chart-status');
+    const updatedDiv = document.getElementById('transit-chart-updated');
+    const tableDiv = document.getElementById('transit-chart-table');
+    const areaName = document.getElementById('transitChartAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    updatedDiv.innerHTML = '';
+    tableDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/subway/passenger/cumulative/chart', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        const subwayData = result.data.subway;
+        const busData = result.data.bus;
+        const updatedAt = result.data.updated_at;
+
+        // 데이터가 없는 경우
+        if ((!subwayData || subwayData.length === 0) && (!busData || busData.length === 0)) {
+            updatedDiv.innerHTML = '<p style="color: var(--color-text-secondary);">해당 지역의 승하차 데이터가 없습니다.</p>';
+            return;
+        }
+
+        // 갱신 시점 표시
+        if (updatedAt) {
+            const date = new Date(updatedAt);
+            const updateTime = date.toLocaleString('ko-KR', { hour12: false });
+            updatedDiv.innerHTML = `<strong>갱신 시점:</strong> ${updateTime}`;
+        }
+
+        // 차트 데이터 준비
+        const labels = subwayData.map(item => `${item.hour}시`);
+
+        // 기존 차트 제거
+        if (transitChartInstance) {
+            transitChartInstance.destroy();
+        }
+
+        // 차트 생성
+        const ctx = document.getElementById('transitChart').getContext('2d');
+        transitChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '지하철 승차',
+                        data: subwayData.map(item => item.get_on_personnel),
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '지하철 하차',
+                        data: subwayData.map(item => item.get_off_personnel),
+                        borderColor: '#60A5FA',
+                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '버스 승차',
+                        data: busData.map(item => item.get_on_personnel),
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '버스 하차',
+                        data: busData.map(item => item.get_off_personnel),
+                        borderColor: '#34D399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${areaName} 대중교통 시간별 승하차 누적 현황`,
+                        font: { size: 16, weight: 'bold' },
+                        color: '#E5E7EB'
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#E5E7EB',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}명`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '시간',
+                            color: '#9CA3AF'
+                        },
+                        ticks: { color: '#9CA3AF' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '누적 인원 (명)',
+                            color: '#9CA3AF'
+                        },
+                        ticks: {
+                            color: '#9CA3AF',
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        updatedDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
+
 // 페이지 로드 시 자동 실행 (설정에 따라) ---------------------------
 window.addEventListener('DOMContentLoaded', function() {
     if (CONFIG.AUTO_LOAD_CCTV) {

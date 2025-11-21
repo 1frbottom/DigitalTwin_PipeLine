@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr, lit
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -407,7 +407,7 @@ query_subway_arrival = subway_arrival_df.writeStream \
     .foreachBatch(write_subway_arrival_to_postgres) \
     .start()
 
-# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 --------
+# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 (지하철 승하차) --------
 
     # LIVE_SUB_PPLTN JSON 스키마 정의 (5분 데이터만)
 schema_sub_ppltn = StructType([
@@ -433,10 +433,11 @@ parsed_sub_ppltn_df = parsed_stream_df_city_data \
         "sub_ppltn_data.*"
     )
 
-    # subway_ppltn_raw 테이블에 저장할 데이터 준비 (5분 단위 원본 데이터)
+    # transit_ppltn_raw 테이블에 저장할 데이터 준비 (지하철)
 subway_ppltn_raw_df = parsed_sub_ppltn_df \
     .select(
         "area_nm",
+        lit("subway").alias("transport_type"),
         # UTC+9 (KST) 변환하여 저장
         (to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("data_time"),
         # 5분 이내 승하차 평균 데이터
@@ -448,8 +449,50 @@ subway_ppltn_raw_df = parsed_sub_ppltn_df \
     ) \
     .filter(col("gton_avg").isNotNull())
 
-    # 데이터베이스 쓰기 함수 (Raw 데이터만 저장)
-def write_subway_ppltn_to_postgres(df, epoch_id):
+# --- 2-5. city_data (city_data_raw)의 live_bus_ppltn 스트림 (버스 승하차) --------
+
+    # LIVE_BUS_PPLTN JSON 스키마 정의
+schema_bus_ppltn = StructType([
+    StructField("BUS_5WTHN_GTON_PPLTN_MIN", StringType(), True),
+    StructField("BUS_5WTHN_GTON_PPLTN_MAX", StringType(), True),
+    StructField("BUS_5WTHN_GTOFF_PPLTN_MIN", StringType(), True),
+    StructField("BUS_5WTHN_GTOFF_PPLTN_MAX", StringType(), True),
+    StructField("BUS_STN_CNT", StringType(), True),
+    StructField("BUS_STN_TIME", StringType(), True)
+])
+
+    # city_data_raw 스트림에서 live_bus_ppltn 필드를 가져와 파싱
+parsed_bus_ppltn_df = parsed_stream_df_city_data \
+    .filter(col("live_bus_ppltn").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("live_bus_ppltn"), schema_bus_ppltn).alias("bus_ppltn_data")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        "bus_ppltn_data.*"
+    )
+
+    # transit_ppltn_raw 테이블에 저장할 데이터 준비 (버스)
+bus_ppltn_raw_df = parsed_bus_ppltn_df \
+    .select(
+        "area_nm",
+        lit("bus").alias("transport_type"),
+        # UTC+9 (KST) 변환하여 저장
+        (to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("data_time"),
+        # 5분 이내 승하차 평균 데이터
+        ((col("BUS_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("BUS_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gton_avg"),
+        ((col("BUS_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()) + col("BUS_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gtoff_avg"),
+        col("BUS_STN_CNT").cast(IntegerType()).alias("stn_cnt")
+    ) \
+    .filter(col("gton_avg").isNotNull())
+
+    # 데이터베이스 쓰기 함수 (대중교통 통합 - Raw 데이터만 저장)
+def write_transit_ppltn_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
         return
 
@@ -457,7 +500,7 @@ def write_subway_ppltn_to_postgres(df, epoch_id):
     from pyspark.sql.window import Window
     from pyspark.sql.functions import row_number
 
-    window_spec = Window.partitionBy("area_nm", "data_time").orderBy(col("data_time").desc())
+    window_spec = Window.partitionBy("area_nm", "transport_type", "data_time").orderBy(col("data_time").desc())
     dedup_raw_df = df.withColumn("row_num", row_number().over(window_spec)) \
                      .filter(col("row_num") == 1) \
                      .drop("row_num")
@@ -465,16 +508,22 @@ def write_subway_ppltn_to_postgres(df, epoch_id):
     dedup_raw_df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "subway_ppltn_raw") \
+      .option("dbtable", "transit_ppltn_raw") \
       .mode("append") \
       .save()
 
     # 집계는 PostgreSQL Trigger가 자동으로 처리합니다
 
-# 5. 스트림 시작
+# 스트림 시작 (지하철)
 query_subway_ppltn = subway_ppltn_raw_df.writeStream \
     .outputMode("append") \
-    .foreachBatch(write_subway_ppltn_to_postgres) \
+    .foreachBatch(write_transit_ppltn_to_postgres) \
+    .start()
+
+# 스트림 시작 (버스)
+query_bus_ppltn = bus_ppltn_raw_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_transit_ppltn_to_postgres) \
     .start()
 
 
