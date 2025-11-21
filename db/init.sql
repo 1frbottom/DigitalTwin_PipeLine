@@ -76,6 +76,16 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
 );
 
+-- 실시간 도시데이터 : 도로소통(평균)
+CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
+    area_nm VARCHAR(50) NOT NULL,
+    road_msg TEXT,
+    road_traffic_idx VARCHAR(50),
+    road_traffic_spd INTEGER,
+    road_traffic_time TIMESTAMP,
+    ingest_timestamp DOUBLE PRECISION
+);
+
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,

@@ -373,61 +373,14 @@ body {
   color: var(--text-sub);
 }
 
-/* ---------- CENTER: DIGITAL TWIN VIEW ---------- */
 
-.dt-card {
-  background: #020617f5;
-  border-radius: 20px;
-  border: 1px solid rgba(30, 64, 175, 0.6);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.6);
-  color: #e5e7eb;
-  padding: 10px 14px 14px 14px;
+
+/* dt-map 안에 들어가는 구글맵 div가 영역 전체를 채우도록 */
+#google-map {
+  width: 100%;
+  height: 100%;
 }
 
-.dt-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-}
-
-.dt-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dt-pill {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  font-size: 10px;
-  color: #e5e7eb;
-}
-
-.badge-sync {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(22, 163, 74, 0.12);
-  color: #bbf7d0;
-  font-size: 10px;
-}
-
-.badge-sync span.dot {
-  background: #22c55e;
-}
-
-.dt-map {
-  position: relative;
-  margin-top: 10px;
-  border-radius: 16px;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  height: 280px;
-  overflow: hidden;
-}
 
 .dt-grid {
   position: absolute;
@@ -502,13 +455,6 @@ body {
   cursor: pointer;
 }
 
-.dt-dot {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
-}
 
 .dt-dot.car {
   background: #38bdf8;
@@ -740,4 +686,16 @@ body {
   color: var(--text-sub);
   font-weight: 500;
   height: 12px;
+}
+
+/* 가운데 구글맵 – 카드 컨테이너 없이 바로 col-center를 채움 */
+.map-main {
+  width: 100%;
+  height: 420px;      /* 여기서 크기 조절 – 더 키우고 싶으면 480px, 520px 등으로 */
+  border-radius: 16px;
+  overflow: hidden;
+  /* 필요하면 아래 두 줄로 약간 그림자 줄 수도 있음 */
+  /* box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+     background: #000; */
+  margin-bottom: 16px; /* 아래 grid-2 카드랑 간격 */
 }
