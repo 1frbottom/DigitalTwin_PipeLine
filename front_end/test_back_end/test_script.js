@@ -425,17 +425,34 @@ async function getSubwayArrivalBoard() {
                         <tr>
                             <th>역명</th>
                             <th>호선</th>
-                            <th>방향</th>
-                            <th>도착 정보</th>
+                            <th>라인</th>
+                            <th>도착예정</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
         data.forEach(item => {
+            const lineNum = item.line_num;
+
+            // 호선 표시 약자 매핑
+            const lineDisplayMap = {
+                '신분당선': '신분',
+                '신분당': '신분',
+                '경의중앙선': '경의',
+                '경의중앙': '경의',
+                '공항철도': '공항',
+                '경춘선': '경춘',
+                '수인분당선': '수분',
+                '수인분당': '수분',
+                '우이신설선': '우이',
+                '우이신설': '우이'
+            };
+            const lineDisplay = lineDisplayMap[lineNum] || lineNum;
+
             boardHTML += `
                 <tr>
                     <td><strong>${item.station_nm}</strong></td>
-                    <td><span class="subway-line line-${item.line_num}">${item.line_num}</span></td>
+                    <td><span class="subway-line-circle line-${lineNum}">${lineDisplay}</span></td>
                     <td class="train-direction">${item.train_line_nm}</td>
                     <td class="arrival-info"><strong>${item.arrival_msg_1 || '-'}</strong></td>
                 </tr>`;
@@ -540,8 +557,8 @@ async function getSubwayPassengerCumulative() {
             tableHTML += `
                 <tr>
                     <td><strong>${timeStr}</strong></td>
-                    <td class="passenger-count">${getOn.toLocaleString()}   명</td>
-                    <td class="passenger-count">${getOff.toLocaleString()}   명</td>
+                    <td class="passenger-count"><strong>${getOn.toLocaleString()}</strong> <span class="count-unit">명</span></td>
+                    <td class="passenger-count"><strong>${getOff.toLocaleString()}</strong> <span class="count-unit">명</span></td>
                     <td><span class="concentration-badge ${concentrationClass}">${concentration}</span></td>
                 </tr>`;
         });

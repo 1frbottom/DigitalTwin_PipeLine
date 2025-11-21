@@ -67,7 +67,7 @@ def read_subway_arrival_board(
     if not arrivals:
         raise HTTPException(status_code=404, detail=f"{area_name}의 지하철 도착 정보를 찾을 수 없습니다.")
 
-    # 갱신 시점 추출 (가장 최신 timestamp)
+    # 갱신 시점 추출 (이미 KST로 저장됨)
     latest_timestamp = max(arrival.ingest_timestamp for arrival in arrivals) if arrivals else None
 
     # 필요한 필드만 추출
@@ -143,7 +143,7 @@ def read_subway_passenger_cumulative(
     if not ppltn_list:
         raise HTTPException(status_code=404, detail=f"{area_name}의 승하차 데이터를 찾을 수 없습니다.")
 
-    # 갱신 시점 추출 (가장 최신 timestamp)
+    # 갱신 시점 추출 (가장 최신 timestamp, 이미 KST로 저장됨)
     latest_timestamp = max(ppltn.last_updated for ppltn in ppltn_list) if ppltn_list else None
 
     # 시간별 누적 데이터 생성
