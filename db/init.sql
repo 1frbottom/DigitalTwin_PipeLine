@@ -1,3 +1,4 @@
+-- cctv stream
 CREATE TABLE IF NOT EXISTS cctv_streams (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -84,8 +85,41 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     road_traffic_spd INTEGER,
     road_traffic_time TIMESTAMP,
     ingest_timestamp DOUBLE PRECISION
+    PRIMARY KEY (area_nm, road_traffic_time)
 );
 
+-- 실시간 도시데이터 : 기상 현황
+CREATE TABLE IF NOT EXISTS city_weather_stts_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    weather_time TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    max_temp DOUBLE PRECISION,
+    min_temp DOUBLE PRECISION,
+    humidity DOUBLE PRECISION,
+    wind_dirct VARCHAR(10),
+    wind_spd DOUBLE PRECISION,
+    precipitation VARCHAR(10),      -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),
+    pcp_msg TEXT,
+    air_idx VARCHAR(50),
+    air_idx_main VARCHAR(50),
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, weather_time)
+);
+
+-- 실시간 도시데이터 : 기상 현황(예측)
+CREATE TABLE IF NOT EXIST city_weather_stts_forecast (
+    area_nm VARCHAR(50) NOT NULL,
+    fcst_dt TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    precipitation VARCHAR(10),     -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),    
+    rain_chance INTEGER,
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, fcst_dt)
+)
+
+-- 실시간 도시데이터 : 지하철 --------------------------------
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,
@@ -102,7 +136,7 @@ CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
 CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
 CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
 
--- 5분 단위 Raw 데이터 테이블
+    -- 5분 단위 Raw 데이터 테이블
 CREATE TABLE IF NOT EXISTS subway_ppltn_raw (
     area_nm VARCHAR(50) NOT NULL,
     data_time TIMESTAMP NOT NULL,
@@ -115,7 +149,7 @@ CREATE TABLE IF NOT EXISTS subway_ppltn_raw (
 CREATE INDEX idx_subway_ppltn_raw_area ON subway_ppltn_raw(area_nm);
 CREATE INDEX idx_subway_ppltn_raw_time ON subway_ppltn_raw(data_time);
 
--- 시간별 집계 테이블
+    -- 시간별 집계 테이블
 CREATE TABLE IF NOT EXISTS subway_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,
     data_date DATE NOT NULL,
@@ -136,7 +170,7 @@ CREATE INDEX idx_subway_ppltn_area ON subway_ppltn_proc(area_nm);
 CREATE INDEX idx_subway_ppltn_date ON subway_ppltn_proc(data_date);
 CREATE INDEX idx_subway_ppltn_hour ON subway_ppltn_proc(hour_slot);
 
--- Raw 데이터 INSERT 시 자동 집계 트리거 함수
+    -- Raw 데이터 INSERT 시 자동 집계 트리거 함수
 CREATE OR REPLACE FUNCTION aggregate_subway_ppltn()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -175,13 +209,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Raw 데이터 INSERT 시 자동 집계 트리거
+    -- Raw 데이터 INSERT 시 자동 집계 트리거
 CREATE TRIGGER trigger_aggregate_subway_ppltn
 AFTER INSERT ON subway_ppltn_raw
 FOR EACH ROW
 EXECUTE FUNCTION aggregate_subway_ppltn();
 
--- 24시간 이전 데이터 자동 삭제 함수
+    -- 24시간 이전 데이터 자동 삭제 함수
 CREATE OR REPLACE FUNCTION delete_old_subway_ppltn()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -191,7 +225,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- INSERT 시마다 24시간 이전 데이터 삭제 트리거
+    -- INSERT 시마다 24시간 이전 데이터 삭제 트리거
 CREATE TRIGGER trigger_delete_old_subway_ppltn
 AFTER INSERT ON subway_ppltn_proc
 FOR EACH STATEMENT
