@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     ingest_timestamp DOUBLE PRECISION
 );
 
+-- 실시간 도시데이터 : 도로소통(평균)
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,
@@ -95,6 +96,37 @@ CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     arrival_msg_2 TEXT,
     ingest_timestamp TIMESTAMP NOT NULL,
     PRIMARY KEY (area_nm, station_nm, line_num, train_line_nm, ingest_timestamp)
+);
+
+-- 실시간 도시데이터 : 기상 현황
+CREATE TABLE IF NOT EXISTS city_weather_stts_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    weather_time TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    max_temp DOUBLE PRECISION,
+    min_temp DOUBLE PRECISION,
+    humidity DOUBLE PRECISION,
+    wind_dirct VARCHAR(10),
+    wind_spd DOUBLE PRECISION,
+    precipitation VARCHAR(10),      -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),
+    pcp_msg TEXT,
+    air_idx VARCHAR(50),
+    air_idx_main VARCHAR(50),
+    ingest_timestamp DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (area_nm, weather_time, ingest_timestamp)
+);
+
+-- 실시간 도시데이터 : 기상 현황(예측)
+CREATE TABLE IF NOT EXISTS city_weather_stts_forecast (
+    area_nm VARCHAR(50) NOT NULL,
+    fcst_dt TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    precipitation VARCHAR(10),     -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),    
+    rain_chance INTEGER,
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, fcst_dt, ingest_timestamp)
 );
 
 CREATE INDEX idx_subway_station ON subway_arrival_proc(station_nm);
