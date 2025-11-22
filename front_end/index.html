@@ -169,50 +169,9 @@
         </section>
 
         <section class="col-center">
-          <article class="dt-card">
-            <div class="dt-header">
-              <div class="dt-header-left">
-                <div class="card-title" style="color: #e5e7eb">
-                  디지털트윈 뷰
-                </div>
-                <div class="dt-pill">강남역 반경 500m</div>
-              </div>
-              <div class="badge-sync">
-                <span class="dot"></span>
-                <span id="sync-lag">동기화 지연 &lt; 3초</span>
-              </div>
-            </div>
+          
+           <div id="google-map" class="map-main"></div>
 
-            <div class="dt-map">
-              <div class="dt-grid"></div>
-
-              <div class="dt-dot car" style="left: 32%; top: 36%"></div>
-              <div class="dt-dot car" style="left: 65%; top: 48%"></div>
-              <div class="dt-dot car" style="left: 44%; top: 72%"></div>
-
-              <div class="dt-dot person" style="left: 55%; top: 30%"></div>
-              <div class="dt-dot person" style="left: 22%; top: 63%"></div>
-
-              <div class="dt-dot crowd" style="left: 50%; top: 50%"></div>
-
-              <button class="dt-btn" type="button">3D 보기 전환</button>
-
-              <div class="dt-legend">
-                <div class="legend-item">
-                  <div class="legend-dot car"></div>
-                  <span>차량</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-dot person"></div>
-                  <span>보행자</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-dot crowd"></div>
-                  <span>혼잡</span>
-                </div>
-              </div>
-            </div>
-          </article>
 
           <div class="grid-2 mt-4">
             <article class="card">
@@ -424,6 +383,11 @@
       </main>
     </div>
 
-    <script src="script.js"></script>
+        <script src="script.js"></script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
+    ></script>
   </body>
 </html>

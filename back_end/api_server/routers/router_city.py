@@ -49,3 +49,24 @@ def read_road_traffic(area_name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"{area_name}의 도로 소통 데이터를 찾을 수 없습니다.")
     return traffic_data
 
+# (4) 기상 현황 조회 API
+@router.get("/weather/current", response_model=model_city.CityWeatherProcBase)
+def read_current_weather(area_name: str, db: Session = Depends(get_db)):
+    """
+    특정 지역의 가장 최신 기상 현황을 조회합니다.
+    """
+    weather_data = crud_city.get_city_weather_proc(db, area_name=area_name)
+    if not weather_data:
+        raise HTTPException(status_code=404, detail=f"{area_name}의 기상 현황 데이터를 찾을 수 없습니다.")
+    return weather_data
+
+# (5) 기상 예측 조회 API
+@router.get("/weather/forecast", response_model=List[model_city.CityWeatherForecastBase])
+def read_weather_forecast(area_name: str, db: Session = Depends(get_db)):
+    """
+    특정 지역의 최신 기상 예보 리스트(24시간)를 조회합니다.
+    """
+    forecast_data = crud_city.get_city_weather_forecast(db, area_name=area_name)
+    if not forecast_data:
+        raise HTTPException(status_code=404, detail=f"{area_name}의 기상 예보 데이터를 찾을 수 없습니다.")
+    return forecast_data
