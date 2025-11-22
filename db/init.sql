@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     road_traffic_idx VARCHAR(50),
     road_traffic_spd INTEGER,
     road_traffic_time TIMESTAMP,
-    ingest_timestamp DOUBLE PRECISION
+    ingest_timestamp DOUBLE PRECISION,
     PRIMARY KEY (area_nm, road_traffic_time)
 );
 
@@ -103,12 +103,12 @@ CREATE TABLE IF NOT EXISTS city_weather_stts_proc (
     pcp_msg TEXT,
     air_idx VARCHAR(50),
     air_idx_main VARCHAR(50),
-    ingest_timestamp DOUBLE PRECISION,
-    PRIMARY KEY (area_nm, weather_time)
+    ingest_timestamp DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (area_nm, weather_time, ingest_timestamp)
 );
 
 -- 실시간 도시데이터 : 기상 현황(예측)
-CREATE TABLE IF NOT EXIST city_weather_stts_forecast (
+CREATE TABLE IF NOT EXISTS city_weather_stts_forecast (
     area_nm VARCHAR(50) NOT NULL,
     fcst_dt TIMESTAMP NOT NULL,
     temp DOUBLE PRECISION,
@@ -116,10 +116,10 @@ CREATE TABLE IF NOT EXIST city_weather_stts_forecast (
     precpt_type VARCHAR(50),    
     rain_chance INTEGER,
     ingest_timestamp DOUBLE PRECISION,
-    PRIMARY KEY (area_nm, fcst_dt)
-)
+    PRIMARY KEY (area_nm, fcst_dt, ingest_timestamp)
+);
 
--- 실시간 도시데이터 : 지하철 --------------------------------
+-- 실시간 도시데이터 : 지하철 도착 --------------------------------
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,

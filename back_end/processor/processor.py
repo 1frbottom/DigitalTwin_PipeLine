@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, coalesce, get_json_object
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -59,7 +59,7 @@ def write_incident_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
             return
     
-    # [수정] 배치 내 중복 데이터 제거 (PK 충돌 방지)
+    # 배치 내 중복 데이터 제거
     df_dedup = df.dropDuplicates(['acc_id', 'timestamp'])
         
     df_dedup.write \
@@ -407,7 +407,7 @@ query_subway_arrival = subway_arrival_df.writeStream \
     .foreachBatch(write_subway_arrival_to_postgres) \
     .start()
 
-# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 --------
+# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 ------------------
 
     # LIVE_SUB_PPLTN JSON 스키마 정의 (5분 데이터만)
 schema_sub_ppltn = StructType([
@@ -478,7 +478,135 @@ query_subway_ppltn = subway_ppltn_raw_df.writeStream \
 
 # --- 2-5. city_data (city_data_raw)의 WEATHER_STTS 스트림 --------
 
+    # 스키마 정의 - 예보 리스트 내부 아이템 (최하위 FCST24HOURS)
+schema_weather_fcst_item = StructType([
+    StructField("FCST_DT", StringType(), True),
+    StructField("TEMP", StringType(), True),
+    StructField("PRECIPITATION", StringType(), True),
+    StructField("PRECPT_TYPE", StringType(), True),
+    StructField("RAIN_CHANCE", StringType(), True),
+])
 
+    # WEATHER_STTS 전체 스키마 (껍데기 벗겨낸 내부 데이터용)
+schema_weather_outer = StructType([
+    StructField("WEATHER_TIME", StringType(), True),
+    StructField("TEMP", StringType(), True),
+    StructField("MAX_TEMP", StringType(), True),
+    StructField("MIN_TEMP", StringType(), True),
+    StructField("HUMIDITY", StringType(), True),
+    StructField("WIND_DIRCT", StringType(), True),
+    StructField("WIND_SPD", StringType(), True),
+    StructField("PRECIPITATION", StringType(), True), 
+    StructField("PRECPT_TYPE", StringType(), True),
+    StructField("PCP_MSG", StringType(), True),
+    StructField("AIR_IDX", StringType(), True),
+    StructField("AIR_IDX_MAIN", StringType(), True)
+])
+
+    # 데이터 파싱
+        # 1. 현황 데이터: get_json_object(..., "$.WEATHER_STTS")로 내부 껍데기 진입
+        # 2. 예보 데이터: coalesce로 이중/단일 구조 모두 대응
+prepared_weather_df = parsed_stream_df_city_data \
+    .filter(col("weather_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        col("weather_stts"), # 원본 JSON 유지 (예보 추출용)
+        # [핵심 수정] $.WEATHER_STTS 경로를 지정하여 내부 객체만 파싱
+        from_json(
+            get_json_object(col("weather_stts"), "$.WEATHER_STTS"), 
+            schema_weather_outer
+        ).alias("weather_data")
+    )
+
+    # (Table 1) 기상 현황 데이터 (city_weather_stts_proc) 처리
+weather_proc_df = prepared_weather_df \
+    .select(
+        col("area_nm"),
+        to_timestamp(col("weather_data.WEATHER_TIME"), "yyyy-MM-dd HH:mm").alias("weather_time"),
+        col("weather_data.TEMP").cast(DoubleType()).alias("temp"),
+        col("weather_data.MAX_TEMP").cast(DoubleType()).alias("max_temp"),
+        col("weather_data.MIN_TEMP").cast(DoubleType()).alias("min_temp"),
+        col("weather_data.HUMIDITY").cast(DoubleType()).alias("humidity"),
+        col("weather_data.WIND_DIRCT").alias("wind_dirct"),
+        col("weather_data.WIND_SPD").cast(DoubleType()).alias("wind_spd"),
+        col("weather_data.PRECIPITATION").alias("precipitation"),
+        col("weather_data.PRECPT_TYPE").alias("precpt_type"),
+        col("weather_data.PCP_MSG").alias("pcp_msg"),
+        col("weather_data.AIR_IDX").alias("air_idx"),
+        col("weather_data.AIR_IDX_MAIN").alias("air_idx_main"),
+        col("ingest_timestamp")
+    ) \
+    .filter(col("weather_time").isNotNull())
+
+    # (Table 2) 기상 예보 데이터 (city_weather_stts_forecast) 처리
+weather_forecast_raw_df = prepared_weather_df \
+    .withColumn("fcst_json_str", 
+        coalesce(
+            get_json_object(col("weather_stts"), "$.WEATHER_STTS.FCST24HOURS.FCST24HOURS"),
+            get_json_object(col("weather_stts"), "$.WEATHER_STTS.FCST24HOURS"),
+            get_json_object(col("weather_stts"), "$.FCST24HOURS.FCST24HOURS")
+        )
+    ) \
+    .filter(col("fcst_json_str").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("ingest_timestamp"),
+        from_json(col("fcst_json_str"), ArrayType(schema_weather_fcst_item)).alias("fcst_list")
+    )
+
+weather_forecast_df = weather_forecast_raw_df \
+    .select(
+        col("area_nm"),
+        col("ingest_timestamp"),
+        explode(col("fcst_list")).alias("fcst")
+    ) \
+    .select(
+        col("area_nm"),
+        to_timestamp(col("fcst.FCST_DT"), "yyyyMMddHHmm").alias("fcst_dt"),
+        col("fcst.TEMP").cast(DoubleType()).alias("temp"),
+        col("fcst.PRECIPITATION").alias("precipitation"),
+        col("fcst.PRECPT_TYPE").alias("precpt_type"),
+        col("fcst.RAIN_CHANCE").cast(IntegerType()).alias("rain_chance"),
+        col("ingest_timestamp")
+    ) \
+    .filter(col("fcst_dt").isNotNull())
+
+    # DB 저장 함수 정의
+def write_weather_proc_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+    
+    # PK 중복 방지 (지역명 + 날씨시간)
+    df.dropDuplicates(['area_nm', 'weather_time']).write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "city_weather_stts_proc") \
+      .mode("append") \
+      .save()
+
+def write_weather_forecast_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+        
+    # PK 중복 방지 (지역명 + 예보시간)
+    df.dropDuplicates(['area_nm', 'fcst_dt']).write \
+      .format("jdbc") \
+      .options(**db_properties) \
+      .option("dbtable", "city_weather_stts_forecast") \
+      .mode("append") \
+      .save()
+
+    # 스트림 시작
+query_weather_proc = weather_proc_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_weather_proc_to_postgres) \
+    .start()
+
+query_weather_forecast = weather_forecast_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_weather_forecast_to_postgres) \
+    .start()
 
 
 

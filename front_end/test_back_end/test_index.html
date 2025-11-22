@@ -150,6 +150,31 @@
             <div id="subway-passenger-table"></div>
         </div>
 
+        <div class="api-section">
+            <h2>실시간 기상 정보 (Weather)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/weather/...</p>
+            
+            <div class="button-group">
+                <input type="text" id="weatherAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityWeatherCurrent()">기상 현황 조회</button>
+                <button onclick="getCityWeatherForecast()">기상 예측 조회 (24시간)</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                기상 현황 (Current)
+                <span id="weather-current-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="weather-current-response" class="response-box" style="display: none;"></div>
+            <div id="weather-current-ui" style="margin-top: 10px;"></div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                기상 예측 (Forecast)
+                <span id="weather-forecast-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="weather-forecast-response" class="response-box" style="display: none;"></div>
+            <div id="weather-forecast-table"></div>
+        </div>
+
     </div>
 
 
