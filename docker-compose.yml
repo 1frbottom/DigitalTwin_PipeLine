@@ -49,7 +49,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: traffic_db
     ports:
-      - "6432:5432"
+      - "8300:5432"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
@@ -84,9 +84,12 @@ services:
     volumes:
       - ./back_end/processor:/opt/spark/work-dir
     command: /bin/sh -c "echo 'Submitting Spark job' && \
-      /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 /opt/spark/work-dir/processor.py"
+      /opt/spark/bin/spark-submit \
+      --master spark://spark-master:7077 \
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 \
+      /opt/spark/work-dir/processor.py"
 
-  roducer:
+  producer:
     image: python:3.9-slim
     container_name: producer
     depends_on:

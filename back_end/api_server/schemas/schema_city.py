@@ -40,3 +40,34 @@ class LiveRoadTrafficAvg(Base):
     road_traffic_spd = Column(Integer)
     road_traffic_time = Column(DateTime, primary_key=True)
     ingest_timestamp = Column(Float)
+
+# (4) city_weather_stts_proc 테이블 매핑 (기상 현황)
+class CityWeatherProc(Base):
+    __tablename__ = "city_weather_stts_proc"
+
+    area_nm = Column(String, primary_key=True)
+    weather_time = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    max_temp = Column(Float)
+    min_temp = Column(Float)
+    humidity = Column(Float)
+    wind_dirct = Column(String)
+    wind_spd = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    pcp_msg = Column(Text)
+    air_idx = Column(String)
+    air_idx_main = Column(String)
+    ingest_timestamp = Column(Float, primary_key=True)
+
+# (5) city_weather_stts_forecast 테이블 매핑 (기상 예측)
+class CityWeatherForecast(Base):
+    __tablename__ = "city_weather_stts_forecast"
+
+    area_nm = Column(String, primary_key=True)
+    fcst_dt = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    rain_chance = Column(Integer)
+    ingest_timestamp = Column(Float, primary_key=True)
