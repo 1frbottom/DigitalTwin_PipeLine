@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, coalesce, get_json_object
+from pyspark.sql.functions import from_json, col, to_timestamp, explode, date_trunc, hour, to_date, expr, lit
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, ArrayType
 
 
@@ -59,7 +59,7 @@ def write_incident_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
             return
     
-    # 배치 내 중복 데이터 제거
+    # [수정] 배치 내 중복 데이터 제거 (PK 충돌 방지)
     df_dedup = df.dropDuplicates(['acc_id', 'timestamp'])
         
     df_dedup.write \
@@ -357,8 +357,8 @@ parsed_subway_df = parsed_stream_df_city_data \
         col("detail.SUB_ROUTE_NM").alias("train_line_nm"),
         col("detail.SUB_ARMG1").alias("arrival_msg_1"),
         col("detail.SUB_ARMG2").alias("arrival_msg_2"),
-        # 타임스탬프를 초 단위로 truncate - 갱신 시각 통일
-        date_trunc("second", to_timestamp(col("ingest_timestamp"))).alias("ingest_timestamp")
+        # UTC+9 (KST) 변환 후 초 단위로 truncate - 갱신 시각 통일
+        date_trunc("second", to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("ingest_timestamp")
     )
 
     # 도착 데이터 필터링
@@ -407,7 +407,7 @@ query_subway_arrival = subway_arrival_df.writeStream \
     .foreachBatch(write_subway_arrival_to_postgres) \
     .start()
 
-# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 ------------------
+# --- 2-4. city_data (city_data_raw)의 live_sub_ppltn 스트림 (지하철 승하차) --------
 
     # LIVE_SUB_PPLTN JSON 스키마 정의 (5분 데이터만)
 schema_sub_ppltn = StructType([
@@ -433,11 +433,13 @@ parsed_sub_ppltn_df = parsed_stream_df_city_data \
         "sub_ppltn_data.*"
     )
 
-    # subway_ppltn_raw 테이블에 저장할 데이터 준비 (5분 단위 원본 데이터)
+    # transit_ppltn_raw 테이블에 저장할 데이터 준비 (지하철)
 subway_ppltn_raw_df = parsed_sub_ppltn_df \
     .select(
         "area_nm",
-        to_timestamp(col("ingest_timestamp")).alias("data_time"),
+        lit("subway").alias("transport_type"),
+        # UTC+9 (KST) 변환하여 저장
+        (to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("data_time"),
         # 5분 이내 승하차 평균 데이터
         ((col("SUB_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("SUB_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
             .cast(IntegerType()).alias("gton_avg"),
@@ -447,8 +449,50 @@ subway_ppltn_raw_df = parsed_sub_ppltn_df \
     ) \
     .filter(col("gton_avg").isNotNull())
 
-    # 데이터베이스 쓰기 함수 (Raw 데이터만 저장)
-def write_subway_ppltn_to_postgres(df, epoch_id):
+# --- 2-5. city_data (city_data_raw)의 live_bus_ppltn 스트림 (버스 승하차) --------
+
+    # LIVE_BUS_PPLTN JSON 스키마 정의
+schema_bus_ppltn = StructType([
+    StructField("BUS_5WTHN_GTON_PPLTN_MIN", StringType(), True),
+    StructField("BUS_5WTHN_GTON_PPLTN_MAX", StringType(), True),
+    StructField("BUS_5WTHN_GTOFF_PPLTN_MIN", StringType(), True),
+    StructField("BUS_5WTHN_GTOFF_PPLTN_MAX", StringType(), True),
+    StructField("BUS_STN_CNT", StringType(), True),
+    StructField("BUS_STN_TIME", StringType(), True)
+])
+
+    # city_data_raw 스트림에서 live_bus_ppltn 필드를 가져와 파싱
+parsed_bus_ppltn_df = parsed_stream_df_city_data \
+    .filter(col("live_bus_ppltn").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("live_bus_ppltn"), schema_bus_ppltn).alias("bus_ppltn_data")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        "bus_ppltn_data.*"
+    )
+
+    # transit_ppltn_raw 테이블에 저장할 데이터 준비 (버스)
+bus_ppltn_raw_df = parsed_bus_ppltn_df \
+    .select(
+        "area_nm",
+        lit("bus").alias("transport_type"),
+        # UTC+9 (KST) 변환하여 저장
+        (to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("data_time"),
+        # 5분 이내 승하차 평균 데이터
+        ((col("BUS_5WTHN_GTON_PPLTN_MIN").cast(IntegerType()) + col("BUS_5WTHN_GTON_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gton_avg"),
+        ((col("BUS_5WTHN_GTOFF_PPLTN_MIN").cast(IntegerType()) + col("BUS_5WTHN_GTOFF_PPLTN_MAX").cast(IntegerType())) / 2)
+            .cast(IntegerType()).alias("gtoff_avg"),
+        col("BUS_STN_CNT").cast(IntegerType()).alias("stn_cnt")
+    ) \
+    .filter(col("gton_avg").isNotNull())
+
+    # 데이터베이스 쓰기 함수 (대중교통 통합 - Raw 데이터만 저장)
+def write_transit_ppltn_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
         return
 
@@ -456,7 +500,7 @@ def write_subway_ppltn_to_postgres(df, epoch_id):
     from pyspark.sql.window import Window
     from pyspark.sql.functions import row_number
 
-    window_spec = Window.partitionBy("area_nm", "data_time").orderBy(col("data_time").desc())
+    window_spec = Window.partitionBy("area_nm", "transport_type", "data_time").orderBy(col("data_time").desc())
     dedup_raw_df = df.withColumn("row_num", row_number().over(window_spec)) \
                      .filter(col("row_num") == 1) \
                      .drop("row_num")
@@ -464,154 +508,23 @@ def write_subway_ppltn_to_postgres(df, epoch_id):
     dedup_raw_df.write \
       .format("jdbc") \
       .options(**db_properties) \
-      .option("dbtable", "subway_ppltn_raw") \
+      .option("dbtable", "transit_ppltn_raw") \
       .mode("append") \
       .save()
 
     # 집계는 PostgreSQL Trigger가 자동으로 처리합니다
 
-# 5. 스트림 시작
+# 스트림 시작 (지하철)
 query_subway_ppltn = subway_ppltn_raw_df.writeStream \
     .outputMode("append") \
-    .foreachBatch(write_subway_ppltn_to_postgres) \
+    .foreachBatch(write_transit_ppltn_to_postgres) \
     .start()
 
-# --- 2-5. city_data (city_data_raw)의 WEATHER_STTS 스트림 --------
-
-    # 스키마 정의 - 예보 리스트 내부 아이템 (최하위 FCST24HOURS)
-schema_weather_fcst_item = StructType([
-    StructField("FCST_DT", StringType(), True),
-    StructField("TEMP", StringType(), True),
-    StructField("PRECIPITATION", StringType(), True),
-    StructField("PRECPT_TYPE", StringType(), True),
-    StructField("RAIN_CHANCE", StringType(), True),
-])
-
-    # WEATHER_STTS 전체 스키마 (껍데기 벗겨낸 내부 데이터용)
-schema_weather_outer = StructType([
-    StructField("WEATHER_TIME", StringType(), True),
-    StructField("TEMP", StringType(), True),
-    StructField("MAX_TEMP", StringType(), True),
-    StructField("MIN_TEMP", StringType(), True),
-    StructField("HUMIDITY", StringType(), True),
-    StructField("WIND_DIRCT", StringType(), True),
-    StructField("WIND_SPD", StringType(), True),
-    StructField("PRECIPITATION", StringType(), True), 
-    StructField("PRECPT_TYPE", StringType(), True),
-    StructField("PCP_MSG", StringType(), True),
-    StructField("AIR_IDX", StringType(), True),
-    StructField("AIR_IDX_MAIN", StringType(), True)
-])
-
-    # 데이터 파싱
-        # 1. 현황 데이터: get_json_object(..., "$.WEATHER_STTS")로 내부 껍데기 진입
-        # 2. 예보 데이터: coalesce로 이중/단일 구조 모두 대응
-prepared_weather_df = parsed_stream_df_city_data \
-    .filter(col("weather_stts").isNotNull()) \
-    .select(
-        col("area_nm"),
-        col("timestamp").alias("ingest_timestamp"),
-        col("weather_stts"), # 원본 JSON 유지 (예보 추출용)
-        # [핵심 수정] $.WEATHER_STTS 경로를 지정하여 내부 객체만 파싱
-        from_json(
-            get_json_object(col("weather_stts"), "$.WEATHER_STTS"), 
-            schema_weather_outer
-        ).alias("weather_data")
-    )
-
-    # (Table 1) 기상 현황 데이터 (city_weather_stts_proc) 처리
-weather_proc_df = prepared_weather_df \
-    .select(
-        col("area_nm"),
-        to_timestamp(col("weather_data.WEATHER_TIME"), "yyyy-MM-dd HH:mm").alias("weather_time"),
-        col("weather_data.TEMP").cast(DoubleType()).alias("temp"),
-        col("weather_data.MAX_TEMP").cast(DoubleType()).alias("max_temp"),
-        col("weather_data.MIN_TEMP").cast(DoubleType()).alias("min_temp"),
-        col("weather_data.HUMIDITY").cast(DoubleType()).alias("humidity"),
-        col("weather_data.WIND_DIRCT").alias("wind_dirct"),
-        col("weather_data.WIND_SPD").cast(DoubleType()).alias("wind_spd"),
-        col("weather_data.PRECIPITATION").alias("precipitation"),
-        col("weather_data.PRECPT_TYPE").alias("precpt_type"),
-        col("weather_data.PCP_MSG").alias("pcp_msg"),
-        col("weather_data.AIR_IDX").alias("air_idx"),
-        col("weather_data.AIR_IDX_MAIN").alias("air_idx_main"),
-        col("ingest_timestamp")
-    ) \
-    .filter(col("weather_time").isNotNull())
-
-    # (Table 2) 기상 예보 데이터 (city_weather_stts_forecast) 처리
-weather_forecast_raw_df = prepared_weather_df \
-    .withColumn("fcst_json_str", 
-        coalesce(
-            get_json_object(col("weather_stts"), "$.WEATHER_STTS.FCST24HOURS.FCST24HOURS"),
-            get_json_object(col("weather_stts"), "$.WEATHER_STTS.FCST24HOURS"),
-            get_json_object(col("weather_stts"), "$.FCST24HOURS.FCST24HOURS")
-        )
-    ) \
-    .filter(col("fcst_json_str").isNotNull()) \
-    .select(
-        col("area_nm"),
-        col("ingest_timestamp"),
-        from_json(col("fcst_json_str"), ArrayType(schema_weather_fcst_item)).alias("fcst_list")
-    )
-
-weather_forecast_df = weather_forecast_raw_df \
-    .select(
-        col("area_nm"),
-        col("ingest_timestamp"),
-        explode(col("fcst_list")).alias("fcst")
-    ) \
-    .select(
-        col("area_nm"),
-        to_timestamp(col("fcst.FCST_DT"), "yyyyMMddHHmm").alias("fcst_dt"),
-        col("fcst.TEMP").cast(DoubleType()).alias("temp"),
-        col("fcst.PRECIPITATION").alias("precipitation"),
-        col("fcst.PRECPT_TYPE").alias("precpt_type"),
-        col("fcst.RAIN_CHANCE").cast(IntegerType()).alias("rain_chance"),
-        col("ingest_timestamp")
-    ) \
-    .filter(col("fcst_dt").isNotNull())
-
-    # DB 저장 함수 정의
-def write_weather_proc_to_postgres(df, epoch_id):
-    if df.rdd.isEmpty():
-        return
-    
-    # PK 중복 방지 (지역명 + 날씨시간)
-    df.dropDuplicates(['area_nm', 'weather_time']).write \
-      .format("jdbc") \
-      .options(**db_properties) \
-      .option("dbtable", "city_weather_stts_proc") \
-      .mode("append") \
-      .save()
-
-def write_weather_forecast_to_postgres(df, epoch_id):
-    if df.rdd.isEmpty():
-        return
-        
-    # PK 중복 방지 (지역명 + 예보시간)
-    df.dropDuplicates(['area_nm', 'fcst_dt']).write \
-      .format("jdbc") \
-      .options(**db_properties) \
-      .option("dbtable", "city_weather_stts_forecast") \
-      .mode("append") \
-      .save()
-
-    # 스트림 시작
-query_weather_proc = weather_proc_df.writeStream \
+# 스트림 시작 (버스)
+query_bus_ppltn = bus_ppltn_raw_df.writeStream \
     .outputMode("append") \
-    .foreachBatch(write_weather_proc_to_postgres) \
+    .foreachBatch(write_transit_ppltn_to_postgres) \
     .start()
-
-query_weather_forecast = weather_forecast_df.writeStream \
-    .outputMode("append") \
-    .foreachBatch(write_weather_forecast_to_postgres) \
-    .start()
-
-
-
-
-
 
 
 
