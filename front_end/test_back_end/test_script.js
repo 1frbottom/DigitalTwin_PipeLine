@@ -1,13 +1,12 @@
-// ========================================
-// 설정
-// ========================================
+// Config
+const API_BASE_URL = "http://localhost:58000";
+
 const CONFIG = {
     AUTO_LOAD_CCTV: true,  // CCTV 자동 로드 (false로 변경하면 비활성화)
     AUTO_PLAY_CCTV: true   // CCTV 자동 재생 (false로 변경하면 비활성화)
 };
 
-// const API_BASE_URL = `http://${window.location.hostname}:8000`;
-const API_BASE_URL = `http://localhost:8000`;
+// ------------------------------------------------------------------------
 
 async function fetchAPI(endpoint, params = {}) {
     try {
@@ -21,7 +20,7 @@ async function fetchAPI(endpoint, params = {}) {
     } catch (error) {
         return { status: 'error', error: error.message };
     }
-}
+}   
 
 // 1. 헬스 체크
 async function getHealth() {
