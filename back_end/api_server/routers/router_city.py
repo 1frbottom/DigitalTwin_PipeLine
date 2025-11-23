@@ -70,3 +70,16 @@ def read_weather_forecast(area_name: str, db: Session = Depends(get_db)):
     if not forecast_data:
         raise HTTPException(status_code=404, detail=f"{area_name}의 기상 예보 데이터를 찾을 수 없습니다.")
     return forecast_data
+
+# (6) 문화행사 현황 조회 API
+@router.get("/events/cultural", response_model=List[model_city.CulturalEventBase])
+def read_cultural_events(area_name: str, limit: int = 10, db: Session = Depends(get_db)):
+    """
+    특정 지역의 주변 문화행사 정보를 조회합니다.
+    city_data_raw 테이블의 event_stts(JSON)에서 직접 파싱하여 반환합니다.
+    """
+    events_data = crud_city.get_city_cultural_events(db, area_name=area_name, limit=limit)
+    if not events_data:
+        return []  # 문화행사가 없을 수 있으므로 빈 배열 반환
+    return events_data
+
