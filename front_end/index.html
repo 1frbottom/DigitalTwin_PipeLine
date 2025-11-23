@@ -21,18 +21,17 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
-          <div class="header-right">
-            <div class="weather-block">
-              <div class="weather-icon">🌙</div>
-              <div class="weather-text">
-                <p class="temp">5.0℃</p>
-                <p class="desc">미세 · 초미세 보통</p>
+          <div class="weather-block">
+            <div class="weather-icon">🌙</div>
+            <div class="weather-info">
+              <div class="weather-temp">5.0℃</div>
+              <div class="weather-air">
+                <span class="air-label">미세</span>
+                <span class="air-value">보통</span>
+                <span class="air-divider">·</span>
+                <span class="air-label">초미세</span>
+                <span class="air-value">보통</span>
               </div>
-            </div>
-            <div class="divider-vert"></div>
-            <div class="time-block">
-              <p class="label">실시간 동기화 기준</p>
-              <p id="timestamp" class="value">---</p>
             </div>
           </div>
         </div>
@@ -40,8 +39,10 @@
       </header>
 
       <main class="layout">
+        <!-- LEFT COLUMN -->
         <section class="col-left">
-          <article class="card">
+          <!-- 실시간 인구수 -->
+          <article class="card card-population" id="card-population">
             <div class="card-header">
               <div class="card-title">실시간 인구수</div>
               <div id="pop-congest" class="tag">데이터 수신중</div>
@@ -66,15 +67,20 @@
               </div>
             </div>
 
-            <div id="forecast-chart" class="forecast-wrap">
-                </div>
+            <div id="forecast-chart" class="forecast-wrap"></div>
 
             <div class="card-timestamp-row">
-              <div id="pop-time">--:-- 기준</div>
+              <div class="last-refresh">
+                최근 갱신: <span id="pop-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="pop-next">--:--:--</span>
+              </div>
             </div>
           </article>
 
-          <article class="card card-muted">
+          <!-- 도로 소통 & 주차장 -->
+          <article class="card card-muted" id="card-traffic">
             <div class="card-header">
               <div class="card-title">도로 소통 단계</div>
               <div class="tag">강남역 사거리 기준</div>
@@ -95,38 +101,36 @@
                 </div>
                 <div class="icon-badge" style="background: #eff6ff">🚗</div>
               </div>
+
+              <div class="card-row" style="margin-top:6px;">
+                <span>주차장 여유도</span>
+                <span class="text-strong">보통 (공영 3곳 기준)</span>
+              </div>
               <div class="traffic-bar-wrap">
                 <div class="traffic-bar-bg">
                   <div class="traffic-bar-fg"></div>
                 </div>
-                <div
-                  style="
-                    margin-top: 4px;
-                    font-size: 11px;
-                    color: var(--text-sub);
-                  "
-                >
+                <div style="margin-top: 4px; font-size: 11px; color: var(--text-sub);">
                   1시간 내 <span class="text-strong">정체 가능성 높음</span>
                 </div>
               </div>
             </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="traffic-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="traffic-next">--:--:--</span>
+              </div>
+            </div>
           </article>
 
-          <article class="card">
+          <!-- 대중교통 -->
+          <article class="card" id="card-transport">
             <div class="card-header">
               <div class="card-title">대중교통</div>
-              <button
-                style="
-                  border: none;
-                  background: transparent;
-                  font-size: 11px;
-                  color: var(--accent);
-                  cursor: pointer;
-                  padding: 0;
-                "
-              >
-                상세보기 &rsaquo;
-              </button>
+              <button class="link-button">상세보기 &rsaquo;</button>
             </div>
             <div class="card-body">
               <div class="public-row">
@@ -154,27 +158,33 @@
                   </div>
                 </div>
               </div>
-              <div
-                style="
-                  margin-top: 8px;
-                  font-size: 11px;
-                  color: var(--text-sub);
-                  text-align: right;
-                "
-              >
+              <div style="margin-top: 8px; font-size: 11px; color: var(--text-sub); text-align: right;">
                 평균 지연 2~3분
+              </div>
+            </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="transport-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="transport-next">--:--:--</span>
               </div>
             </div>
           </article>
         </section>
 
+        <!-- CENTER COLUMN -->
         <section class="col-center">
-          
-           <div id="google-map" class="map-main"></div>
-
+          <!-- 디지털트윈 뷰 - 박스 없이 지도만 -->
+          <div class="dt-map-full">
+            <div id="google-map"></div>
+            <button class="dt-btn-overlay" type="button">3D 보기 전환</button>
+          </div>
 
           <div class="grid-2 mt-4">
-            <article class="card">
+            <!-- 실시간 안전지수 -->
+            <article class="card" id="card-safety">
               <div class="card-header">
                 <div class="card-title">실시간 안전지수</div>
                 <div class="tag-amber tag">경계 단계</div>
@@ -184,41 +194,33 @@
                   73<span style="font-size: 13px; color: #9ca3af"> / 120</span>
                 </div>
                 <div style="font-size: 11px; margin-top: 4px">
-                  80 이상 시 <span class="text-strong" style="color: #b91c1c"
-                    >위험 단계</span
-                  >
-                  로 전환
+                  80 이상 시 <span class="text-strong" style="color: #b91c1c">위험 단계</span>로 전환
                 </div>
                 <div class="safety-graph-bars">
-                  <div
-                    class="safety-bar"
-                    style="height: calc(50% * 0.8)"
-                  ></div>
-                  <div
-                    class="safety-bar"
-                    style="height: calc(55% * 0.8)"
-                  ></div>
-                  <div
-                    class="safety-bar"
-                    style="height: calc(60% * 0.8)"
-                  ></div>
-                  <div
-                    class="safety-bar"
-                    style="height: calc(68% * 0.8)"
-                  ></div>
-                  <div
-                    class="safety-bar"
-                    style="height: calc(73% * 0.8)"
-                  ></div>
+                  <div class="safety-bar" style="height: calc(50% * 0.8)"></div>
+                  <div class="safety-bar" style="height: calc(55% * 0.8)"></div>
+                  <div class="safety-bar" style="height: calc(60% * 0.8)"></div>
+                  <div class="safety-bar" style="height: calc(68% * 0.8)"></div>
+                  <div class="safety-bar" style="height: calc(73% * 0.8)"></div>
                 </div>
                 <div class="safety-caption">
                   <span>5분 전</span>
                   <span>현재</span>
                 </div>
               </div>
+
+              <div class="card-timestamp-row">
+                <div class="last-refresh">
+                  최근 갱신: <span id="safety-last">--:--:--</span>
+                </div>
+                <div class="next-refresh">
+                  다음 갱신: <span id="safety-next">--:--:--</span>
+                </div>
+              </div>
             </article>
 
-            <article class="card">
+            <!-- 30분 후 혼잡 예측 -->
+            <article class="card" id="card-prediction">
               <div class="card-header">
                 <div class="card-title">30분 후 혼잡 예측</div>
                 <div class="tag">AI 예측</div>
@@ -226,10 +228,7 @@
               <div class="card-body">
                 <div style="font-size: 13px">
                   향후 20~40분 사이
-                  <span class="text-strong" style="color: #b45309"
-                    >도로 소통 단계 &ldquo;정체&rdquo; 가능성</span
-                  >
-                  이 있습니다.
+                  <span class="text-strong" style="color: #b45309">도로 소통 단계 &ldquo;정체&rdquo; 가능성</span>이 있습니다.
                 </div>
                 <div style="margin-top: 6px; font-size: 11px">
                   버스 배차 간격 조정 및 보행자 안내 메시지 송출에 활용 가능합니다.
@@ -238,76 +237,74 @@
                   <div class="predict-bar-fg"></div>
                 </div>
               </div>
+
+              <div class="card-timestamp-row">
+                <div class="last-refresh">
+                  최근 갱신: <span id="prediction-last">--:--:--</span>
+                </div>
+                <div class="next-refresh">
+                  다음 갱신: <span id="prediction-next">--:--:--</span>
+                </div>
+              </div>
             </article>
           </div>
         </section>
 
+        <!-- RIGHT COLUMN -->
         <section class="col-right">
-          <article class="card">
+          <!-- 실시간 돌발정보 -->
+          <article class="card" id="card-incidents">
             <div class="card-header">
-              <div class="card-title">기상·환경 정보</div>
-              <div style="font-size: 18px">🌡️</div>
-            </div>
-            <div class="card-body">
-              <div class="card-row">
-                <span>기온 (TEMP)</span>
-                <span class="text-strong">17.2℃</span>
-              </div>
-              <div class="card-row" style="margin-top: 4px">
-                <span>습도 (HUMIDITY)</span>
-                <span class="text-strong">48%</span>
-              </div>
-              <div class="card-row" style="margin-top: 4px">
-                <span>체감온도 (SENSIBLE_TEMP)</span>
-                <span class="text-strong">15.8℃</span>
-              </div>
-              <div class="card-row" style="margin-top: 4px">
-                <span>풍속 (WIND_SPD)</span>
-                <span class="text-strong">3.1 m/s</span>
-              </div>
-              <div class="card-row" style="margin-top: 4px">
-                <span>강수량 (PRECIPITATION)</span>
-                <span class="text-strong">0.0 mm</span>
-              </div>
-              <div class="badge-soft">
-                <div style="font-weight: 500; color: #374151">참고</div>
-                <div style="margin-top: 2px">
-                  기상 정보는 10분 단위로 갱신되며, 혼잡도·안전지수 계산에 함께
-                  활용됩니다.
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title">실시간 이벤트</div>
-              <div class="tag-danger tag">2건</div>
+              <div class="card-title">실시간 돌발정보</div>
+              <div class="tag-amber tag">3건</div>
             </div>
             <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
-              <div class="event-item">
-                <div>
-                  <div class="event-chip danger">경계</div>
-                  <div style="margin-top: 4px">
-                    2번 출구 인근 보행자 밀집
-                  </div>
+              <div class="incident-item">
+                <div class="incident-header">
+                  <div class="incident-type">🚧 공사</div>
+                  <div class="incident-time">15분 전</div>
                 </div>
-                <div style="font-size: 10px; color: var(--text-sub)">1분 전</div>
+                <div class="incident-content">
+                  <div class="incident-location">강남대로 61길</div>
+                  <div class="incident-detail">도로 보수 작업 진행 중</div>
+                </div>
+              </div>
+              
+              <div class="incident-item">
+                <div class="incident-header">
+                  <div class="incident-type">🚗 사고</div>
+                  <div class="incident-time">23분 전</div>
+                </div>
+                <div class="incident-content">
+                  <div class="incident-location">테헤란로 역삼역 인근</div>
+                  <div class="incident-detail">접촉사고, 1차로 통제</div>
+                </div>
               </div>
 
-              <div class="event-item">
-                <div>
-                  <div class="event-chip warn">주의</div>
-                  <div style="margin-top: 4px">
-                    버스 정류장 대기 인원 증가
-                  </div>
+              <div class="incident-item">
+                <div class="incident-header">
+                  <div class="incident-type">⚠️ 통제</div>
+                  <div class="incident-time">1시간 전</div>
                 </div>
-                <div style="font-size: 10px; color: var(--text-sub)">4분 전</div>
+                <div class="incident-content">
+                  <div class="incident-location">강남역 11번 출구 앞</div>
+                  <div class="incident-detail">행사로 인한 차량 통제</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="incidents-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="incidents-next">--:--:--</span>
               </div>
             </div>
           </article>
 
-          <article class="card">
+          <!-- 주변 문화·행사 정보 -->
+          <article class="card" id="card-culture">
             <div class="card-header">
               <div class="card-title">주변 문화·행사 정보</div>
               <div style="font-size: 18px">🎭</div>
@@ -340,42 +337,13 @@
                 * 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.
               </div>
             </div>
-          </article>
 
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title">시스템 상태</div>
-            </div>
-            <div class="card-body">
-              <div class="status-row">
-                <div class="status-left">
-                  <div
-                    class="status-dot"
-                    style="background: var(--safe)"
-                  ></div>
-                  <span>데이터 스트림</span>
-                </div>
-                <span class="text-strong">정상</span>
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="culture-last">--:--:--</span>
               </div>
-              <div class="status-row">
-                <div class="status-left">
-                  <div
-                    class="status-dot"
-                    style="background: var(--accent)"
-                  ></div>
-                  <span>API 응답 속도</span>
-                </div>
-                <span class="text-strong">평균 210ms</span>
-              </div>
-              <div class="status-row">
-                <div class="status-left">
-                  <div
-                    class="status-dot"
-                    style="background: var(--warn)"
-                  ></div>
-                  <span>동기화 지연</span>
-                </div>
-                <span class="text-strong">최대 3.2초</span>
+              <div class="next-refresh">
+                다음 갱신: <span id="culture-next">--:--:--</span>
               </div>
             </div>
           </article>
@@ -383,7 +351,7 @@
       </main>
     </div>
 
-        <script src="script.js"></script>
+    <script src="script.js"></script>
     <script
       async
       defer
