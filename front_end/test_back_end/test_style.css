@@ -1067,9 +1067,11 @@ table tr:hover {
 
 .subway-board-table th {
     padding: var(--space-12);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
     text-align: left;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.05em;
 }
 
 .subway-board-table td {
@@ -1085,7 +1087,7 @@ table tr:hover {
     background-color: var(--color-secondary-hover);
 }
 
-/* 호선 뱃지 스타일 */
+/* 호선 뱃지 스타일 (사각형) */
 .subway-line {
     display: inline-block;
     padding: var(--space-4) var(--space-8);
@@ -1097,16 +1099,63 @@ table tr:hover {
     min-width: 40px;
 }
 
+/* 호선 원형 뱃지 스타일 */
+.subway-line-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    color: white;
+    text-align: center;
+}
+
 /* 서울 지하철 호선별 색상 */
-.subway-line.line-1 { background-color: #0052A4; }
-.subway-line.line-2 { background-color: #00A84D; }
-.subway-line.line-3 { background-color: #EF7C1C; }
-.subway-line.line-4 { background-color: #00A5DE; }
-.subway-line.line-5 { background-color: #996CAC; }
-.subway-line.line-6 { background-color: #CD7C2F; }
-.subway-line.line-7 { background-color: #747F00; }
-.subway-line.line-8 { background-color: #E6186C; }
-.subway-line.line-9 { background-color: #BDB092; }
+.subway-line.line-1, .subway-line-circle.line-1 { background-color: #0052A4; }
+.subway-line.line-2, .subway-line-circle.line-2 { background-color: #00A84D; }
+.subway-line.line-3, .subway-line-circle.line-3 { background-color: #EF7C1C; }
+.subway-line.line-4, .subway-line-circle.line-4 { background-color: #00A5DE; }
+.subway-line.line-5, .subway-line-circle.line-5 { background-color: #996CAC; }
+.subway-line.line-6, .subway-line-circle.line-6 { background-color: #CD7C2F; }
+.subway-line.line-7, .subway-line-circle.line-7 { background-color: #747F00; }
+.subway-line.line-8, .subway-line-circle.line-8 { background-color: #E6186C; }
+.subway-line.line-9, .subway-line-circle.line-9 { background-color: #BDB092; }
+
+/* 특수 노선 - 원형 뱃지 (약자 2글자로 동일 규격) */
+.subway-line-circle.line-신분당선,
+.subway-line-circle.line-신분당 {
+    background-color: #D31145;
+    font-size: 10px;
+}
+.subway-line-circle.line-경의중앙선,
+.subway-line-circle.line-경의중앙 {
+    background-color: #77C4A3;
+    font-size: 10px;
+}
+.subway-line-circle.line-공항철도 {
+    background-color: #0090D2;
+    font-size: 10px;
+}
+.subway-line-circle.line-경춘선 {
+    background-color: #0C8E72;
+    font-size: 10px;
+}
+.subway-line-circle.line-수인분당선,
+.subway-line-circle.line-수인분당 {
+    background-color: #FABE00;
+    color: #333;
+    font-size: 10px;
+}
+.subway-line-circle.line-우이신설선,
+.subway-line-circle.line-우이신설 {
+    background-color: #B7C450;
+    font-size: 10px;
+}
+
+/* 기존 사각형 스타일 호선 색상 (하위 호환) */
 .subway-line.line-신분당선 { background-color: #D31145; }
 .subway-line.line-경의중앙선 { background-color: #77C4A3; }
 .subway-line.line-공항철도 { background-color: #0090D2; }
@@ -1116,8 +1165,9 @@ table tr:hover {
 
 /* 방향 정보 스타일 */
 .train-direction {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     max-width: 300px;
 }
 
@@ -1170,9 +1220,11 @@ table tr:hover {
 
 .passenger-table th {
     padding: var(--space-12);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.05em;
 }
 
 .passenger-table td {
@@ -1193,7 +1245,30 @@ table tr:hover {
 .passenger-count {
     font-weight: var(--font-weight-medium);
     color: var(--color-text);
+}
+
+/* 시간 값 스타일 */
+.time-value {
     font-family: var(--font-family-mono);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+}
+
+/* 숫자 강조 스타일 */
+.count-number {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+}
+
+/* 단위 (명) 스타일 */
+.count-unit {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    margin-left: 2px;
 }
 
 /* 승하차 집중도 뱃지 스타일 */

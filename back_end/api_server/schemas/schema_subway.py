@@ -13,11 +13,12 @@ class SubwayArrival(Base):
     arrival_msg_2 = Column(Text)
     ingest_timestamp = Column(DateTime, primary_key=True)
 
-# (2) subway_ppltn_proc 테이블 ORM 모델
-class SubwayPpltn(Base):
-    __tablename__ = "subway_ppltn_proc"
+# (2) transit_ppltn_proc 테이블 ORM 모델 (대중교통 통합: 지하철 + 버스)
+class TransitPpltn(Base):
+    __tablename__ = "transit_ppltn_proc"
 
     area_nm = Column(String(50), primary_key=True)
+    transport_type = Column(String(10), primary_key=True)  # 'subway' or 'bus'
     data_date = Column(Date, primary_key=True)
     hour_slot = Column(Integer, primary_key=True)
     gton_avg = Column(Integer)
