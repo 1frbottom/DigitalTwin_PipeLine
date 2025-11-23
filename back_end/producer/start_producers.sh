@@ -3,7 +3,7 @@
 cd /app
 
 echo ">>> Waiting for Kafka to be ready..."
-while ! nc -z kafka 29092; do
+while ! nc -z kafka 9092; do
   sleep 1
 done
 

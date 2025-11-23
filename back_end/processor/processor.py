@@ -289,7 +289,9 @@ def write_road_avg_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
         return
         
-    df.write \
+    df_dedup = df.dropDuplicates(['area_nm', 'road_traffic_time'])
+        
+    df_dedup.write \
       .format("jdbc") \
       .options(**db_properties) \
       .option("dbtable", "city_road_traffic_stts_avg") \
