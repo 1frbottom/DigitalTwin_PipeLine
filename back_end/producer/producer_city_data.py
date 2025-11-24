@@ -18,7 +18,7 @@ if not API_KEY:
     print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
 
-AREA_NM = "POI014"
+AREA_NM = "강남역"
 API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/1000/{AREA_NM}"
 
 def connect_kafka_producer():
