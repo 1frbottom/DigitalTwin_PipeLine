@@ -819,3 +819,72 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* cctv test
+/* --- 미니 플레이어 (Floating Window) 스타일 --- */
+.mini-player {
+    position: fixed; /* 화면에 고정 */
+    top: 100px;      /* 위에서 100px 떨어짐 (헤더 아래) */
+    right: 20px;     /* 오른쪽에서 20px 떨어짐 */
+    width: 320px;    /* 작은 크기 고정 */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* 그림자로 붕 뜬 느낌 */
+    z-index: 2000;   /* 지도보다 위에 표시 */
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* 숨김 클래스 */
+.hidden {
+    display: none !important;
+}
+
+/* 헤더 (제목 + 닫기 버튼) */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+#player-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.btn-mini-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 0 4px;
+}
+
+.btn-mini-close:hover {
+    color: var(--danger);
+}
+
+/* 비디오 영역 */
+.player-body {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* 유튜브 비율 */
+    background: black;
+}
+
+#cctv-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 비율 유지 */
+}
+
+/* 등장 애니메이션 */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
