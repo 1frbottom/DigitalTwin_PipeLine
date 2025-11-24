@@ -36,7 +36,7 @@ incident_stream_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "traffic-incidents") \
-    .option("startingOffsets", "earliest") \
+    .option("startingOffsets", "latest") \
     .load()
 
 parsed_incident_df = incident_stream_df.select(from_json(col("value").cast("string"), incident_schema).alias("data")).select(
@@ -98,7 +98,7 @@ stream_df_city_data = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "city-data") \
-    .option("startingOffsets", "earliest") \
+    .option("startingOffsets", "latest") \
     .load()
 
 parsed_stream_df_city_data = stream_df_city_data.select(from_json(col("value").cast("string"), schema_city_data).alias("data")).select("data.*")
@@ -659,6 +659,90 @@ query_weather_forecast = weather_forecast_df.writeStream \
     .foreachBatch(write_weather_forecast_to_postgres) \
     .start()
 
+# --- 2-6. city_data (city_data_raw)의 event_stts 스트림 (문화행사 현황) --------
+
+    # EVENT_STTS 배열 내부의 개별 행사 정보 스키마
+schema_event_item = StructType([
+    StructField("EVENT_NM", StringType(), True),
+    StructField("EVENT_PERIOD", StringType(), True),
+    StructField("EVENT_PLACE", StringType(), True),
+    StructField("EVENT_X", StringType(), True),
+    StructField("EVENT_Y", StringType(), True),
+    StructField("THUMBNAIL", StringType(), True),
+    StructField("URL", StringType(), True),
+    StructField("PAY_YN", StringType(), True),
+    StructField("EVENT_ETC_DETAIL", StringType(), True)
+])
+
+    # city_data_raw 스트림에서 event_stts 필드를 가져와 파싱
+    # API 응답이 이중 구조일 수 있음: EVENT_STTS.EVENT_STTS 또는 EVENT_STTS 직접 배열
+parsed_event_df = parsed_stream_df_city_data \
+    .filter(col("event_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        col("event_stts"),
+        # 이중 구조 대응: $.EVENT_STTS.EVENT_STTS 또는 $.EVENT_STTS
+        coalesce(
+            get_json_object(col("event_stts"), "$.EVENT_STTS.EVENT_STTS"),
+            get_json_object(col("event_stts"), "$.EVENT_STTS")
+        ).alias("event_array_json")
+    ) \
+    .filter(col("event_array_json").isNotNull()) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        from_json(col("event_array_json"), ArrayType(schema_event_item)).alias("events")
+    ) \
+    .filter(col("events").isNotNull()) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        explode(col("events")).alias("event")
+    ) \
+    .select(
+        "area_nm",
+        col("event.EVENT_NM").alias("event_nm"),
+        col("event.EVENT_PERIOD").alias("event_period"),
+        col("event.EVENT_PLACE").alias("event_place"),
+        col("event.EVENT_X").cast(DoubleType()).alias("event_x"),
+        col("event.EVENT_Y").cast(DoubleType()).alias("event_y"),
+        col("event.THUMBNAIL").alias("thumbnail"),
+        col("event.URL").alias("url"),
+        col("event.PAY_YN").alias("pay_yn"),
+        col("event.EVENT_ETC_DETAIL").alias("event_etc_detail"),
+        date_trunc("second", to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("ingest_timestamp")
+    )
+
+    # 유효한 데이터만 필터링
+cultural_event_df = parsed_event_df \
+    .filter(col("event_nm").isNotNull())
+
+    # 데이터베이스 쓰기 함수
+def write_cultural_event_to_postgres(df, epoch_id):
+    if df.rdd.isEmpty():
+        return
+
+    from pyspark.sql.window import Window
+    from pyspark.sql.functions import row_number
+
+    window_spec = Window.partitionBy("area_nm", "event_nm").orderBy(col("ingest_timestamp").desc())
+    dedup_df = df.withColumn("row_num", row_number().over(window_spec)) \
+                .filter(col("row_num") == 1) \
+                .drop("row_num")
+
+    dedup_df.write \
+        .format("jdbc") \
+        .options(**db_properties) \
+        .option("dbtable", "city_cultural_event_proc") \
+        .mode("append") \
+        .save()
+
+    # 스트림 시작
+query_cultural_event = cultural_event_df.writeStream \
+    .outputMode("append") \
+    .foreachBatch(write_cultural_event_to_postgres) \
+    .start()
 
 
 # ----------------------------------------------------

@@ -237,4 +237,23 @@ CREATE TRIGGER trigger_delete_old_transit_ppltn
 AFTER INSERT ON transit_ppltn_proc
 FOR EACH STATEMENT
 EXECUTE FUNCTION delete_old_transit_ppltn();
+
+-- 실시간 도시데이터 : 문화행사 현황
+CREATE TABLE IF NOT EXISTS city_cultural_event_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    event_nm TEXT NOT NULL,
+    event_period VARCHAR(100),
+    event_place TEXT,
+    event_x DOUBLE PRECISION,
+    event_y DOUBLE PRECISION,
+    thumbnail TEXT,
+    url TEXT,
+    pay_yn VARCHAR(5),
+    event_etc_detail TEXT,
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, event_nm, ingest_timestamp)
+);
+
+CREATE INDEX idx_cultural_event_area ON city_cultural_event_proc(area_nm);
+CREATE INDEX idx_cultural_event_timestamp ON city_cultural_event_proc(ingest_timestamp);
 --------------------------------------------------------------------------------

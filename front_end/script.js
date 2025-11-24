@@ -1,7 +1,4 @@
-// Config
-const API_BASE_URL = "http://localhost:58000";
-
-// ---------------- 갱신 시간 관리 --------------------------------
+// ---------------- 갱신 시간 관리 ----------------
 
 // 각 카드별 갱신 간격 (밀리초)
 const REFRESH_INTERVALS = {
@@ -9,12 +6,10 @@ const REFRESH_INTERVALS = {
   traffic: 15000,         // 15초
   transport: 20000,       // 20초
   livingPop: 60000,       // 1분
-  safety: 10000,          // 10초
-  prediction: 30000,      // 30초
-  retail: 300000,         // 5분
   events: 5000,           // 5초
   culture: 3600000,       // 1시간
-  toilet: 86400000,       // 24시간
+  weather: 300000,        // 5분
+  transit: 60000,         // 1분
 };
 
 // 각 카드별 마지막 갱신 시간 저장
@@ -115,7 +110,7 @@ function getColorByLevel(level) {
 async function fetchPopulationData() {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/city/population/current?area_name=강남역`
+      "http://localhost:8000/city/population/current?area_name=강남역"
     );
     if (!response.ok) throw new Error("Current API Error");
     const data = await response.json();
@@ -147,12 +142,12 @@ async function fetchPopulationData() {
   }
 }
 
-// ---------------- 예측 데이터 ------------------------------------
+// ---------------- 예측 데이터 ----------------
 
 async function fetchForecastData() {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/city/population/forecast?area_name=강남역`
+      "http://localhost:8000/city/population/forecast?area_name=강남역"
     );
 
     const container = document.getElementById("forecast-chart");
@@ -164,16 +159,14 @@ async function fetchForecastData() {
     container.innerHTML = "";
 
     if (!response.ok) {
-      container.innerHTML =
-        "<span style='font-size:11px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
+      container.innerHTML = "<span class='loading-msg'>예측 데이터 없음</span>";
       return;
     }
 
     const list = await response.json();
 
     if (!list || list.length === 0) {
-      container.innerHTML =
-        "<span style='font-size:11px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
+      container.innerHTML = "<span class='loading-msg'>예측 데이터 준비중</span>";
       return;
     }
 
@@ -213,32 +206,203 @@ async function fetchForecastData() {
 
 // ---------------- 도로 소통 ----------------
 
-function updateTrafficData() {
-  updateTimestamps('traffic');
+// 도로 소통 상태별 스타일
+function getTrafficStyle(idx) {
+  if (!idx) return { color: "#9ca3af", bg: "#f3f4f6" };
+
+  if (idx.includes("원활")) {
+    return { color: "#10b981", bg: "#dcfce7" };
+  } else if (idx.includes("서행")) {
+    return { color: "#f59e0b", bg: "#fef3c7" };
+  } else if (idx.includes("정체")) {
+    return { color: "#ef4444", bg: "#fee2e2" };
+  }
+  return { color: "#6b7280", bg: "#f3f4f6" };
 }
 
-// ---------------- 대중교통 ----------------
+async function fetchTrafficData() {
+  try {
+    const response = await fetch("http://localhost:8000/city/traffic/road?area_name=강남역");
+    if (!response.ok) throw new Error("Traffic API Error");
+    const data = await response.json();
 
-function updateTransportData() {
-  updateTimestamps('transport');
+    const card = document.getElementById("card-traffic");
+
+    // 현재 단계 업데이트
+    const levelEl = card.querySelector('.card-row > div > div:nth-child(2)');
+    const trafficIdx = data.road_traffic_idx || '정보없음';
+    levelEl.textContent = trafficIdx;
+
+    // 소통 상태에 따른 색상 적용
+    const style = getTrafficStyle(trafficIdx);
+    levelEl.style.color = style.color;
+
+    // 평균 속도 업데이트
+    const speedEl = card.querySelector('.card-row > div > div:nth-child(3) .text-strong');
+    if (speedEl) {
+      speedEl.textContent = `${data.road_traffic_spd || 0}km/h`;
+    }
+
+    // 메시지 업데이트 (있으면)
+    if (data.road_msg) {
+      const msgEl = card.querySelector('.traffic-bar-wrap > div:last-child .text-strong');
+      if (msgEl) msgEl.textContent = data.road_msg;
+    }
+
+    updateTimestamps('traffic');
+  } catch (error) {
+    console.error("도로 소통 수신 실패:", error);
+  }
+}
+
+// ---------------- 지하철 실시간 도착 ----------------
+
+// 호선별 색상 (서울 지하철 공식 색상)
+function getLineColor(lineNum) {
+  const colors = {
+    '1': '#0052A4',      // 1호선 - 남색
+    '2': '#00A84D',      // 2호선 - 녹색
+    '3': '#EF7C1C',      // 3호선 - 주황
+    '4': '#00A5DE',      // 4호선 - 하늘색
+    '5': '#996CAC',      // 5호선 - 보라
+    '6': '#CD7C2F',      // 6호선 - 갈색
+    '7': '#747F00',      // 7호선 - 올리브
+    '8': '#E6186C',      // 8호선 - 분홍
+    '9': '#BDB092',      // 9호선 - 황금색
+    '신분당선': '#A71E31' // 신분당 - 빨강
+  };
+  return colors[lineNum] || '#6b7280';
+}
+
+// 호선 표시 텍스트 (신분당선은 '신분당'으로 짧게)
+function getLineLabel(lineNum) {
+  if (lineNum === '신분당선') return '신분당';
+  return lineNum;
+}
+
+async function fetchSubwayData() {
+  try {
+    const response = await fetch("http://localhost:8000/subway/arrival/board?area_name=강남역");
+    if (!response.ok) throw new Error("Subway API Error");
+    const result = await response.json();
+
+    const container = document.getElementById("subway-arrival-list");
+
+    if (!result.data || result.data.length === 0) {
+      container.innerHTML = '<div class="loading-msg">도착 정보 없음</div>';
+      return;
+    }
+
+    // 노선별로 그룹화 (최대 4개만 표시)
+    const grouped = {};
+    result.data.forEach(item => {
+      const key = `${item.line_num}-${item.train_line_nm}`;
+      if (!grouped[key]) {
+        grouped[key] = item;
+      }
+    });
+
+    const arrivals = Object.values(grouped).slice(0, 4);
+
+    container.innerHTML = arrivals.map(item => {
+      const lineColor = getLineColor(item.line_num);
+      const lineLabel = getLineLabel(item.line_num);
+      const direction = item.train_line_nm.split(' - ')[0] || item.train_line_nm;
+      return `
+        <div class="subway-arrival-item">
+          <div class="subway-line-badge" style="background:${lineColor}">${lineLabel}</div>
+          <div class="subway-info">
+            <div class="subway-direction">${direction}</div>
+            <div class="subway-msg">${item.arrival_msg_1 || '정보없음'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    updateTimestamps('transport');
+  } catch (error) {
+    console.error("지하철 도착정보 수신 실패:", error);
+  }
 }
 
 // ---------------- 실시간 돌발정보 ----------------
 
-function updateIncidentsData() {
-  updateTimestamps('incidents');
+async function fetchIncidentsData() {
+  try {
+    const response = await fetch("http://localhost:8000/incident/active");
+    if (!response.ok) throw new Error("Incident API Error");
+    const incidents = await response.json();
+
+    const container = document.querySelector("#card-incidents .card-body");
+    const countTag = document.querySelector("#card-incidents .tag");
+
+    // 건수 업데이트 및 태그 스타일 적용
+    countTag.textContent = `${incidents.length}건`;
+    if (incidents.length === 0) {
+      countTag.className = "tag";
+      countTag.style.backgroundColor = "#dcfce7";
+      countTag.style.color = "#10b981";
+    } else if (incidents.length <= 2) {
+      countTag.className = "tag";
+      countTag.style.backgroundColor = "";
+      countTag.style.color = "";
+    } else {
+      countTag.className = "tag tag-amber";
+      countTag.style.backgroundColor = "";
+      countTag.style.color = "";
+    }
+
+    // 돌발정보 목록 렌더링
+    if (incidents.length === 0) {
+      container.innerHTML = '<div class="loading-msg">현재 돌발정보 없음</div>';
+    } else {
+      container.innerHTML = incidents.map(item => {
+        const typeIcon = getIncidentIcon(item.acc_type);
+        const timeAgo = getTimeAgo(item.occr_date, item.occr_time);
+        return `
+          <div class="incident-item">
+            <div class="incident-header">
+              <div class="incident-type">${typeIcon} ${item.acc_dtype || item.acc_type || '기타'}</div>
+              <div class="incident-time">${timeAgo}</div>
+            </div>
+            <div class="incident-content">
+              <div class="incident-detail">${item.acc_info || '상세정보 없음'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    updateTimestamps('incidents');
+  } catch (error) {
+    console.error("돌발정보 수신 실패:", error);
+  }
 }
 
-// ---------------- 안전지수 ----------------
-
-function updateSafetyData() {
-  updateTimestamps('safety');
+// 발생 시간 파싱 (Date 객체 반환)
+function parseIncidentTime(date, time) {
+  if (!date || !time) return null;
+  try {
+    const timeStr = time.padStart(6, '0'); // "1400" -> "140000" 처리
+    return new Date(
+      `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}T${timeStr.slice(0,2)}:${timeStr.slice(2,4)}:${timeStr.slice(4,6)}`
+    ).getTime();
+  } catch {
+    return null;
+  }
 }
 
-// ---------------- 예측 ----------------
+function getIncidentIcon(type) {
+  const icons = { '공사': '🚧', '사고': '🚗', '통제': '⚠️', '행사': '🎉' };
+  return icons[type] || '⚠️';
+}
 
-function updatePredictionData() {
-  updateTimestamps('prediction');
+function getTimeAgo(date, time) {
+  if (!date || !time) return '';
+  const occur = new Date(`${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}T${time.slice(0,2)}:${time.slice(2,4)}`);
+  const diff = Math.floor((Date.now() - occur) / 60000);
+  if (diff < 60) return `${diff}분 전`;
+  return `${Math.floor(diff/60)}시간 전`;
 }
 
 // ---------------- 문화행사 ----------------
@@ -247,34 +411,151 @@ function updateCultureData() {
   updateTimestamps('culture');
 }
 
+// ---------------- 날씨 API ----------------
+
+// 날씨 아이콘 매핑
+function getWeatherIcon(precptType, temp) {
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour >= 18;
+
+  if (precptType === '비' || precptType === '소나기') return '🌧️';
+  if (precptType === '눈') return '🌨️';
+  if (precptType === '비/눈') return '🌨️';
+
+  return isNight ? '🌙' : '☀️';
+}
+
+// 대기질 등급 스타일
+function getAirQualityStyle(airIdx) {
+  if (!airIdx) return { text: '-', color: '#9ca3af' };
+
+  if (airIdx.includes('좋음')) return { text: '좋음', color: '#10b981' };
+  if (airIdx.includes('보통')) return { text: '보통', color: '#3b82f6' };
+  if (airIdx.includes('나쁨') && !airIdx.includes('매우')) return { text: '나쁨', color: '#f59e0b' };
+  if (airIdx.includes('매우')) return { text: '매우나쁨', color: '#ef4444' };
+
+  return { text: airIdx, color: '#6b7280' };
+}
+
+async function fetchWeatherData() {
+  try {
+    const response = await fetch("http://localhost:8000/city/weather/current?area_name=강남역");
+    if (!response.ok) throw new Error("Weather API Error");
+    const data = await response.json();
+
+    // 날씨 아이콘 업데이트
+    const iconEl = document.querySelector('.weather-icon');
+    if (iconEl) {
+      iconEl.textContent = getWeatherIcon(data.precpt_type, data.temp);
+    }
+
+    // 기온 업데이트
+    const tempEl = document.querySelector('.weather-temp');
+    if (tempEl && data.temp !== null) {
+      tempEl.textContent = `${data.temp.toFixed(1)}℃`;
+    }
+
+    // 대기질 업데이트 (미세먼지)
+    const airValues = document.querySelectorAll('.air-value');
+    if (airValues.length >= 2) {
+      const airStyle = getAirQualityStyle(data.air_idx);
+      airValues[0].textContent = airStyle.text;
+      airValues[0].style.color = airStyle.color;
+
+      // 초미세먼지도 동일하게 (air_idx_main이 있으면 사용)
+      const airMainStyle = getAirQualityStyle(data.air_idx_main || data.air_idx);
+      airValues[1].textContent = airMainStyle.text;
+      airValues[1].style.color = airMainStyle.color;
+    }
+
+    updateTimestamps('weather');
+  } catch (error) {
+    console.error("날씨 데이터 수신 실패:", error);
+  }
+}
+
+// ---------------- 대중교통 승하차 인원 ----------------
+
+async function fetchTransitPassengerData() {
+  const container = document.getElementById("transit-passenger-chart");
+  if (!container) return;
+
+  try {
+    const response = await fetch("http://localhost:8000/city/transit/passenger?area_name=강남역");
+
+    if (!response.ok) {
+      container.innerHTML = '<div class="loading-msg">데이터 준비중</div>';
+      return;
+    }
+
+    const data = await response.json();
+
+    // 데이터 검증
+    if (!data.subway && !data.bus) {
+      container.innerHTML = '<div class="loading-msg">데이터 없음</div>';
+      return;
+    }
+
+    // 지하철/버스 승하차 데이터 (누적)
+    const subwayOn = data.subway ? Math.round((data.subway.get_on_min + data.subway.get_on_max) / 2) : 0;
+    const subwayOff = data.subway ? Math.round((data.subway.get_off_min + data.subway.get_off_max) / 2) : 0;
+    const busOn = data.bus ? Math.round((data.bus.get_on_min + data.bus.get_on_max) / 2) : 0;
+    const busOff = data.bus ? Math.round((data.bus.get_off_min + data.bus.get_off_max) / 2) : 0;
+
+    container.innerHTML = `
+      <div class="transit-row">
+        <div class="transit-type">
+          <span class="transit-icon subway">🚇</span>
+          <span>지하철</span>
+        </div>
+        <div class="transit-stats">
+          <span class="stat-up">${subwayOn.toLocaleString()}</span>
+          <span class="stat-down">${subwayOff.toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="transit-row">
+        <div class="transit-type">
+          <span class="transit-icon bus">🚌</span>
+          <span>버스</span>
+        </div>
+        <div class="transit-stats">
+          <span class="stat-up">${busOn.toLocaleString()}</span>
+          <span class="stat-down">${busOff.toLocaleString()}</span>
+        </div>
+      </div>
+    `;
+
+    updateTimestamps('transit');
+  } catch (error) {
+    console.error("대중교통 승하차 데이터 수신 실패:", error);
+    container.innerHTML = '<div class="loading-msg">연결 실패</div>';
+  }
+}
+
 // ---------------- 대시보드 초기화 ----------------
 
 function initDashboard() {
-  // 인구 데이터
   fetchPopulationData();
   fetchForecastData();
-  
-  // 기타 데이터 (실제 API 연동 시 각각의 함수 구현)
-  updateTrafficData();
-  updateTransportData();
-  updateIncidentsData();
-  updateSafetyData();
-  updatePredictionData();
+  fetchTrafficData();
+  fetchIncidentsData();
+  fetchSubwayData();
+  fetchWeatherData();
+  fetchTransitPassengerData();
   updateCultureData();
 }
 
-// 각 데이터별 갱신 인터벌 설정
 function setupRefreshIntervals() {
   setInterval(() => {
     fetchPopulationData();
     fetchForecastData();
   }, REFRESH_INTERVALS.population);
 
-  setInterval(updateTrafficData, REFRESH_INTERVALS.traffic);
-  setInterval(updateTransportData, REFRESH_INTERVALS.transport);
-  setInterval(updateIncidentsData, REFRESH_INTERVALS.events); // 돌발정보는 5초마다
-  setInterval(updateSafetyData, REFRESH_INTERVALS.safety);
-  setInterval(updatePredictionData, REFRESH_INTERVALS.prediction);
+  setInterval(fetchTrafficData, REFRESH_INTERVALS.traffic);
+  setInterval(fetchIncidentsData, REFRESH_INTERVALS.events);
+  setInterval(fetchSubwayData, REFRESH_INTERVALS.transport);
+  setInterval(fetchWeatherData, REFRESH_INTERVALS.weather);
+  setInterval(fetchTransitPassengerData, REFRESH_INTERVALS.transit);
   setInterval(updateCultureData, REFRESH_INTERVALS.culture);
 }
 
@@ -291,17 +572,50 @@ const CCTV_LOCATIONS = [
 ];
 
 let map;
+let is3DMode = false;
 
 function initMap() {
   const gangnam = { lat: 37.4979, lng: 127.0276 };
 
   map = new google.maps.Map(document.getElementById("google-map"), {
     center: gangnam,
-    zoom: 16,
+    zoom: 17,
     disableDefaultUI: true,
+    mapTypeId: "roadmap",
+    tilt: 0,
+    heading: 0,
   });
 
   addCctvMarkers();
+  setup3DToggle();
+}
+
+// 3D 보기 전환 설정
+function setup3DToggle() {
+  const btn = document.querySelector(".dt-btn-overlay");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    if (is3DMode) {
+      // 2D 모드로 전환 (일반 지도)
+      map.setMapTypeId("roadmap");
+      map.setTilt(0);
+      map.setHeading(0);
+      map.setZoom(17);
+      btn.textContent = "3D 보기 전환";
+      btn.classList.remove("active");
+      is3DMode = false;
+    } else {
+      // 3D 모드로 전환 (위성 + 기울기)
+      map.setMapTypeId("hybrid");  // 위성 + 도로명
+      map.setTilt(45);
+      map.setHeading(90);
+      map.setZoom(18);
+      btn.textContent = "2D 보기 전환";
+      btn.classList.add("active");
+      is3DMode = true;
+    }
+  });
 }
 
 function addCctvMarkers() {
