@@ -83,3 +83,13 @@ def read_cultural_events(area_name: str, limit: int = 10, db: Session = Depends(
         return []  # 문화행사가 없을 수 있으므로 빈 배열 반환
     return events_data
 
+# (7) 대중교통 승하차 현황 조회 API
+@router.get("/transit/passenger", response_model=model_city.TransitPassengerResponse)
+def read_transit_passenger(area_name: str, db: Session = Depends(get_db)):
+    """
+    특정 지역의 최신 대중교통(지하철+버스) 승하차 현황을 조회합니다.
+    """
+    transit_data = crud_city.get_transit_passenger_data(db, area_name=area_name)
+    if not transit_data:
+        raise HTTPException(status_code=404, detail=f"{area_name}의 대중교통 승하차 데이터를 찾을 수 없습니다.")
+    return transit_data
