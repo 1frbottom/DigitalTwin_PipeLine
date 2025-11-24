@@ -78,7 +78,7 @@ def fetch_and_parse_city_data():
             'sbike_stts': json.dumps(citydata.get('SBIKE_STTS'), ensure_ascii=False) if citydata.get('SBIKE_STTS') else None,
             'weather_stts': json.dumps(citydata.get('WEATHER_STTS'), ensure_ascii=False) if citydata.get('WEATHER_STTS') else None,
             'charger_stts': json.dumps(citydata.get('CHARGER_STTS'), ensure_ascii=False) if citydata.get('CHARGER_STTS') else None,
-            'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None,
+            'event_stts': json.dumps(citydata.get('EVENT_STTS'), ensure_ascii=False) if citydata.get('EVENT_STTS') else None,
             'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'live_dst_message': json.dumps(citydata.get('LIVE_DST_MESSAGE'), ensure_ascii=False) if citydata.get('LIVE_DST_MESSAGE') else None,
             'live_yna_news': json.dumps(citydata.get('LIVE_YNA_NEWS'), ensure_ascii=False) if citydata.get('LIVE_YNA_NEWS') else None,
