@@ -71,3 +71,24 @@ class CityWeatherForecast(Base):
     precpt_type = Column(String)
     rain_chance = Column(Integer)
     ingest_timestamp = Column(Float, primary_key=True)
+
+# (6) city_cultural_event_proc 테이블 매핑
+class CulturalEventProc(Base):
+    __tablename__ = "city_cultural_event_proc"
+
+    area_nm = Column(String, primary_key=True)
+    event_nm = Column(Text, primary_key=True)
+    event_period = Column(String)
+    event_place = Column(Text)
+    url = Column(Text)
+    ingest_timestamp = Column(DateTime, primary_key=True)
+
+# (7) city_data_raw 테이블 매핑 (대중교통 승하차 데이터용)
+class CityDataRaw(Base):
+    __tablename__ = "city_data_raw"
+
+    area_nm = Column(String, primary_key=True)
+    area_cd = Column(String)
+    timestamp = Column(Float, primary_key=True)
+    live_sub_ppltn = Column(Text)
+    live_bus_ppltn = Column(Text)

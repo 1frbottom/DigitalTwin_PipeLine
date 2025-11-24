@@ -181,6 +181,26 @@
             <div id="weather-forecast-table"></div>
         </div>
 
+                <!--섹션 8: 문화행사 현황 -->
+        <div class="api-section">
+            <h2>주변 문화행사 정보</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/events/cultural</p>
+
+            <div class="button-group">
+                <input type="text" id="culturalAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCulturalEvents()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="cultural-count" style="margin-left: 10px; color: var(--color-primary);"></span>
+                <span id="cultural-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="cultural-response" class="response-box" style="display: none;"></div>
+
+            <div id="cultural-table"></div>
+        </div>
     </div>
 
 
