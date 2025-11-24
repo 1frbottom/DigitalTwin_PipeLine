@@ -69,7 +69,24 @@ class CityWeatherForecastBase(BaseModel):
     precipitation: Optional[str] = None
     precpt_type: Optional[str] = None
     rain_chance: Optional[int] = None
-    
+
+    class Config:
+        orm_mode = True
+
+# (6) 대중교통 승하차 현황 응답 모델
+class TransitPassengerData(BaseModel):
+    transport_type: str  # 'subway' or 'bus'
+    get_on_min: int
+    get_on_max: int
+    get_off_min: int
+    get_off_max: int
+    station_count: int
+
+class TransitPassengerResponse(BaseModel):
+    area_nm: str
+    subway: Optional[TransitPassengerData] = None
+    bus: Optional[TransitPassengerData] = None
+
     class Config:
         orm_mode = True
 

@@ -82,3 +82,13 @@ class CulturalEventProc(Base):
     event_place = Column(Text)
     url = Column(Text)
     ingest_timestamp = Column(DateTime, primary_key=True)
+
+# (7) city_data_raw 테이블 매핑 (대중교통 승하차 데이터용)
+class CityDataRaw(Base):
+    __tablename__ = "city_data_raw"
+
+    area_nm = Column(String, primary_key=True)
+    area_cd = Column(String)
+    timestamp = Column(Float, primary_key=True)
+    live_sub_ppltn = Column(Text)
+    live_bus_ppltn = Column(Text)
