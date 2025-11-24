@@ -72,3 +72,14 @@ class CityWeatherForecastBase(BaseModel):
     
     class Config:
         orm_mode = True
+
+
+# (6) 문화행사 모델
+class CulturalEventBase(BaseModel):
+    event_nm: str
+    event_period: Optional[str] = None
+    event_place: Optional[str] = None
+    url: Optional[str] = None
+
+    class Config:
+        orm_mode = True

@@ -720,7 +720,79 @@ async function getCityWeatherForecast() {
     }
 }
 
+// 8. 문화행사 현황 조회
+async function getCulturalEvents() {
+    const resultDiv = document.getElementById('cultural-response');
+    const tableDiv = document.getElementById('cultural-table');
+    const statusDiv = document.getElementById('cultural-status');
+    const countDiv = document.getElementById('cultural-count');
+    const areaName = document.getElementById('culturalAreaName').value;
 
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    tableDiv.innerHTML = '';
+    countDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/city/events/cultural', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        // 데이터가 없는 경우
+        if (!result.data || result.data.length === 0) {
+            countDiv.innerHTML = '<strong>0건</strong>';
+            resultDiv.innerHTML = `<span class="success">현재 진행중인 문화행사가 없습니다.</span>`;
+            return;
+        }
+
+        // 건수 표시
+        countDiv.innerHTML = `<strong>${result.data.length}건</strong>`;
+        resultDiv.innerHTML = `<span class="success">데이터 수신 완료</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        // 테이블 생성
+        let tableHTML = `
+            <table>
+                <tr>
+                    <th style="width: 35%;">행사명</th>
+                    <th style="width: 20%;">기간</th>
+                    <th style="width: 25%;">장소</th>
+                    <th style="width: 20%;">상세정보</th>
+                </tr>`;
+
+        result.data.forEach(item => {
+            const urlLink = item.url ? `<a href="${item.url}" target="_blank" style="color: var(--color-primary);">바로가기</a>` : '-';
+
+            tableHTML += `
+                <tr>
+                    <td>${item.event_nm || '-'}</td>
+                    <td>${item.event_period || '-'}</td>
+                    <td>${item.event_place || '-'}</td>
+                    <td>${urlLink}</td>
+                </tr>`;
+        });
+        tableHTML += '</table>';
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        // 에러 또는 404인 경우 -> 문화행사 없음으로 처리
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        countDiv.innerHTML = '<strong>0건</strong>';
+        resultDiv.innerHTML = `<span class="success">현재 진행중인 문화행사가 없습니다.</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
 
 // 8. 대중교통 승하차 누적 현황 차트 (버스/지하철 분리)
 let transitChartInstance = null;

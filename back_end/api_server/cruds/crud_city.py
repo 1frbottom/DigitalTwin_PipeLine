@@ -86,3 +86,24 @@ def get_city_weather_forecast(db: Session, area_name: str):
              ) \
              .order_by(schema_city.CityWeatherForecast.fcst_dt.asc()) \
              .all()
+
+# (6) 문화행사 현황 조회 함수
+def get_city_cultural_events(db: Session, area_name: str, limit: int = 10):
+    """특정 지역의 최신 문화행사 목록을 조회합니다."""
+    from sqlalchemy import func
+
+    # 최신 타임스탬프 조회
+    latest_timestamp = db.query(func.max(schema_city.CulturalEventProc.ingest_timestamp)) \
+                         .filter(schema_city.CulturalEventProc.area_nm == area_name) \
+                         .scalar()
+
+    if latest_timestamp is None:
+        return []
+
+    return db.query(schema_city.CulturalEventProc) \
+             .filter(
+                 schema_city.CulturalEventProc.area_nm == area_name,
+                 schema_city.CulturalEventProc.ingest_timestamp == latest_timestamp
+             ) \
+             .limit(limit) \
+             .all()
