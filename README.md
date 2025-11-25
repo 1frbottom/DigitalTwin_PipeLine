@@ -37,7 +37,7 @@
 		# 4. Spark Master UI
 		HOST_PORT_SPARK_UI=58080q
 		```
-		<br><br>
+		<br>
 
 	- 프로젝트의 루트 디렉토리에서 터미널 실행 & 도커 데스크탑 앱 실행<br><br>
 
@@ -48,12 +48,15 @@
 	- [docker app] (프론트는 바로 html 열어서 봐도 됩니다. 필요한 경우에) db 컨테이너의 exec으로 가서 아래의 명령어 입력<br>
 		```
 		psql -U user -d traffic_db
+
 		\dt
+
 		SELECT * FROM 테이블명 LIMIT 10;
+		
 		\q
 		```
-		<br><br>
-		
+		<br>
+
 	- [terminal] docker compose down<br><br>
 
 	- .yml이나 .sql 등 코어 소스가 아닌 이상 compose 올려놓고 작업해도 바로바로 반영 됩니다.<br><br>
