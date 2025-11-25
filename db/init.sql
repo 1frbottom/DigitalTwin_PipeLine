@@ -83,7 +83,8 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     road_traffic_idx VARCHAR(50),
     road_traffic_spd INTEGER,
     road_traffic_time TIMESTAMP,
-    ingest_timestamp DOUBLE PRECISION
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, road_traffic_time)
 );
 
 -- 실시간 도시데이터 : 기상 현황
