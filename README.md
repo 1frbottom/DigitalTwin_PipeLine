@@ -9,8 +9,8 @@
 
 	- 프론트 제외 전부 도커 컨테이너 위에서 동작합니다.<br><br>
 
-	- producer_asdf.py(데이터 생성, api별로 존재) -><br>
-			spark(데이터 가공 / processor.py) -><br>
+	- producer_asdf.py(데이터 생성, api별로 존재) -><br><br>
+			spark(데이터 가공 / processor.py) -><br><br>
 			spark(데이터 저장 및 조회 / postgres DB) -><br><br>
 			api_server(api called) -><br><br>
 			front_end(api caller)<br><br>
@@ -22,19 +22,10 @@
 
 	- 루트에 .env 파일을 만들고 아래 붙여넣기<br><br>
 		-
-		# 서울 열린데이터 광장 (https://data.seoul.go.kr)
 		SEOUL_API_KEY=본인키
-
-		# 1. API Server
 		HOST_PORT_API=58000
-
-		# 2. Kafka External
 		HOST_PORT_KAFKA=59092
-
-		# 3. PostgreSQL
 		HOST_PORT_DB=54320
-
-		# 4. Spark Master UI
 		HOST_PORT_SPARK_UI=58080
 
 	- 프로젝트의 루트 디렉토리에서 터미널 실행 & 도커 데스크탑 앱 실행<br><br>
@@ -60,6 +51,6 @@
 - 발생할만한 에러 및 트러블슈팅<br>
 	- 각 컨테이너의 로그에 port 관련 문제가 찍혀있는 경우, .env의 포트를 바꿔서 시도해보세요.<br><br>
 	- back_end/start_producers.sh 파일이 윈도우 기반 CRLF로 되어있는 경우 도커가 작동하지 않으니 LF로 바꿔줘야 합니다.<br><br>
-	- producer에서 api xml 태그 줄때 대소문자 뭐가맞는지 확인 필요, 서울 열린데이터는 소문자.
-	- producer - spark 간에 레이스컨디션때문에 아예 못받아올 수 있음, 켜진상태로 producer를 재시작해보고 확인 ( 일단 해결됨 )
-	- API의 response 원문이 깨져서 오는경우도 간혹 있으니 원문 확인 필요.
+	- producer에서 api xml 태그 줄때 대소문자 뭐가맞는지 확인 필요, 서울 열린데이터는 소문자.<br><br>
+	- producer - spark 간에 레이스컨디션때문에 아예 못받아올 수 있음, 켜진상태로 producer를 재시작해보고 확인 ( 일단 해결됨 )<br><br>
+	- API의 response 원문이 깨져서 오는경우도 간혹 있으니 원문 확인 필요.<br><br>
