@@ -21,12 +21,13 @@
 	- 패치(patch)로 커밋목록 최신화 및 확인<br><br>
 
 	- 루트에 .env 파일을 만들고 아래 붙여넣기<br><br>
-		-
+		```
 		SEOUL_API_KEY=본인키<br>
 		HOST_PORT_API=58000<br>
 		HOST_PORT_KAFKA=59092<br>
 		HOST_PORT_DB=54320<br>
 		HOST_PORT_SPARK_UI=58080<br><br>
+		```
 
 	- 프로젝트의 루트 디렉토리에서 터미널 실행 & 도커 데스크탑 앱 실행<br><br>
 
