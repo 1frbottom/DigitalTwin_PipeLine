@@ -36,7 +36,7 @@ incident_stream_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "traffic-incidents") \
-    .option("startingOffsets", "latest") \
+    .option("startingOffsets", "earliest") \
     .load()
 
 parsed_incident_df = incident_stream_df.select(from_json(col("value").cast("string"), incident_schema).alias("data")).select(
@@ -289,7 +289,9 @@ def write_road_avg_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
         return
         
-    df.write \
+    df_dedup = df.dropDuplicates(['area_nm', 'road_traffic_time'])
+        
+    df_dedup.write \
       .format("jdbc") \
       .options(**db_properties) \
       .option("dbtable", "city_road_traffic_stts_avg") \
