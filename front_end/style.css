@@ -1,16 +1,23 @@
 :root {
-  --bg: #e5e7ec;
-  --bg-soft: #f2f4f8;
+  --bg: #f1f3f8;
+  --bg-soft: #f8f9fc;
   --card: #ffffff;
-  --card-muted: #f3f4fa;
-  --accent: #2f80ed;
-  --accent-soft: #e3f2ff;
-  --text-main: #111827;
-  --text-sub: #6b7280;
-  --border-soft: #d1d5db;
-  --danger: #ef4444;
-  --warn: #f59e0b;
-  --safe: #10b981;
+  --card-muted: #f8f9fc;
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+  --text-main: #1e293b;
+  --text-sub: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-soft: #f1f5f9;
+  --danger: #dc2626;
+  --warn: #d97706;
+  --safe: #16a34a;
+
+  /* 통일된 간격 */
+  --gap: 20px;
+  --card-padding: 16px;
+  --card-radius: 16px;
 }
 
 * {
@@ -20,10 +27,11 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #eef2ff 0, var(--bg) 45%);
+  font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
   color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .app {
@@ -32,35 +40,38 @@ body {
   flex-direction: column;
 }
 
-/* ---------- HEADER ---------- */
+/* ========== HEADER ========== */
 
 .header {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-inner {
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 12px 16px 8px 16px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .header-pill {
-  width: 6px;
-  height: 32px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #4f46e5);
+  width: 4px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--accent);
 }
 
 .header-title {
@@ -70,237 +81,234 @@ body {
 }
 
 .header-title small {
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-sub);
-  font-weight: 600;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .header-title h1 {
   font-size: 18px;
   margin: 0;
-  font-weight: 600;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
 .weather-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-radius: 12px;
 }
 
 .weather-icon {
-  font-size: 24px;
+  font-size: 28px;
+  line-height: 1;
 }
 
-.weather-text p {
-  margin: 0;
-  line-height: 1.2;
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.weather-text .temp {
+.weather-temp {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.weather-air {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.air-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.air-value {
+  color: var(--text-sub);
   font-weight: 600;
 }
 
-.weather-text .desc {
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-.divider-vert {
-  width: 1px;
-  height: 32px;
-  background: var(--border-soft);
-}
-
-.time-block {
-  text-align: right;
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-.time-block .label {
-  margin-bottom: 2px;
-}
-
-.time-block .value {
-  font-weight: 500;
-  color: #374151;
+.air-divider {
+  color: var(--border);
+  margin: 0 2px;
 }
 
 .header-bar {
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), #4f46e5);
+  height: 2px;
+  background: var(--accent);
 }
 
-/* ---------- LAYOUT ---------- */
+/* ========== LAYOUT ========== */
 
 .layout {
   flex: 1 0 auto;
-  max-width: 1180px;
+  max-width: 1600px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px 16px 24px 16px;
+  padding: var(--gap) 32px;
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
 }
 
-.col-left {
-  grid-column: span 12;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+@media (min-width: 1200px) {
+  .layout {
+    grid-template-columns: 280px 1fr 280px;
+  }
 }
 
-.col-center {
-  grid-column: span 12;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+.col-left,
+.col-center,
 .col-right {
-  grid-column: span 12;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--gap);
 }
 
-@media (min-width: 960px) {
-  /* 데스크톱에서 2 : 8 : 2 비율 */
-  .col-left {
-    grid-column: span 2;
-  }
-
-  .col-center {
-    grid-column: span 8;
-  }
-
-  .col-right {
-    grid-column: span 2;
-  }
-}
-
-/* ---------- CARD BASE ---------- */
+/* ========== CARD BASE ========== */
 
 .card {
   background: var(--card);
-  border-radius: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.04);
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
-  padding: 10px 14px 12px 14px;
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  padding: var(--card-padding);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .card-muted {
-  background: var(--card-muted);
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  background: var(--card);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  padding: var(--card-padding);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
+/* 카드 헤더 - 통일된 구조 */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .card-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-sub);
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
+/* 태그/뱃지 - 통일된 스타일 */
 .tag {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: var(--accent-soft);
-  color: #1d4ed8;
-  font-weight: 500;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .tag-amber {
   background: #fef3c7;
-  color: #b45309;
+  color: var(--warn);
 }
 
 .tag-danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+.tag-safe {
+  background: #dcfce7;
+  color: var(--safe);
 }
 
 .card-body {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-sub);
 }
 
-.card-row {
+/* 카드 푸터 - 갱신 시간 */
+.card-timestamp-row {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
+  margin-top: 12px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
-/* ---------- LEFT COLUMN CARDS ---------- */
+.card-timestamp-row .last-refresh,
+.card-timestamp-row .next-refresh {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.card-timestamp-row .last-refresh span,
+.card-timestamp-row .next-refresh span {
+  color: var(--text-sub);
+  font-weight: 500;
+}
+
+/* ========== 카드 갱신 애니메이션 ========== */
+
+.card-update {
+  animation: cardFlash 0.5s ease-out;
+}
+
+@keyframes cardFlash {
+  0% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); }
+  50% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+  100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); }
+}
+
+/* ========== 실시간 인구수 카드 ========== */
 
 .people-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 8px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .people-main .range-label {
-  font-size: 11px;
-  color: var(--text-sub);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
 .people-main .range-value {
-  margin-top: 4px;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.02em;
 }
 
 .people-main .range-value span {
   font-size: 14px;
-  font-weight: 400;
-  color: #9ca3af;
-}
-
-.people-main .info-sub {
-  margin-top: 6px;
-  font-size: 11px;
-}
-
-.icon-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: var(--accent-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .people-footer {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(209, 213, 219, 0.7);
-  font-size: 11px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -310,392 +318,573 @@ body {
 .dot {
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--accent);
 }
 
-.traffic-bar-wrap {
-  margin-top: 10px;
-}
+/* ========== 예측 그래프 ========== */
 
-.traffic-bar-bg {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.3);
-  overflow: hidden;
-}
-
-.traffic-bar-fg {
-  height: 100%;
-  width: 50%;
-  background: linear-gradient(
-    90deg,
-    var(--safe),
-    var(--warn),
-    var(--danger)
-  );
-}
-
-.public-row {
-  margin-top: 8px;
+.forecast-wrap {
+  margin-top: 16px;
   display: flex;
-  gap: 10px;
-  font-size: 13px;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 60px;
+  gap: 4px;
 }
 
-.public-item {
+.forecast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1;
+  height: 100%;
+}
+
+.bar-graph {
+  width: 100%;
+  max-width: 20px;
+  border-radius: 4px;
+  background: var(--border);
+  transition: height 0.6s ease;
+  min-height: 4px;
+}
+
+.time-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ========== 지하철 실시간 도착 ========== */
+
+.subway-arrival-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
 }
 
-.public-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
+.subway-arrival-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.subway-arrival-item:first-child {
+  padding-top: 0;
+}
+
+.subway-line-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.subway-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.subway-direction {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subway-msg {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ========== 대중교통 승하차 현황 ========== */
+
+.transit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.transit-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.transit-row:first-child {
+  padding-top: 0;
+}
+
+.transit-type {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.transit-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.transit-icon.subway {
+  background: #00A84D;
+}
+
+.transit-icon.bus {
+  background: var(--accent);
+}
+
+.transit-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stat-up {
+  color: var(--text-sub);
+}
+
+.stat-up::before {
+  content: "▲ ";
+  color: var(--danger);
+  font-size: 10px;
+}
+
+.stat-down {
+  color: var(--text-sub);
+}
+
+.stat-down::before {
+  content: "▼ ";
+  color: var(--accent);
+  font-size: 10px;
+}
+
+/* ========== 지도 영역 ========== */
+
+.dt-map-full {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+#google-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dt-btn-overlay {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  background: white;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.dt-btn-overlay:hover {
+  background: var(--bg-soft);
+}
+
+.dt-btn-overlay.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* ========== 하단 카드 그리드 ========== */
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+@media (min-width: 768px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.mt-4 {
+  margin-top: var(--gap);
+}
+
+/* ========== 도로 소통 / 안전지수 / 예측 카드 ========== */
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
 }
 
-.public-icon.bus {
-  background: #e0f2fe;
+.traffic-bar-wrap {
+  margin-top: 12px;
 }
 
-.public-icon.metro {
-  background: #dcfce7;
-}
-
-.public-meta {
-  font-size: 11px;
-  color: var(--text-sub);
-}
-
-
-
-/* dt-map 안에 들어가는 구글맵 div가 영역 전체를 채우도록 */
-#google-map {
+.traffic-bar-bg {
   width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.traffic-bar-fg {
   height: 100%;
-}
-
-
-.dt-grid {
-  position: absolute;
-  inset: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-}
-
-.dt-grid::before,
-.dt-grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(
-      90deg,
-      rgba(75, 85, 99, 0.35) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      180deg,
-      rgba(75, 85, 99, 0.35) 1px,
-      transparent 1px
-    );
-  background-size: 40px 40px;
-  opacity: 0.55;
-}
-
-.dt-legend {
-  position: absolute;
-  left: 18px;
-  bottom: 12px;
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: #e5e7eb;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-
-.legend-dot.car {
-  background: #38bdf8;
-}
-
-.legend-dot.person {
-  background: #4ade80;
-}
-
-.legend-dot.crowd {
-  background: #fb923c;
-}
-
-.dt-btn {
-  position: absolute;
-  right: 18px;
-  top: 14px;
-  font-size: 11px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-
-.dt-dot.car {
-  background: #38bdf8;
-}
-
-.dt-dot.person {
-  background: #4ade80;
-}
-
-.dt-dot.crowd {
-  background: #fb923c;
-  box-shadow: 0 0 12px rgba(248, 171, 84, 0.8);
-  animation: pulse 1.4s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1.4);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* ---------- CENTER BOTTOM: 안전지수 & 예측 ---------- */
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@media (min-width: 640px) {
-  .grid-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  width: 50%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
 }
 
 .safety-graph-bars {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  height: 64px;
-  margin-top: 10px;
+  gap: 4px;
+  height: 48px;
+  margin-top: 12px;
 }
 
 .safety-bar {
   flex: 1;
-  border-radius: 999px;
-  background: #fed7aa;
+  border-radius: 3px;
+  background: #fde68a;
 }
 
+.safety-bar[data-value="50"] { height: 40%; }
+.safety-bar[data-value="55"] { height: 44%; }
+.safety-bar[data-value="60"] { height: 48%; }
+.safety-bar[data-value="68"] { height: 54%; }
+.safety-bar[data-value="73"] { height: 58%; }
+
 .safety-caption {
-  margin-top: 4px;
+  margin-top: 6px;
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: var(--text-sub);
+  color: var(--text-muted);
 }
 
 .predict-bar-bg {
   margin-top: 12px;
   width: 100%;
   height: 6px;
-  border-radius: 999px;
-  background: #e5e7eb;
+  border-radius: 3px;
+  background: var(--border);
   overflow: hidden;
 }
 
 .predict-bar-fg {
   height: 100%;
   width: 75%;
-  background: linear-gradient(
-    90deg,
-    var(--safe),
-    var(--warn),
-    var(--danger)
-  );
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
 }
 
-/* ---------- RIGHT COLUMN ---------- */
+/* ========== 돌발정보 카드 ========== */
 
-.event-item {
-  border-radius: 14px;
-  padding: 8px 10px;
+#card-incidents .card-body {
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.incident-item {
   background: var(--bg-soft);
+  border-radius: 10px;
+  padding: 12px;
+  border-left: 3px solid var(--warn);
+  margin-bottom: 8px;
+}
+
+.incident-item:last-child {
+  margin-bottom: 0;
+}
+
+.incident-header {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
-.event-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 10px;
+.incident-type {
+  font-size: 12px;
   font-weight: 600;
+  color: var(--text-main);
 }
 
-.event-chip.warn {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.event-chip.danger {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+.incident-time {
   font-size: 11px;
-  padding: 4px 0;
+  color: var(--text-muted);
 }
 
-.status-left {
+.incident-content {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
+.incident-location {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
 }
 
-.badge-soft {
-  border-radius: 12px;
-  padding: 6px 8px;
-  background: var(--bg-soft);
-  margin-top: 10px;
-  font-size: 11px;
+.incident-detail {
+  font-size: 12px;
   color: var(--text-sub);
+  line-height: 1.4;
 }
 
-/* 주변 문화행사 카드 */
+/* ========== 문화행사 카드 ========== */
+
 .culture-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .culture-item {
-  border-radius: 14px;
-  padding: 8px 10px;
+  border-radius: 10px;
+  padding: 12px;
   background: var(--bg-soft);
-  font-size: 11px;
 }
 
 .culture-title {
+  font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-main);
+  margin-bottom: 4px;
 }
 
 .culture-meta {
-  margin-top: 2px;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
-  font-size: 10px;
-  color: var(--text-sub);
+  gap: 4px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
-/* small helpers */
+/* ========== 유틸리티 ========== */
+
 .text-strong {
   font-weight: 600;
-  color: #111827;
+  color: var(--text-main);
 }
 
-.mt-4 {
-  margin-top: 16px;
+.text-muted {
+  color: var(--text-muted);
 }
 
-.card-timestamp-row {
-  border-top: 1px solid rgba(209, 213, 219, 0.5); /* 구분선 */
-  padding-top: 8px;
-  margin-top: 4px;
-  display: flex;
-  justify-content: flex-end; /* 우측 정렬 */
+.text-danger {
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.text-warn {
+  font-weight: 600;
+  color: var(--warn);
+}
+
+/* 공통 라벨/값 스타일 */
+.label-sm {
   font-size: 11px;
   color: var(--text-sub);
-  font-weight: 500;
+  margin-top: 2px;
 }
 
-/* 예측 그래프 컨테이너 */
-.forecast-wrap {
-  margin-top: 14px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  height: 50px; 
-  padding: 0 4px;
+.value-lg {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-top: 4px;
 }
 
-/* 개별 막대 아이템 (막대 + 시간텍스트) */
-.forecast-item {
+.value-xl {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.value-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* 로딩 메시지 */
+.loading-msg {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 10px;
+}
+
+/* 바 캡션 */
+.bar-caption {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+/* 예측 텍스트 */
+.predict-text {
+  font-size: 13px;
+  margin: 0 0 6px 0;
+}
+
+/* 돌발정보 리스트 */
+.incidents-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  width: 100%;
-  height: 100%;
+  gap: 6px;
 }
 
-/* 막대 (Bar) 디자인 */
-.bar-graph {
-  width: 8px;
-  border-radius: 4px;
-  background-color: #e5e7eb;
-  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 4px;
+/* 아이콘 이모지 */
+.icon-emoji {
+  font-size: 18px;
+  line-height: 1;
 }
 
-/* X축 시간 라벨 */
-.time-label {
+/* 카드 푸터노트 */
+.card-footnote {
+  margin-top: 8px;
   font-size: 10px;
-  color: var(--text-sub);
-  font-weight: 500;
-  height: 12px;
+  color: var(--text-muted);
+  text-align: right;
 }
 
-/* 가운데 구글맵 – 카드 컨테이너 없이 바로 col-center를 채움 */
-.map-main {
-  width: 100%;
-  height: 420px;      /* 여기서 크기 조절 – 더 키우고 싶으면 480px, 520px 등으로 */
-  border-radius: 16px;
-  overflow: hidden;
-  /* 필요하면 아래 두 줄로 약간 그림자 줄 수도 있음 */
-  /* box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-     background: #000; */
-  margin-bottom: 16px; /* 아래 grid-2 카드랑 간격 */
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* cctv test
+/* --- 미니 플레이어 (Floating Window) 스타일 --- */
+.mini-player {
+    position: fixed; /* 화면에 고정 */
+    top: 100px;      /* 위에서 100px 떨어짐 (헤더 아래) */
+    right: 20px;     /* 오른쪽에서 20px 떨어짐 */
+    width: 320px;    /* 작은 크기 고정 */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* 그림자로 붕 뜬 느낌 */
+    z-index: 2000;   /* 지도보다 위에 표시 */
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* 숨김 클래스 */
+.hidden {
+    display: none !important;
+}
+
+/* 헤더 (제목 + 닫기 버튼) */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+#player-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.btn-mini-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 0 4px;
+}
+
+.btn-mini-close:hover {
+    color: var(--danger);
+}
+
+/* 비디오 영역 */
+.player-body {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* 유튜브 비율 */
+    background: black;
+}
+
+#cctv-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 비율 유지 */
+}
+
+/* 등장 애니메이션 */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
 }
