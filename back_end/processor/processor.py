@@ -98,7 +98,7 @@ stream_df_city_data = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "city-data") \
-    .option("startingOffsets", "latest") \
+    .option("startingOffsets", "earliest") \
     .load()
 
 parsed_stream_df_city_data = stream_df_city_data.select(from_json(col("value").cast("string"), schema_city_data).alias("data")).select("data.*")
