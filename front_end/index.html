@@ -12,6 +12,7 @@
   </head>
   <body>
     <div class="app">
+      <!-- HEADER: 상단 고정 -->
       <header class="header">
         <div class="header-inner">
           <div class="header-left">
@@ -38,53 +39,178 @@
         <div class="header-bar"></div>
       </header>
 
+      <!-- CATEGORY CHIP BAR: 헤더 바로 아래 고정 -->
+      <div class="chip-bar">
+        <div class="chip is-active" data-panel="panel-population">
+          <span class="chip-icon">👥</span>
+          <span class="chip-text">실시간 인구수</span>
+        </div>
+        <div class="chip" data-panel="panel-subway">
+          <span class="chip-icon">🚇</span>
+          <span class="chip-text">지하철 도착</span>
+        </div>
+        <div class="chip" data-panel="panel-transit">
+          <span class="chip-icon">🚌</span>
+          <span class="chip-text">대중교통 승하차</span>
+        </div>
+        <div class="chip" data-panel="panel-road">
+          <span class="chip-icon">🚗</span>
+          <span class="chip-text">도로 소통</span>
+        </div>
+        <div class="chip" data-panel="panel-incident">
+          <span class="chip-icon">⚠️</span>
+          <span class="chip-text">실시간 돌발정보</span>
+        </div>
+        <div class="chip" data-panel="panel-events">
+          <span class="chip-icon">🎭</span>
+          <span class="chip-text">문화·행사 정보</span>
+        </div>
+      </div>
+
+      <!-- MAP BACKGROUND: 전체 화면 배경 -->
+      <div class="map-background">
+        <div id="google-map"></div>
+      </div>
+
       <main class="layout">
-        <!-- LEFT COLUMN -->
-        <section class="col-left">
-          <!-- 실시간 인구수 -->
+        <!-- OVERLAY PANELS: 지도 위에 떠 있는 패널들 -->
+
+        <!-- 1) 실시간 인구수 패널 -->
+        <section class="overlay-panel is-active" id="panel-population">
           <article class="card card-population" id="card-population">
             <div class="card-header">
               <div class="card-title">실시간 인구수</div>
               <div id="pop-congest" class="tag">데이터 수신중</div>
             </div>
-            
+
             <div class="people-main">
-              <div>
-                <div class="range-label">추정 범위</div>
-                <div class="range-value">
-                  <span id="pop-min">0</span>
-                  <span> ~ </span>
-                  <span id="pop-max">0</span>
-                  <span> 명</span>
-                </div>
+              <div class="range-label">추정 범위</div>
+              <div class="range-value">
+                <span id="pop-min">0</span>
+                <span class="range-separator"> ~ </span>
+                <span id="pop-max">0</span>
+                <span class="range-unit"> 명</span>
               </div>
             </div>
-            
+
             <div class="people-footer">
-              <span class="dot"></span>
-              <span>변동률 <span id="pop-change" class="text-muted">-</span></span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="dot"></span>
+                <span>변동률 <span id="pop-change" style="color:#9ca3af">-</span></span>
+              </div>
             </div>
 
             <div id="forecast-chart" class="forecast-wrap"></div>
 
             <div class="card-timestamp-row">
               <div class="last-refresh">
-                최근 갱신: <span id="pop-last">--:--:--</span>
+                최근 갱신: <span id="population-last">--:--:--</span>
               </div>
               <div class="next-refresh">
-                다음 갱신: <span id="pop-next">--:--:--</span>
+                다음 갱신: <span id="population-next">--:--:--</span>
               </div>
             </div>
           </article>
+        </section>
 
-          <!-- 지하철 실시간 도착 -->
-          <article class="card" id="card-transport">
+        <!-- 2) 지하철 실시간 도착 패널 -->
+        <section class="overlay-panel" id="panel-subway">
+          <article class="card" id="card-subway">
             <div class="card-header">
               <div class="card-title">지하철 실시간 도착</div>
-              <div class="tag">강남역 기준</div>
+              <div class="tag">강남역 (2호선, 신분당선)</div>
             </div>
-            <div class="card-body" id="subway-arrival-list">
-              <div class="loading-msg">데이터 로딩중...</div>
+            <div class="card-body">
+              <!-- 2호선 -->
+              <div class="subway-section-title">2호선 (순환)</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-2">2</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">외선 (잠실 방면)</div>
+                  <div class="subway-detail">2분 후 도착 (교대)</div>
+                </div>
+                <div class="subway-arrival-time normal">2분</div>
+              </div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-2">2</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">내선 (시청 방면)</div>
+                  <div class="subway-detail">5분 후 도착 (역삼)</div>
+                </div>
+                <div class="subway-arrival-time normal">5분</div>
+              </div>
+
+              <!-- 신분당선 -->
+              <div class="subway-section-title">신분당선</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-sinbundang">신분당</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">신사행</div>
+                  <div class="subway-detail">1분 후 도착 (양재)</div>
+                </div>
+                <div class="subway-arrival-time soon">1분</div>
+              </div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-sinbundang">신분당</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">광교행</div>
+                  <div class="subway-detail">3분 후 도착 (양재시민의숲)</div>
+                </div>
+                <div class="subway-arrival-time normal">3분</div>
+              </div>
+            </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="subway-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="subway-next">--:--:--</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- 3) 대중교통 승하차 현황 패널 -->
+        <section class="overlay-panel" id="panel-transit">
+          <article class="card" id="card-transport">
+            <div class="card-header">
+              <div class="card-title">대중교통</div>
+              <button class="link-button">상세보기 &rsaquo;</button>
+            </div>
+            <div class="card-body">
+              <div class="public-row">
+                <div class="public-item">
+                  <div class="public-icon metro">🚇</div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      지하철 (2, 9호선)
+                    </div>
+                    <div class="public-meta">
+                      배차 간격 <span class="text-strong">평균 3분</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="public-row">
+                <div class="public-item">
+                  <div class="public-icon bus">🚌</div>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">버스</div>
+                    <div class="public-meta">
+                      실시간 혼잡도
+                      <span class="text-strong" style="color: #b45309">중간</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top: 8px; font-size: 11px; color: var(--text-sub); text-align: right;">
+                평균 지연 2~3분
+              </div>
             </div>
 
             <div class="card-timestamp-row">
@@ -96,107 +222,67 @@
               </div>
             </div>
           </article>
-
-          <!-- 대중교통 승하차 인원 -->
-          <article class="card" id="card-transit">
-            <div class="card-header">
-              <div class="card-title">대중교통 승하차 현황</div>
-              <div class="tag">오늘 누적</div>
-            </div>
-            <div class="card-body" id="transit-passenger-chart">
-              <div class="loading-msg">데이터 로딩중...</div>
-            </div>
-
-            <div class="card-timestamp-row">
-              <div class="last-refresh">
-                최근 갱신: <span id="transit-last">--:--:--</span>
-              </div>
-              <div class="next-refresh">
-                다음 갱신: <span id="transit-next">--:--:--</span>
-              </div>
-            </div>
-          </article>
         </section>
 
-        <!-- CENTER COLUMN -->
-        <section class="col-center">
-          <!-- 디지털트윈 뷰 - 박스 없이 지도만 -->
-          <div class="dt-map-full">
-            <div id="google-map"></div>
-            <button class="dt-btn-overlay" type="button">3D 보기 전환</button>
-          </div>
-
-          <!-- 도로 소통 단계 -->
-          <article class="card card-muted mt-4" id="card-traffic">
+        <!-- 4) 도로 소통 단계 패널 -->
+        <section class="overlay-panel" id="panel-road">
+          <article class="card card-muted" id="card-traffic">
             <div class="card-header">
               <div class="card-title">도로 소통 단계</div>
-              <div class="tag">강남역 기준</div>
+              <div class="tag">강남역 사거리 기준</div>
             </div>
             <div class="card-body">
               <div class="card-row">
                 <div>
-                  <div class="label-sm">현재 단계</div>
-                  <div class="value-lg">서행</div>
-                  <div class="label-sm">평균 속도 <span class="text-strong">34km/h</span></div>
+                  <div style="font-size: 11px; color: var(--text-sub)">
+                    현재 단계
+                  </div>
+                  <div style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                    서행
+                  </div>
+                  <div style="font-size: 11px; margin-top: 2px">
+                    전체 평균 속도
+                    <span class="text-strong">34km/h</span>
+                  </div>
                 </div>
-                <div class="icon-badge">🚗</div>
+                <div class="icon-badge" style="background: #eff6ff">🚗</div>
+              </div>
+
+              <div class="card-row" style="margin-top:6px;">
+                <span>주차장 여유도</span>
+                <span class="text-strong">보통 (공영 3곳 기준)</span>
               </div>
               <div class="traffic-bar-wrap">
                 <div class="traffic-bar-bg">
                   <div class="traffic-bar-fg"></div>
                 </div>
-                <div class="bar-caption">
-                  <span class="text-strong">정체 가능성</span>
+                <div style="margin-top: 4px; font-size: 11px; color: var(--text-sub);">
+                  1시간 내 <span class="text-strong">정체 가능성 높음</span>
                 </div>
               </div>
             </div>
+
             <div class="card-timestamp-row">
-              <div class="last-refresh">최근 갱신: <span id="traffic-last">--:--:--</span></div>
-              <div class="next-refresh">다음 갱신: <span id="traffic-next">--:--:--</span></div>
+              <div class="last-refresh">
+                최근 갱신: <span id="traffic-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="traffic-next">--:--:--</span>
+              </div>
             </div>
           </article>
         </section>
 
-        <!-- RIGHT COLUMN -->
-        <section class="col-right">
-          <!-- 실시간 돌발정보 -->
+        <!-- 5) 실시간 돌발정보 패널 -->
+        <section class="overlay-panel" id="panel-incident">
           <article class="card" id="card-incidents">
             <div class="card-header">
               <div class="card-title">실시간 돌발정보</div>
-              <div class="tag-amber tag">3건</div>
+              <div class="tag-amber tag">0건</div>
             </div>
-            <div class="card-body incidents-list">
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">🚧 공사</div>
-                  <div class="incident-time">15분 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">강남대로 61길</div>
-                  <div class="incident-detail">도로 보수 작업 진행 중</div>
-                </div>
-              </div>
-              
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">🚗 사고</div>
-                  <div class="incident-time">23분 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">테헤란로 역삼역 인근</div>
-                  <div class="incident-detail">접촉사고, 1차로 통제</div>
-                </div>
-              </div>
-
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">⚠️ 통제</div>
-                  <div class="incident-time">1시간 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">강남역 11번 출구 앞</div>
-                  <div class="incident-detail">행사로 인한 차량 통제</div>
-                </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
+              <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
+                데이터를 불러오는 중...
               </div>
             </div>
 
@@ -209,12 +295,14 @@
               </div>
             </div>
           </article>
+        </section>
 
-          <!-- 주변 문화·행사 정보 -->
+        <!-- 6) 주변 문화·행사 정보 패널 -->
+        <section class="overlay-panel" id="panel-events">
           <article class="card" id="card-culture">
             <div class="card-header">
               <div class="card-title">주변 문화·행사 정보</div>
-              <div class="icon-emoji">🎭</div>
+              <div style="font-size: 18px">🎭</div>
             </div>
             <div class="card-body">
               <div class="culture-list">
@@ -240,7 +328,9 @@
                   </div>
                 </div>
               </div>
-              <div class="card-footnote">* 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.</div>
+              <div style="margin-top:8px;font-size:10px;color:var(--text-sub);text-align:right;">
+                * 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.
+              </div>
             </div>
 
             <div class="card-timestamp-row">
@@ -253,6 +343,7 @@
             </div>
           </article>
         </section>
+
       </main>
     </div>
 
