@@ -22,15 +22,15 @@
             </div>
           </div>
           <div class="weather-block">
-            <div class="weather-icon">🌙</div>
+            <div class="weather-icon">--</div>
             <div class="weather-info">
-              <div class="weather-temp">5.0℃</div>
+              <div class="weather-temp">--℃</div>
               <div class="weather-air">
                 <span class="air-label">미세</span>
-                <span class="air-value">보통</span>
+                <span class="air-value">--</span>
                 <span class="air-divider">·</span>
                 <span class="air-label">초미세</span>
-                <span class="air-value">보통</span>
+                <span class="air-value">--</span>
               </div>
             </div>
           </div>
@@ -45,16 +45,16 @@
           <article class="card card-population" id="card-population">
             <div class="card-header">
               <div class="card-title">실시간 인구수</div>
-              <div id="pop-congest" class="tag">데이터 수신중</div>
+              <div id="population-congest" class="tag">데이터 수신중</div>
             </div>
             
             <div class="people-main">
               <div>
                 <div class="range-label">추정 범위</div>
                 <div class="range-value">
-                  <span id="pop-min">0</span>
+                  <span id="population-min">0</span>
                   <span> ~ </span>
-                  <span id="pop-max">0</span>
+                  <span id="population-max">0</span>
                   <span> 명</span>
                 </div>
               </div>
@@ -62,23 +62,23 @@
             
             <div class="people-footer">
               <span class="dot"></span>
-              <span>변동률 <span id="pop-change" class="text-muted">-</span></span>
+              <span>변동률 <span id="population-change" class="text-muted">-</span></span>
             </div>
 
             <div id="forecast-chart" class="forecast-wrap"></div>
 
             <div class="card-timestamp-row">
               <div class="last-refresh">
-                최근 갱신: <span id="pop-last">--:--:--</span>
+                최근 갱신: <span id="population-last">--:--:--</span>
               </div>
               <div class="next-refresh">
-                다음 갱신: <span id="pop-next">--:--:--</span>
+                다음 갱신: <span id="population-next">--:--:--</span>
               </div>
             </div>
           </article>
 
           <!-- 지하철 실시간 도착 -->
-          <article class="card" id="card-transport">
+          <article class="card" id="card-subway_arrv">
             <div class="card-header">
               <div class="card-title">지하철 실시간 도착</div>
               <div class="tag">강남역 기준</div>
@@ -89,30 +89,30 @@
 
             <div class="card-timestamp-row">
               <div class="last-refresh">
-                최근 갱신: <span id="transport-last">--:--:--</span>
+                최근 갱신: <span id="subway_arrv-last">--:--:--</span>
               </div>
               <div class="next-refresh">
-                다음 갱신: <span id="transport-next">--:--:--</span>
+                다음 갱신: <span id="subway_arrv-next">--:--:--</span>
               </div>
             </div>
           </article>
 
           <!-- 대중교통 승하차 인원 -->
-          <article class="card" id="card-transit">
+          <article class="card" id="card-transit_accm">
             <div class="card-header">
               <div class="card-title">대중교통 승하차 현황</div>
               <div class="tag">오늘 누적</div>
             </div>
-            <div class="card-body" id="transit-passenger-chart">
+            <div class="card-body" id="transit_accm-passenger-chart">
               <div class="loading-msg">데이터 로딩중...</div>
             </div>
 
             <div class="card-timestamp-row">
               <div class="last-refresh">
-                최근 갱신: <span id="transit-last">--:--:--</span>
+                최근 갱신: <span id="transit_accm-last">--:--:--</span>
               </div>
               <div class="next-refresh">
-                다음 갱신: <span id="transit-next">--:--:--</span>
+                다음 갱신: <span id="transit_accm-next">--:--:--</span>
               </div>
             </div>
           </article>
@@ -136,8 +136,8 @@
               <div class="card-row">
                 <div>
                   <div class="label-sm">현재 단계</div>
-                  <div class="value-lg">서행</div>
-                  <div class="label-sm">평균 속도 <span class="text-strong">34km/h</span></div>
+                  <div class="value-lg">--</div>
+                  <div class="label-sm">평균 속도 <span class="text-strong">--km/h</span></div>
                 </div>
                 <div class="icon-badge">🚗</div>
               </div>
@@ -161,43 +161,14 @@
         <section class="col-right">
           <!-- 실시간 돌발정보 -->
           <article class="card" id="card-incidents">
+
             <div class="card-header">
               <div class="card-title">실시간 돌발정보</div>
-              <div class="tag-amber tag">3건</div>
+              <div class="tag-amber tag">--건</div>
             </div>
-            <div class="card-body incidents-list">
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">🚧 공사</div>
-                  <div class="incident-time">15분 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">강남대로 61길</div>
-                  <div class="incident-detail">도로 보수 작업 진행 중</div>
-                </div>
-              </div>
-              
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">🚗 사고</div>
-                  <div class="incident-time">23분 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">테헤란로 역삼역 인근</div>
-                  <div class="incident-detail">접촉사고, 1차로 통제</div>
-                </div>
-              </div>
 
-              <div class="incident-item">
-                <div class="incident-header">
-                  <div class="incident-type">⚠️ 통제</div>
-                  <div class="incident-time">1시간 전</div>
-                </div>
-                <div class="incident-content">
-                  <div class="incident-location">강남역 11번 출구 앞</div>
-                  <div class="incident-detail">행사로 인한 차량 통제</div>
-                </div>
-              </div>
+            <div class="card-body incidents-list">
+              <div class="loading-msg">데이터 로딩중...</div>
             </div>
 
             <div class="card-timestamp-row">
@@ -208,6 +179,7 @@
                 다음 갱신: <span id="incidents-next">--:--:--</span>
               </div>
             </div>
+
           </article>
 
           <!-- 주변 문화·행사 정보 -->
@@ -218,27 +190,7 @@
             </div>
             <div class="card-body">
               <div class="culture-list">
-                <div class="culture-item">
-                  <div class="culture-title">강남역 버스킹 공연</div>
-                  <div class="culture-meta">
-                    <span>오늘 19:00 ~ 21:00</span>
-                    <span>2번 출구 광장</span>
-                  </div>
-                </div>
-                <div class="culture-item">
-                  <div class="culture-title">도심 야간 플리마켓</div>
-                  <div class="culture-meta">
-                    <span>토요일 17:00 ~ 22:00</span>
-                    <span>역삼 문화의 거리</span>
-                  </div>
-                </div>
-                <div class="culture-item">
-                  <div class="culture-title">지하철 갤러리 전시 &lt;디지털 강남&gt;</div>
-                  <div class="culture-meta">
-                    <span>상시 전시</span>
-                    <span>강남역 지하상가 G-1 전시장</span>
-                  </div>
-                </div>
+                <div class="loading-msg">데이터 로딩중...</div>
               </div>
               <div class="card-footnote">* 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.</div>
             </div>
@@ -256,7 +208,8 @@
       </main>
     </div>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
+    
     <script
       async
       defer
@@ -275,12 +228,7 @@
         </div>
     </div>
 
-        <script src="script.js"></script>
-        ```
-
-
-        <!-- cctv test -->
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
   </body>
 </html>
