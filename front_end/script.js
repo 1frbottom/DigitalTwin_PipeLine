@@ -1,19 +1,25 @@
-// ---------------- 갱신 시간 관리 ----------------
+// config
+const API_BASE_URL = "http://localhost:58000";
+const TARGET_AREA_NAME = "강남역"
 
-// 각 카드별 갱신 간격 (밀리초)
+  // 각 카드별 갱신 간격 (ms)
 const REFRESH_INTERVALS = {
-  population: 10000,      // 10초
-  traffic: 15000,         // 15초
-  transport: 20000,       // 20초
-  livingPop: 60000,       // 1분
-  events: 5000,           // 5초
-  culture: 3600000,       // 1시간
-  weather: 300000,        // 5분
-  transit: 60000,         // 1분
+  incidents: 60000,                   // 1분
+
+  population: 60000,                  // 1분
+  traffic: 300000,                    // 5분
+  subway_arrv: 60000,                 // 1분
+  transit_accm: 300000,               // 5분
+  culture: 3600000,                   // 1시간
+  weather: 600000,                    // 10분
+
+  livingPop: 60000,                   // 1분
 };
 
-// 각 카드별 마지막 갱신 시간 저장
+  // 각 카드별 마지막 갱신 시간 저장
 const lastUpdateTimes = {};
+
+// --------------------------------------------------------------------------------
 
 // 갱신 시간 표시 업데이트 함수
 function updateTimestamps(cardName) {
@@ -110,13 +116,13 @@ function getColorByLevel(level) {
 async function fetchPopulationData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/current?area_name=강남역"
+      `${API_BASE_URL}/city/population/current?area_name=${TARGET_AREA_NAME}`
     );
     if (!response.ok) throw new Error("Current API Error");
     const data = await response.json();
 
     // (1) 혼잡도 태그 업데이트
-    const congestEl = document.getElementById("pop-congest");
+    const congestEl = document.getElementById("population-congest");
     const styleInfo = getColorByLevel(data.congest_lvl);
 
     congestEl.textContent = data.congest_lvl;
@@ -131,11 +137,11 @@ async function fetchPopulationData() {
     }
 
     // (2) 인구수 업데이트
-    document.getElementById("pop-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
-    document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
+    document.getElementById("population-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
+    document.getElementById("population-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
     // (3) 갱신 시간 업데이트
-    updateTimestamps('pop');
+    updateTimestamps('population');
 
   } catch (error) {
     console.error("인구 현황 수신 실패:", error);
@@ -147,7 +153,7 @@ async function fetchPopulationData() {
 async function fetchForecastData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/forecast?area_name=강남역"
+      `${API_BASE_URL}/city/population/forecast?area_name=${TARGET_AREA_NAME}`
     );
 
     const container = document.getElementById("forecast-chart");
@@ -222,7 +228,9 @@ function getTrafficStyle(idx) {
 
 async function fetchTrafficData() {
   try {
-    const response = await fetch("http://localhost:58000/city/traffic/road?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/traffic/road?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) throw new Error("Traffic API Error");
     const data = await response.json();
 
@@ -282,7 +290,9 @@ function getLineLabel(lineNum) {
 
 async function fetchSubwayData() {
   try {
-    const response = await fetch("http://localhost:58000/subway/arrival/board?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/subway/arrival/board?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) throw new Error("Subway API Error");
     const result = await response.json();
 
@@ -319,7 +329,7 @@ async function fetchSubwayData() {
       `;
     }).join('');
 
-    updateTimestamps('transport');
+    updateTimestamps('subway_arrv');
   } catch (error) {
     console.error("지하철 도착정보 수신 실패:", error);
   }
@@ -329,7 +339,9 @@ async function fetchSubwayData() {
 
 async function fetchIncidentsData() {
   try {
-    const response = await fetch("http://localhost:58000/incident/active");
+    const response = await fetch(
+      `${API_BASE_URL}/incident/active`
+    );
     if (!response.ok) throw new Error("Incident API Error");
     const incidents = await response.json();
 
@@ -439,7 +451,9 @@ function getAirQualityStyle(airIdx) {
 
 async function fetchWeatherData() {
   try {
-    const response = await fetch("http://localhost:58000/city/weather/current?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/weather/current?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) throw new Error("Weather API Error");
     const data = await response.json();
 
@@ -477,11 +491,13 @@ async function fetchWeatherData() {
 // ---------------- 대중교통 승하차 인원 ----------------
 
 async function fetchTransitPassengerData() {
-  const container = document.getElementById("transit-passenger-chart");
+  const container = document.getElementById("transit_accm-passenger-chart");
   if (!container) return;
 
   try {
-    const response = await fetch("http://localhost:58000/city/transit/passenger?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/transit/passenger?area_name=${TARGET_AREA_NAME}`
+    );
 
     if (!response.ok) {
       container.innerHTML = '<div class="loading-msg">데이터 준비중</div>';
@@ -525,7 +541,7 @@ async function fetchTransitPassengerData() {
       </div>
     `;
 
-    updateTimestamps('transit');
+    updateTimestamps('transit_accm');
   } catch (error) {
     console.error("대중교통 승하차 데이터 수신 실패:", error);
     container.innerHTML = '<div class="loading-msg">연결 실패</div>';
@@ -552,10 +568,10 @@ function setupRefreshIntervals() {
   }, REFRESH_INTERVALS.population);
 
   setInterval(fetchTrafficData, REFRESH_INTERVALS.traffic);
-  setInterval(fetchIncidentsData, REFRESH_INTERVALS.events);
-  setInterval(fetchSubwayData, REFRESH_INTERVALS.transport);
+  setInterval(fetchIncidentsData, REFRESH_INTERVALS.incidents);
+  setInterval(fetchSubwayData, REFRESH_INTERVALS.subway_arrv);
   setInterval(fetchWeatherData, REFRESH_INTERVALS.weather);
-  setInterval(fetchTransitPassengerData, REFRESH_INTERVALS.transit);
+  setInterval(fetchTransitPassengerData, REFRESH_INTERVALS.transit_accm);
   setInterval(updateCultureData, REFRESH_INTERVALS.culture);
 }
 
@@ -725,7 +741,9 @@ window.openCctv = async function (cctvId) {
             hls = null;
         }
 
-        const response = await fetch("http://localhost:58000/cctv/streams");
+        const response = await fetch(
+          `${API_BASE_URL}/cctv/streams`
+        );
         const result = await response.json();
         const streamData = result.data[cctvId - 1]; // ID 매핑 주의
 

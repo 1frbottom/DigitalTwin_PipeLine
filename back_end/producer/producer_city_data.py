@@ -15,7 +15,7 @@ KAFKA_REQUEST_TIMEOUT = 15000
 # API
 API_KEY = os.environ.get("SEOUL_API_KEY")
 if not API_KEY:
-    print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
+    print("[ERROR] city_data : SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
 
 AREA_NM = "강남역"
@@ -32,7 +32,7 @@ def connect_kafka_producer():
         print("city_data : Kafka Producer에 연결되었습니다.")
         return producer
     except Exception as e:
-        print(f"city_data : Kafka 연결 중 심각한 오류 발생: {e}")
+        print(f"[ERROR] city_data :  Kafka 연결 중 심각한 오류 발생: {e}")
         time.sleep(5)
         exit()
 
@@ -50,7 +50,7 @@ def fetch_and_parse_city_data():
         # 데이터가 정상적으로 있는지 확인
         if 'SeoulRtd.citydata' not in data or 'CITYDATA' not in data['SeoulRtd.citydata']:
             error_msg = data.get('RESULT', {}).get('MESSAGE', '알 수 없는 응답')
-            print(f"  - API 응답 (데이터 없음 또는 오류): {error_msg}")
+            print(f"[ERROR] city_data : API 응답 (데이터 없음 또는 오류): {error_msg}")
             return None
 
         citydata = data['SeoulRtd.citydata']['CITYDATA']
@@ -58,7 +58,7 @@ def fetch_and_parse_city_data():
         area_cd = citydata.get('AREA_CD')
 
         if not area_nm or not area_cd:
-            print("  - 파싱 오류: AREA_NM 또는 AREA_CD를 찾을 수 없습니다.")
+            print("[ERROR] city_data : 파싱 오류, AREA_NM 또는 AREA_CD를 찾을 수 없습니다.")
             return None
 
         # 원본 테이블 스키마에 맞게 각 섹션을 JSON 문자열로 직렬화
@@ -86,9 +86,9 @@ def fetch_and_parse_city_data():
         return message
 
     except requests.exceptions.RequestException as e:
-        print(f"  - 네트워크 오류 발생: {e}", flush=True)
+        print(f"[ERROR] city_data :네트워크 오류 발생: {e}", flush=True)
     except Exception as e:
-        print(f"  - 처리 중 알 수 없는 오류 발생: {e}", flush=True)
+        print(f"[ERROR] city_data : 처리 중 알 수 없는 오류 발생: {e}", flush=True)
     
     return None
 
@@ -110,9 +110,8 @@ def main():
         else:
             print(f"city_data : {AREA_NM} 데이터 수신 실패.")
 
-        # 도시 데이터는 5분(300초) 주기로 수집 (API 정책에 맞게 조절)
-        print("city_data : 300초 후 다시 시작합니다.")
-        time.sleep(300)
+        print("city_data : 60초 후 다시 시작합니다.")
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
