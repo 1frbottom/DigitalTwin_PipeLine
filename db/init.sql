@@ -182,8 +182,8 @@ DECLARE
     v_hour_slot INTEGER;
     v_adjusted_time TIMESTAMP;
 BEGIN
-    -- 10분 오프셋 적용하여 날짜와 시간 슬롯 계산
-    v_adjusted_time := NEW.data_time - INTERVAL '10 minutes';
+    -- 5분 오프셋 적용하여 날짜와 시간 슬롯 계산
+    v_adjusted_time := NEW.data_time - INTERVAL '5 minutes';
     v_data_date := v_adjusted_time::DATE;
     v_hour_slot := EXTRACT(HOUR FROM v_adjusted_time);
 
