@@ -262,5 +262,25 @@
       defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
     ></script>
+
+    <div id="cctv-mini-player" class="mini-player hidden">
+        <div class="player-header">
+            <span id="player-title">CCTV 뷰어</span>
+            <button class="btn-mini-close" onclick="closeCctv()">✕</button>
+        </div>
+        <div class="player-body">
+            <div id="video-container">
+                <video id="cctv-player" controls autoplay muted playsinline></video>
+            </div>
+        </div>
+    </div>
+
+        <script src="script.js"></script>
+        ```
+
+
+        <!-- cctv test -->
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
   </body>
 </html>

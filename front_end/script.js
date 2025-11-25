@@ -110,7 +110,7 @@ function getColorByLevel(level) {
 async function fetchPopulationData() {
   try {
     const response = await fetch(
-      "http://localhost:8000/city/population/current?area_name=강남역"
+      "http://localhost:58000/city/population/current?area_name=강남역"
     );
     if (!response.ok) throw new Error("Current API Error");
     const data = await response.json();
@@ -147,7 +147,7 @@ async function fetchPopulationData() {
 async function fetchForecastData() {
   try {
     const response = await fetch(
-      "http://localhost:8000/city/population/forecast?area_name=강남역"
+      "http://localhost:58000/city/population/forecast?area_name=강남역"
     );
 
     const container = document.getElementById("forecast-chart");
@@ -222,7 +222,7 @@ function getTrafficStyle(idx) {
 
 async function fetchTrafficData() {
   try {
-    const response = await fetch("http://localhost:8000/city/traffic/road?area_name=강남역");
+    const response = await fetch("http://localhost:58000/city/traffic/road?area_name=강남역");
     if (!response.ok) throw new Error("Traffic API Error");
     const data = await response.json();
 
@@ -282,7 +282,7 @@ function getLineLabel(lineNum) {
 
 async function fetchSubwayData() {
   try {
-    const response = await fetch("http://localhost:8000/subway/arrival/board?area_name=강남역");
+    const response = await fetch("http://localhost:58000/subway/arrival/board?area_name=강남역");
     if (!response.ok) throw new Error("Subway API Error");
     const result = await response.json();
 
@@ -329,7 +329,7 @@ async function fetchSubwayData() {
 
 async function fetchIncidentsData() {
   try {
-    const response = await fetch("http://localhost:8000/incident/active");
+    const response = await fetch("http://localhost:58000/incident/active");
     if (!response.ok) throw new Error("Incident API Error");
     const incidents = await response.json();
 
@@ -439,7 +439,7 @@ function getAirQualityStyle(airIdx) {
 
 async function fetchWeatherData() {
   try {
-    const response = await fetch("http://localhost:8000/city/weather/current?area_name=강남역");
+    const response = await fetch("http://localhost:58000/city/weather/current?area_name=강남역");
     if (!response.ok) throw new Error("Weather API Error");
     const data = await response.json();
 
@@ -481,7 +481,7 @@ async function fetchTransitPassengerData() {
   if (!container) return;
 
   try {
-    const response = await fetch("http://localhost:8000/city/transit/passenger?area_name=강남역");
+    const response = await fetch("http://localhost:58000/city/transit/passenger?area_name=강남역");
 
     if (!response.ok) {
       container.innerHTML = '<div class="loading-msg">데이터 준비중</div>';
@@ -665,6 +665,111 @@ function addCctvMarkers() {
   });
 }
 
-window.openCctv = function (cctvId) {
-  console.log("CCTV 클릭:", cctvId);
+// !!! CCTV 구버전 !!!
+// // CCTV 모달 열기
+// window.openCctv = function (cctvId) {
+//   console.log("CCTV 열기:", cctvId);
+  
+//   const modal = document.getElementById('cctv-modal');
+//   const title = document.getElementById('modal-cctv-title');
+  
+//   // 제목 설정 (CCTV ID에 따라 이름 매핑)
+//   // CCTV_LOCATIONS 배열을 활용해 이름을 찾습니다.
+//   const targetCCTV = CCTV_LOCATIONS.find(c => c.id == cctvId);
+//   title.textContent = targetCCTV ? targetCCTV.name : `CCTV #${cctvId}`;
+
+//   // 모달 보여주기 (hidden 클래스 제거)
+//   modal.classList.remove('hidden');
+
+//   // TODO: 여기에 실제 비디오 스트리밍 연결 로직 추가
+//   // 예: hls.loadSource(streamUrl);
+// };
+
+// // CCTV 모달 닫기
+// window.closeCctv = function () {
+//   const modal = document.getElementById('cctv-modal');
+//   modal.classList.add('hidden');
+  
+//   // 영상 정지 로직이 필요하면 여기에 추가
+// };
+
+// // 배경 클릭 시 닫기
+// document.getElementById('cctv-modal').addEventListener('click', (e) => {
+//     if (e.target === document.getElementById('cctv-modal')) {
+//         closeCctv();
+//     }
+// });
+
+let hls = null; // HLS 객체 전역 변수
+
+// CCTV 미니 플레이어 열기
+window.openCctv = async function (cctvId) {
+    console.log("CCTV 미니창 열기:", cctvId);
+
+    const playerBox = document.getElementById('cctv-mini-player');
+    const title = document.getElementById('player-title');
+    const video = document.getElementById('cctv-player');
+
+    // 1. 플레이어 UI 보여주기 (기존 hidden 제거)
+    playerBox.classList.remove('hidden');
+
+    // 2. 제목 설정
+    const targetCCTV = CCTV_LOCATIONS.find(c => c.id == cctvId);
+    title.textContent = targetCCTV ? targetCCTV.name : `CCTV #${cctvId}`;
+
+    // 3. 스트림 URL 연결 (기존 로직 유지)
+    try {
+        // 이미 재생 중인 HLS가 있다면 정리 (채널 변경 시)
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+
+        const response = await fetch("http://localhost:58000/cctv/streams");
+        const result = await response.json();
+        const streamData = result.data[cctvId - 1]; // ID 매핑 주의
+
+        if (!streamData) {
+            alert("CCTV 정보를 찾을 수 없습니다.");
+            return;
+        }
+
+        const streamUrl = streamData.stream_url;
+
+        if (Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play().catch(e => console.log("자동재생 막힘:", e));
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.addEventListener('loadedmetadata', function () {
+                video.play();
+            });
+        }
+
+    } catch (error) {
+        console.error("CCTV 연결 에러:", error);
+    }
+};
+
+// CCTV 닫기
+window.closeCctv = function () {
+    const playerBox = document.getElementById('cctv-mini-player');
+    const video = document.getElementById('cctv-player');
+
+    // UI 숨기기
+    playerBox.classList.add('hidden');
+
+    // 영상 정지 및 자원 해제 (데이터 낭비 방지)
+    if (video) {
+        video.pause();
+        video.src = "";
+    }
+    if (hls) {
+        hls.destroy();
+        hls = null;
+    }
 };
