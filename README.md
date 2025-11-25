@@ -20,14 +20,24 @@
 
 	- 패치(patch)로 커밋목록 최신화 및 확인<br><br>
 
-	- 루트에 .env 파일을 만들고 아래 붙여넣기<br><br>
+	- 루트에 .env 파일을 만들고 아래 붙여넣기<br>
 		```
-		SEOUL_API_KEY=본인키<br>
-		HOST_PORT_API=58000<br>
-		HOST_PORT_KAFKA=59092<br>
-		HOST_PORT_DB=54320<br>
-		HOST_PORT_SPARK_UI=58080<br><br>
+		# 서울 열린데이터 광장 (https://data.seoul.go.kr)
+		SEOUL_API_KEY=64496f53736974733530424d6b4b4a
+
+		# 1. API Server
+		HOST_PORT_API=58000
+
+		# 2. Kafka External
+		HOST_PORT_KAFKA=59092
+
+		# 3. PostgreSQL
+		HOST_PORT_DB=54320
+
+		# 4. Spark Master UI
+		HOST_PORT_SPARK_UI=58080q
 		```
+		<br><br>
 
 	- 프로젝트의 루트 디렉토리에서 터미널 실행 & 도커 데스크탑 앱 실행<br><br>
 
@@ -35,12 +45,15 @@
 
 	- [docker app] 여러 컨테이너들에 불이 잘 들어와있나 체크 (kafka-setup은 실행 몇초 후 꺼지는게 정상)<br><br>
 
-	- [docker app] (프론트는 바로 html 열어서 봐도 됩니다. 필요한 경우에) db 컨테이너의 exec으로 가서 아래의 명령어 입력<br><br>
-		- psql -U user -d traffic_db<br><br>
-		- \dt<br><br>
-		- SELECT * FROM 테이블명 LIMIT 10;<br><br>
-		- \q<br><br>
-
+	- [docker app] (프론트는 바로 html 열어서 봐도 됩니다. 필요한 경우에) db 컨테이너의 exec으로 가서 아래의 명령어 입력<br>
+		```
+		psql -U user -d traffic_db
+		\dt
+		SELECT * FROM 테이블명 LIMIT 10;
+		\q
+		```
+		<br><br>
+		
 	- [terminal] docker compose down<br><br>
 
 	- .yml이나 .sql 등 코어 소스가 아닌 이상 compose 올려놓고 작업해도 바로바로 반영 됩니다.<br><br>
