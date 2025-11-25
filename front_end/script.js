@@ -2,18 +2,13 @@
 
 // 각 카드별 갱신 간격 (밀리초)
 const REFRESH_INTERVALS = {
-  population: 10000,      // 10초
-  subway: 10000,          // 10초
-  traffic: 15000,         // 15초
-  transport: 20000,       // 20초
-  livingPop: 60000,       // 1분
-  safety: 10000,          // 10초
-  prediction: 30000,      // 30초
-  retail: 300000,         // 5분
-  events: 5000,           // 5초
-  culture: 3600000,       // 1시간
-  toilet: 86400000,       // 24시간
-  incidents: 5000,        // 5초
+  population: 300000,     // 5분 - 인구현황
+  subway: 10000,          // 10초 - 실시간 지하철 도착현황
+  traffic: 300000,        // 5분 - 도로소통
+  transport: 300000,      // 5분 - 대중교통 승하차
+  weather: 600000,        // 10분 - 기상현황
+  incidents: 5000,        // 5초 - 실시간 돌발정보
+  culture: 3600000,       // 1시간 - 문화행사
 };
 
 // 각 카드별 마지막 갱신 시간 저장
@@ -310,8 +305,16 @@ function updateSubwayData() {
 
 async function fetchTrafficData() {
   try {
-    // 도로 소통 API가 없으므로 임시로 타임스탬프만 업데이트
-    console.log("도로 소통 데이터 갱신 (API 없음)");
+    const response = await fetch("http://localhost:8000/city/traffic/road?area_name=강남역");
+    if (!response.ok) {
+      console.log("도로 소통 데이터 없음");
+      updateTimestamps('traffic');
+      return;
+    }
+
+    const data = await response.json();
+    console.log("도로 소통 데이터 수신:", data);
+
     updateTimestamps('traffic');
 
   } catch (error) {
@@ -327,7 +330,7 @@ function updateTrafficData() {
 
 async function fetchTransportData() {
   try {
-    const response = await fetch("http://localhost:8000/subway/ppltn/current?area_name=강남역");
+    const response = await fetch("http://localhost:8000/city/transit/passenger?area_name=강남역");
     if (!response.ok) {
       console.log("대중교통 데이터 없음");
       updateTimestamps('transport');
@@ -335,7 +338,7 @@ async function fetchTransportData() {
     }
 
     const data = await response.json();
-    console.log("대중교통 데이터 수신:", data);
+    console.log("대중교통 승하차 데이터 수신:", data);
 
     updateTimestamps('transport');
 
@@ -487,6 +490,59 @@ function updatePredictionData() {
   updateTimestamps('prediction');
 }
 
+// ---------------- 기상현황 ----------------
+
+async function fetchWeatherData() {
+  try {
+    const response = await fetch("http://localhost:8000/city/weather/current?area_name=강남역");
+    if (!response.ok) {
+      console.log("기상현황 데이터 없음");
+      updateTimestamps('weather');
+      return;
+    }
+
+    const data = await response.json();
+    console.log("기상현황 데이터 수신:", data);
+
+    // 헤더의 날씨 정보 업데이트
+    const weatherTemp = document.querySelector('.weather-temp');
+    const weatherIcon = document.querySelector('.weather-icon');
+
+    if (weatherTemp && data.temp !== undefined) {
+      weatherTemp.textContent = `${data.temp}℃`;
+    }
+
+    // 날씨 아이콘 업데이트 (간단한 매핑)
+    if (weatherIcon && data.weather_desc) {
+      const iconMap = {
+        '맑음': '☀️',
+        '구름많음': '⛅',
+        '흐림': '☁️',
+        '비': '🌧️',
+        '눈': '🌨️',
+        '소나기': '⛈️'
+      };
+      weatherIcon.textContent = iconMap[data.weather_desc] || '🌤️';
+    }
+
+    // 미세먼지/초미세먼지 정보 업데이트 (데이터가 있다면)
+    const airLabels = document.querySelectorAll('.air-value');
+    if (airLabels.length >= 2) {
+      if (data.pm10_status) airLabels[0].textContent = data.pm10_status;
+      if (data.pm25_status) airLabels[1].textContent = data.pm25_status;
+    }
+
+    updateTimestamps('weather');
+
+  } catch (error) {
+    console.error("기상현황 수신 실패:", error);
+  }
+}
+
+function updateWeatherData() {
+  fetchWeatherData();
+}
+
 // ---------------- 문화행사 ----------------
 
 function updateCultureData() {
@@ -500,29 +556,39 @@ function initDashboard() {
   fetchPopulationData();
   fetchForecastData();
 
-  // 기타 데이터 (실제 API 연동 시 각각의 함수 구현)
+  // 기타 데이터
   updateSubwayData();
   updateTrafficData();
   updateTransportData();
+  updateWeatherData();
   updateIncidentsData();
-  updateSafetyData();
-  updatePredictionData();
   updateCultureData();
 }
 
 // 각 데이터별 갱신 인터벌 설정
 function setupRefreshIntervals() {
+  // 인구현황 - 5분마다
   setInterval(() => {
     fetchPopulationData();
     fetchForecastData();
   }, REFRESH_INTERVALS.population);
 
+  // 지하철 도착 - 10초마다
   setInterval(updateSubwayData, REFRESH_INTERVALS.subway);
+
+  // 도로소통 - 5분마다
   setInterval(updateTrafficData, REFRESH_INTERVALS.traffic);
+
+  // 대중교통 승하차 - 5분마다
   setInterval(updateTransportData, REFRESH_INTERVALS.transport);
+
+  // 기상현황 - 10분마다
+  setInterval(updateWeatherData, REFRESH_INTERVALS.weather);
+
+  // 실시간 돌발정보 - 5초마다
   setInterval(updateIncidentsData, REFRESH_INTERVALS.incidents);
-  setInterval(updateSafetyData, REFRESH_INTERVALS.safety);
-  setInterval(updatePredictionData, REFRESH_INTERVALS.prediction);
+
+  // 문화행사 - 1시간마다
   setInterval(updateCultureData, REFRESH_INTERVALS.culture);
 }
 
