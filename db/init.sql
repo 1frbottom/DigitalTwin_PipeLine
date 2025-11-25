@@ -83,19 +83,8 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     road_traffic_idx VARCHAR(50),
     road_traffic_spd INTEGER,
     road_traffic_time TIMESTAMP,
-    ingest_timestamp DOUBLE PRECISION
-);
-
--- 실시간 도시데이터 : 도로소통(평균)
-CREATE TABLE IF NOT EXISTS subway_arrival_proc (
-    area_nm VARCHAR(50) NOT NULL,
-    station_nm VARCHAR(100) NOT NULL,
-    line_num VARCHAR(10) NOT NULL,
-    train_line_nm VARCHAR(100) NOT NULL,
-    arrival_msg_1 TEXT,
-    arrival_msg_2 TEXT,
-    ingest_timestamp TIMESTAMP NOT NULL,
-    PRIMARY KEY (area_nm, station_nm, line_num, train_line_nm, ingest_timestamp)
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, road_traffic_time)
 );
 
 -- 실시간 도시데이터 : 기상 현황
@@ -129,12 +118,25 @@ CREATE TABLE IF NOT EXISTS city_weather_stts_forecast (
     PRIMARY KEY (area_nm, fcst_dt, ingest_timestamp)
 );
 
+-- 실시간 도시데이터 : 지하철 실시간 도착 현황(sub_stts)
+CREATE TABLE IF NOT EXISTS subway_arrival_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    station_nm VARCHAR(100) NOT NULL,
+    line_num VARCHAR(10) NOT NULL,
+    train_line_nm VARCHAR(100) NOT NULL,
+    arrival_msg_1 TEXT,
+    arrival_msg_2 TEXT,
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, station_nm, line_num, train_line_nm, ingest_timestamp)
+);
+
+-- 실시간 도시데이터 : 대중교통(지하철+버스) 승하차 인구 및 집계 ----------------------------------
 CREATE INDEX idx_subway_station ON subway_arrival_proc(station_nm);
 CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
 CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
 CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
 
--- 5분 단위 Raw 데이터 테이블 (대중교통 통합: 지하철 + 버스)
+    -- 5분 단위 Raw 데이터 테이블
 CREATE TABLE IF NOT EXISTS transit_ppltn_raw (
     area_nm VARCHAR(50) NOT NULL,
     transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
@@ -149,7 +151,7 @@ CREATE INDEX idx_transit_ppltn_raw_area ON transit_ppltn_raw(area_nm);
 CREATE INDEX idx_transit_ppltn_raw_type ON transit_ppltn_raw(transport_type);
 CREATE INDEX idx_transit_ppltn_raw_time ON transit_ppltn_raw(data_time);
 
--- 시간별 집계 테이블 (대중교통 통합)
+    -- 시간별 집계 테이블
 CREATE TABLE IF NOT EXISTS transit_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,
     transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
@@ -172,7 +174,7 @@ CREATE INDEX idx_transit_ppltn_type ON transit_ppltn_proc(transport_type);
 CREATE INDEX idx_transit_ppltn_date ON transit_ppltn_proc(data_date);
 CREATE INDEX idx_transit_ppltn_hour ON transit_ppltn_proc(hour_slot);
 
--- Raw 데이터 INSERT 시 자동 집계 트리거 함수
+    -- Raw 데이터 INSERT 시 자동 집계 트리거 함수
 CREATE OR REPLACE FUNCTION aggregate_transit_ppltn()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -180,8 +182,8 @@ DECLARE
     v_hour_slot INTEGER;
     v_adjusted_time TIMESTAMP;
 BEGIN
-    -- 10분 오프셋 적용하여 날짜와 시간 슬롯 계산
-    v_adjusted_time := NEW.data_time - INTERVAL '10 minutes';
+    -- 5분 오프셋 적용하여 날짜와 시간 슬롯 계산
+    v_adjusted_time := NEW.data_time - INTERVAL '5 minutes';
     v_data_date := v_adjusted_time::DATE;
     v_hour_slot := EXTRACT(HOUR FROM v_adjusted_time);
 
@@ -214,13 +216,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Raw 데이터 INSERT 시 자동 집계 트리거
+    -- Raw 데이터 INSERT 시 자동 집계 트리거
 CREATE TRIGGER trigger_aggregate_transit_ppltn
 AFTER INSERT ON transit_ppltn_raw
 FOR EACH ROW
 EXECUTE FUNCTION aggregate_transit_ppltn();
 
--- 24시간 이전 데이터 자동 삭제 함수
+    -- 24시간 이전 데이터 자동 삭제 함수
 CREATE OR REPLACE FUNCTION delete_old_transit_ppltn()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -230,8 +232,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- INSERT 시마다 24시간 이전 데이터 삭제 트리거
+    -- INSERT 시마다 24시간 이전 데이터 삭제 트리거
 CREATE TRIGGER trigger_delete_old_transit_ppltn
 AFTER INSERT ON transit_ppltn_proc
 FOR EACH STATEMENT
 EXECUTE FUNCTION delete_old_transit_ppltn();
+
+-- 실시간 도시데이터 : 문화행사 현황
+CREATE TABLE IF NOT EXISTS city_cultural_event_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    event_nm TEXT NOT NULL,
+    event_period VARCHAR(100),
+    event_place TEXT,
+    event_x DOUBLE PRECISION,
+    event_y DOUBLE PRECISION,
+    thumbnail TEXT,
+    url TEXT,
+    pay_yn VARCHAR(5),
+    event_etc_detail TEXT,
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, event_nm, ingest_timestamp)
+);
+
+CREATE INDEX idx_cultural_event_area ON city_cultural_event_proc(area_nm);
+CREATE INDEX idx_cultural_event_timestamp ON city_cultural_event_proc(ingest_timestamp);
+--------------------------------------------------------------------------------
