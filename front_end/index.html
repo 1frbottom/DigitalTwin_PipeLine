@@ -9,6 +9,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css?v=2" />
+    <!-- Chart.js 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   </head>
   <body>
     <div class="app">
@@ -22,19 +24,21 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
-          <div class="weather-card">
-            <div class="weather-icon">🌙</div>
-            <div class="weather-info">
-              <div class="weather-temp">5.0℃</div>
-              <div class="weather-air">
-                <span class="air-label">미세</span>
-                <span class="air-value">보통</span>
-                <span class="air-divider">·</span>
-                <span class="air-label">초미세</span>
-                <span class="air-value">보통</span>
+          <div class="weather-bar">
+            <span class="weather-icon">🌙</span>
+
+            <div class="weather-text">
+              <div class="weather-main">
+                <span class="weather-temp">6.2℃</span>
+                <span class="weather-air-summary">
+                    미세 <span class="air-good" id="pm10-status">보통</span> ·
+                    초미세 <span class="air-good" id="pm25-status">보통</span>
+                </span>
               </div>
-              <div class="weather-last-update">
-                갱신: <span id="weather-last">--:--</span>
+
+              <div class="weather-meta-row">
+                최근 갱신: <span id="weather-last">오후 08:01</span> ·
+                다음 갱신: <span id="weather-next">9분 후</span>
               </div>
             </div>
           </div>
@@ -45,6 +49,12 @@
       <div class="map-background">
         <div id="google-map"></div>
       </div>
+
+      <!-- 2D/3D 변환 버튼 -->
+      <button class="map-toggle-3d-btn" id="toggle3DButton">
+        <span class="btn-icon">🗺️</span>
+        <span class="btn-text">3D 변환</span>
+      </button>
 
       <!-- FLOATING CHIP BAR: 지도 위에 떠 있는 반투명 네비게이션 바 -->
       <div class="floating-chip-bar">
@@ -117,10 +127,10 @@
 
         <!-- 2) 지하철 실시간 도착 패널 -->
         <section class="overlay-panel" id="panel-subway">
-          <article class="card card-subway" id="bway">
+          <article class="card card-subway" id="card-subway">
             <div class="card-header">
               <div class="card-title">지하철 실시간 도착</div>
-              <div class="tag">강남역 (2호선,신분당선,9호선)</div>
+              <div class="tag">강남역 (2호선,9호선,신분당선)</div>
             </div>
             <div class="card-body">
               <!-- 2호선 -->
@@ -204,7 +214,7 @@
             
             <div class="card-header">
               <div class="card-title">대중교통</div>
-              <button class="link-button">상세보기 ›</button>
+              <button class="link-button" id="transportDetailButton">상세보기 ›</button>
             </div>
 
             <div class="card-body">
@@ -219,8 +229,8 @@
                   <div class="public-desc">오늘 승하차 누적</div>
                 </div>
                 <div class="public-right transport-values">
-                  <span class="transport-up"  id="subway-up">▲ 0</span>
-                  <span class="transport-down" id="subway-down">▼ 0</span>
+                  <span class="transport-up"  id="subway-up">승차</span>
+                  <span class="transport-down" id="subway-down">하차</span>
                 </div>
               </div>
 
@@ -234,11 +244,42 @@
                   <div class="public-desc">오늘 승하차 누적</div>
                 </div>
                 <div class="public-right transport-values">
-                  <span class="transport-up"  id="bus-up">▲ 0</span>
-                  <span class="transport-down" id="bus-down">▼ 0</span>
+                  <span class="transport-up"  id="bus-up">승차</span>
+                  <span class="transport-down" id="bus-down">하차</span>
                 </div>
               </div>
 
+            </div>
+
+            <!-- 상세 그래프 영역 (처음엔 숨김) -->
+            <div class="transport-detail-section" id="transportDetailSection" style="display: none;">
+              <div class="detail-header">
+                <h3 class="detail-title">시간대별 승하차 현황</h3>
+                <button class="detail-close-btn" id="closeDetailButton">✕</button>
+              </div>
+
+              <div class="chart-container">
+                <canvas id="transportChart"></canvas>
+              </div>
+
+              <div class="chart-legend">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #3b82f6;"></span>
+                  <span>지하철 승차</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #60a5fa;"></span>
+                  <span>지하철 하차</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #10b981;"></span>
+                  <span>버스 승차</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #34d399;"></span>
+                  <span>버스 하차</span>
+                </div>
+              </div>
             </div>
 
             <div class="card-timestamp-row">
