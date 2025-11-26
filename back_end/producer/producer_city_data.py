@@ -18,7 +18,7 @@ if not API_KEY:
     print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
 
-AREA_NM = "POI014"
+AREA_NM = "강남역"
 API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/1000/{AREA_NM}"
 
 def connect_kafka_producer():
@@ -29,10 +29,10 @@ def connect_kafka_producer():
             value_serializer=lambda v: json.dumps(v).encode('utf-8'),
             request_timeout_ms=KAFKA_REQUEST_TIMEOUT
         )
-        print("CityData: Kafka Producer에 연결되었습니다.")
+        print("city_data : Kafka Producer에 연결되었습니다.")
         return producer
     except Exception as e:
-        print(f"CityData: Kafka 연결 중 심각한 오류 발생: {e}")
+        print(f"city_data : Kafka 연결 중 심각한 오류 발생: {e}")
         time.sleep(5)
         exit()
 
@@ -78,7 +78,7 @@ def fetch_and_parse_city_data():
             'sbike_stts': json.dumps(citydata.get('SBIKE_STTS'), ensure_ascii=False) if citydata.get('SBIKE_STTS') else None,
             'weather_stts': json.dumps(citydata.get('WEATHER_STTS'), ensure_ascii=False) if citydata.get('WEATHER_STTS') else None,
             'charger_stts': json.dumps(citydata.get('CHARGER_STTS'), ensure_ascii=False) if citydata.get('CHARGER_STTS') else None,
-            'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None,
+            'event_stts': json.dumps(citydata.get('EVENT_STTS'), ensure_ascii=False) if citydata.get('EVENT_STTS') else None,
             'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'live_dst_message': json.dumps(citydata.get('LIVE_DST_MESSAGE'), ensure_ascii=False) if citydata.get('LIVE_DST_MESSAGE') else None,
             'live_yna_news': json.dumps(citydata.get('LIVE_YNA_NEWS'), ensure_ascii=False) if citydata.get('LIVE_YNA_NEWS') else None,
@@ -96,22 +96,22 @@ def fetch_and_parse_city_data():
 def main():
     producer = connect_kafka_producer()
     
-    print("CityData: 수집을 시작합니다.")
+    print("city_data : 수집을 시작합니다.")
     
     while True:
-        print(f"CityData: {AREA_NM} 데이터 수집 주기 시작")
+        print(f"city_data : {AREA_NM} 데이터 수집 주기 시작")
         
         message = fetch_and_parse_city_data()
         
         if message:
             producer.send(KAFKA_TOPIC, value=message)
             producer.flush()
-            print(f"CityData: {AREA_NM} 데이터 전송 완료.")
+            print(f"city_data : {AREA_NM} 데이터 전송 완료.")
         else:
-            print(f"CityData: {AREA_NM} 데이터 수신 실패.")
+            print(f"city_data : {AREA_NM} 데이터 수신 실패.")
 
         # 도시 데이터는 5분(300초) 주기로 수집 (API 정책에 맞게 조절)
-        print("CityData: 300초 후 다시 시작합니다.")
+        print("city_data : 300초 후 다시 시작합니다.")
         time.sleep(300)
 
 if __name__ == "__main__":

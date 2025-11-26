@@ -11,8 +11,8 @@ echo ">>> Kafka is ready!"
 
 echo ">>> Starting ALL Kafka Producer Scripts..."
 
-python3 -u /app/producer_road_comm.py &
-
 python3 -u /app/producer_incident.py &
+
+python3 -u /app/producer_city_data.py &
 
 wait -n
