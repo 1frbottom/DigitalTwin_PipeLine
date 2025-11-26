@@ -3,6 +3,23 @@
 const API_BASE_URL = "http://localhost:58000";
 const TARGET_AREA_NAME = "강남역"
 
+  // 돌발정보 코드 매핑
+const ACC_TYPE_MAP = {
+  'A01': '교통사고',
+  'A02': '차량고장',
+  'A03': '보행사고',
+  'A04': '공사',
+  'A05': '낙하물',
+  'A06': '버스사고',
+  'A07': '지하철사고',
+  'A08': '화재',
+  'A09': '기상/재난',
+  'A10': '집회및행사',
+  'A11': '기타',
+  'A12': '제보',
+  'A13': '단순정보'
+};
+
 // -------------------------- 갱신 --------------------------
 
   // api 호출 주기 (ms)
@@ -682,28 +699,29 @@ async function fetchIncidentsData() {
       const displayIncidents = incidents.slice(0, 5);
 
       displayIncidents.forEach(incident => {
-        const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
-        const incidentType = getIncidentType(incident.acc_type, incident.acc_dtype);
-        const incidentIcon = getIncidentIcon(incident.acc_type);
-
-        const incidentHtml = `
-          <div class="incident-item">
-            <div class="incident-icon-block">
-              <div class="incident-icon-circle">${incidentIcon}</div>
-              <div class="incident-link">${incident.link_id || '-'}</div>
-            </div>
-
-            <div class="incident-main">
-              <div class="incident-type">${incidentType}</div>
-              <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
-            </div>
-
-            <div class="incident-time">${incidentTime}</div>
+      const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
+      // 여기가 매핑된 한글 유형 (예: "공사")
+      const incidentType = ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
+      const incidentIcon = getIncidentIcon(incident.acc_type);
+      
+      const incidentHtml = `
+        <div class="incident-item">
+          <div class="incident-icon-block">
+            <div class="incident-icon-circle">${incidentIcon}</div>
           </div>
-        `;
 
-        incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
-      });
+          <div class="incident-main">
+            <div class="incident-header">
+              <div class="incident-type">${incidentType}</div>
+              <div class="incident-time">${incidentTime}</div>
+            </div>
+            <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
+          </div>
+        </div>
+      `;
+
+      incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
+    });
     }
 
     // 돌발정보 건수 업데이트
@@ -731,15 +749,23 @@ async function fetchIncidentsData() {
 }
 
 // 돌발정보 타입에 따른 아이콘 반환
-function getIncidentIcon(accType) {
-  if (!accType) return '⚠️';
-
-  if (accType.includes('사고')) return '🚗';
-  if (accType.includes('공사')) return '🚧';
-  if (accType.includes('행사')) return '🎪';
-  if (accType.includes('통제')) return '⛔';
-
-  return '⚠️';
+function getIncidentIcon(code) {
+  const icons = {
+    'A01': '🚗', // 교통사고
+    'A02': '🔧', // 차량고장
+    'A03': '🚶', // 보행사고
+    'A04': '🚧', // 공사
+    'A05': '📦', // 낙하물
+    'A06': '🚌', // 버스사고
+    'A07': '🚇', // 지하철사고
+    'A08': '🔥', // 화재
+    'A09': '⛈️', // 기상/재난
+    'A10': '📢', // 집회및행사
+    'A11': '⚠️', // 기타
+    'A12': '📞', // 제보
+    'A13': 'ℹ️'  // 단순정보
+  };
+  return icons[code] || '⚠️';
 }
 
 // 돌발정보 타입 텍스트 반환
