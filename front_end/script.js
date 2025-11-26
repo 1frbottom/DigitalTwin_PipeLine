@@ -840,8 +840,8 @@ async function fetchWeatherData() {
     console.log("기상현황 데이터 수신:", data);
 
     // 헤더의 날씨 정보 업데이트
-    const weatherTemp = document.querySelector('.weather-temp');
-    const weatherIcon = document.querySelector('.weather-icon');
+    const weatherTemp = document.getElementById('weather-temp');
+    const weatherIcon = document.getElementById('weather-icon');
 
     if (weatherTemp && data.temp !== undefined) {
       weatherTemp.textContent = `${data.temp}℃`;
@@ -871,11 +871,15 @@ async function fetchWeatherData() {
       weatherIcon.textContent = icon;
     }
 
-    // 미세먼지/초미세먼지 정보 업데이트 (데이터가 있다면)
-    const airLabels = document.querySelectorAll('.air-value');
-    if (airLabels.length >= 2) {
-      if (data.pm10_status) airLabels[0].textContent = data.pm10_status;
-      if (data.pm25_status) airLabels[1].textContent = data.pm25_status;
+    // 미세먼지/초미세먼지 정보 업데이트
+    const pm10Status = document.getElementById('pm10-status');
+    const pm25Status = document.getElementById('pm25-status');
+
+    if (pm10Status && data.pm10_status) {
+      pm10Status.textContent = data.pm10_status;
+    }
+    if (pm25Status && data.pm25_status) {
+      pm25Status.textContent = data.pm25_status;
     }
 
     updateTimestamps('weather');
@@ -1027,15 +1031,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------------- Google Map + CCTV 마커 ----------------
 
-const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심 근처
+const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심
 
 const CCTV_LOCATIONS = [
-  // 기존 강남역 10번 출구 → 신논현역으로 변경
-  { id: 1, name: "신논현역 5번 출구", lat: SINNONHYEON.lat, lng: SINNONHYEON.lng },
-
-  // 나머지 강남 쪽 CCTV는 그대로 두고 싶으면 냅두면 됨
-  { id: 2, name: "강남역 11번 출구", lat: 37.49772, lng: 127.02845 },
-  { id: 3, name: "강남대로 횡단보도 앞", lat: 37.4985, lng: 127.0268 },
+  // 신논현역 출구별 CCTV 위치
+  { id: 1, name: "신논현역 5번 출구", lat: 37.50418, lng: 127.02510 },  // 5번 출구 (역 동쪽)
+  { id: 2, name: "신논현역 6번 출구", lat: 37.50380, lng: 127.02490 },  // 6번 출구 (역 남동쪽)
+  { id: 3, name: "신논현역 교보타워 앞", lat: 37.50465, lng: 127.02380 },  // 교보타워 방향 (역 북서쪽)
 ];
 
 let map;
