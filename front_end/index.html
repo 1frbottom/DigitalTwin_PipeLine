@@ -8,7 +8,7 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=2" />
   </head>
   <body>
     <div class="app">
@@ -22,7 +22,7 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
-          <div class="weather-block">
+          <div class="weather-card">
             <div class="weather-icon">🌙</div>
             <div class="weather-info">
               <div class="weather-temp">5.0℃</div>
@@ -33,15 +33,22 @@
                 <span class="air-label">초미세</span>
                 <span class="air-value">보통</span>
               </div>
+              <div class="weather-last-update">
+                갱신: <span id="weather-last">--:--</span>
+              </div>
             </div>
           </div>
         </div>
-        <div class="header-bar"></div>
       </header>
 
-      <!-- CATEGORY CHIP BAR: 헤더 바로 아래 고정 -->
-      <div class="chip-bar">
-        <div class="chip is-active" data-panel="panel-population">
+      <!-- MAP BACKGROUND: 전체 화면 배경 -->
+      <div class="map-background">
+        <div id="google-map"></div>
+      </div>
+
+      <!-- FLOATING CHIP BAR: 지도 위에 떠 있는 반투명 네비게이션 바 -->
+      <div class="floating-chip-bar">
+        <div class="chip" data-panel="panel-population">
           <span class="chip-icon">👥</span>
           <span class="chip-text">실시간 인구수</span>
         </div>
@@ -49,7 +56,7 @@
           <span class="chip-icon">🚇</span>
           <span class="chip-text">지하철 도착</span>
         </div>
-        <div class="chip" data-panel="panel-transit">
+        <div class="chip" data-panel="panel-transport">
           <span class="chip-icon">🚌</span>
           <span class="chip-text">대중교통 승하차</span>
         </div>
@@ -67,16 +74,11 @@
         </div>
       </div>
 
-      <!-- MAP BACKGROUND: 전체 화면 배경 -->
-      <div class="map-background">
-        <div id="google-map"></div>
-      </div>
-
       <main class="layout">
         <!-- OVERLAY PANELS: 지도 위에 떠 있는 패널들 -->
 
         <!-- 1) 실시간 인구수 패널 -->
-        <section class="overlay-panel is-active" id="panel-population">
+        <section class="overlay-panel" id="panel-population">
           <article class="card card-population" id="card-population">
             <div class="card-header">
               <div class="card-title">실시간 인구수</div>
@@ -115,10 +117,10 @@
 
         <!-- 2) 지하철 실시간 도착 패널 -->
         <section class="overlay-panel" id="panel-subway">
-          <article class="card" id="card-subway">
+          <article class="card card-subway" id="bway">
             <div class="card-header">
               <div class="card-title">지하철 실시간 도착</div>
-              <div class="tag">강남역 (2호선, 신분당선)</div>
+              <div class="tag">강남역 (2호선,신분당선,9호선)</div>
             </div>
             <div class="card-body">
               <!-- 2호선 -->
@@ -162,6 +164,27 @@
                 </div>
                 <div class="subway-arrival-time normal">3분</div>
               </div>
+
+              <!-- 9호선 -->
+              <div class="subway-section-title">9호선</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-9">9</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">개화행 - 사평방면</div>
+                  <div class="subway-detail">7분 30초 후 (봉은사)</div>
+                </div>
+                <div class="subway-arrival-time normal">7분</div>
+              </div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-9">9</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">김포공항행 - 사평방면 (급행)</div>
+                  <div class="subway-detail">전역 출발</div>
+                </div>
+                <div class="subway-arrival-time urgent">곧 도착</div>
+              </div>
             </div>
 
             <div class="card-timestamp-row">
@@ -176,41 +199,46 @@
         </section>
 
         <!-- 3) 대중교통 승하차 현황 패널 -->
-        <section class="overlay-panel" id="panel-transit">
-          <article class="card" id="card-transport">
+        <section class="overlay-panel" id="panel-transport">
+          <article class="card card-public" id="card-transport">
+            
             <div class="card-header">
               <div class="card-title">대중교통</div>
-              <button class="link-button">상세보기 &rsaquo;</button>
+              <button class="link-button">상세보기 ›</button>
             </div>
+
             <div class="card-body">
-              <div class="public-row">
-                <div class="public-item">
-                  <div class="public-icon metro">🚇</div>
-                  <div>
-                    <div style="font-size: 13px; font-weight: 500">
-                      지하철 (2, 9호선)
-                    </div>
-                    <div class="public-meta">
-                      배차 간격 <span class="text-strong">평균 3분</span>
-                    </div>
-                  </div>
+
+              <!-- 지하철 -->
+              <div class="public-row-line">
+                <div class="public-icon-wrap subway">
+                  🚇
+                </div>
+                <div class="public-info">
+                  <div class="public-title">지하철</div>
+                  <div class="public-desc">오늘 승하차 누적</div>
+                </div>
+                <div class="public-right transport-values">
+                  <span class="transport-up"  id="subway-up">▲ 0</span>
+                  <span class="transport-down" id="subway-down">▼ 0</span>
                 </div>
               </div>
-              <div class="public-row">
-                <div class="public-item">
-                  <div class="public-icon bus">🚌</div>
-                  <div>
-                    <div style="font-size: 13px; font-weight: 500">버스</div>
-                    <div class="public-meta">
-                      실시간 혼잡도
-                      <span class="text-strong" style="color: #b45309">중간</span>
-                    </div>
-                  </div>
+
+              <!-- 버스 -->
+              <div class="public-row-line">
+                <div class="public-icon-wrap bus">
+                  🚌
+                </div>
+                <div class="public-info">
+                  <div class="public-title">버스</div>
+                  <div class="public-desc">오늘 승하차 누적</div>
+                </div>
+                <div class="public-right transport-values">
+                  <span class="transport-up"  id="bus-up">▲ 0</span>
+                  <span class="transport-down" id="bus-down">▼ 0</span>
                 </div>
               </div>
-              <div style="margin-top: 8px; font-size: 11px; color: var(--text-sub); text-align: right;">
-                평균 지연 2~3분
-              </div>
+
             </div>
 
             <div class="card-timestamp-row">
@@ -218,12 +246,11 @@
                 최근 갱신: <span id="transport-last">--:--:--</span>
               </div>
               <div class="next-refresh">
-                다음 갱신: <span id="transport-next">--:--:--</span>
+                다음 갱신: <span id="transport-next">--초 후</span>
               </div>
             </div>
           </article>
         </section>
-
         <!-- 4) 도로 소통 단계 패널 -->
         <section class="overlay-panel" id="panel-road">
           <article class="card card-muted" id="card-traffic">
@@ -232,32 +259,39 @@
               <div class="tag">강남역 사거리 기준</div>
             </div>
             <div class="card-body">
-              <div class="card-row">
-                <div>
+              <div class="traffic-info-row">
+                <div class="traffic-text-info">
                   <div style="font-size: 11px; color: var(--text-sub)">
                     현재 단계
                   </div>
-                  <div style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                  <div id="traffic-status-text" style="font-size: 18px; font-weight: 600; margin-top: 4px">
                     서행
                   </div>
                   <div style="font-size: 11px; margin-top: 2px">
                     전체 평균 속도
-                    <span class="text-strong">34km/h</span>
+                    <span class="text-strong" id="traffic-speed">34km/h</span>
                   </div>
                 </div>
                 <div class="icon-badge" style="background: #eff6ff">🚗</div>
               </div>
 
-              <div class="card-row" style="margin-top:6px;">
-                <span>주차장 여유도</span>
-                <span class="text-strong">보통 (공영 3곳 기준)</span>
-              </div>
-              <div class="traffic-bar-wrap">
-                <div class="traffic-bar-bg">
-                  <div class="traffic-bar-fg"></div>
+              <!-- 도로 소통 단계 게이지 -->
+              <div class="traffic-gauge">
+                <div class="traffic-bar-container">
+                  <div class="traffic-bar">
+                    <div class="traffic-segment traffic-segment-green"></div>
+                    <div class="traffic-segment traffic-segment-yellow"></div>
+                    <div class="traffic-segment traffic-segment-red"></div>
+
+                    <!-- 포인터 -->
+                    <div class="traffic-indicator" id="traffic-indicator"></div>
+                  </div>
                 </div>
-                <div style="margin-top: 4px; font-size: 11px; color: var(--text-sub);">
-                  1시간 내 <span class="text-strong">정체 가능성 높음</span>
+
+                <div class="traffic-labels">
+                  <span>원활</span>
+                  <span>서행</span>
+                  <span>정체</span>
                 </div>
               </div>
             </div>
@@ -275,7 +309,7 @@
 
         <!-- 5) 실시간 돌발정보 패널 -->
         <section class="overlay-panel" id="panel-incident">
-          <article class="card" id="card-incidents">
+          <article class="card card-incidents" id="card-incidents">
             <div class="card-header">
               <div class="card-title">실시간 돌발정보</div>
               <div class="tag-amber tag">0건</div>
@@ -347,7 +381,7 @@
       </main>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=6"></script>
     <script
       async
       defer
