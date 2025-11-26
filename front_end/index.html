@@ -12,6 +12,7 @@
   </head>
   <body>
     <div class="app">
+
       <!-- HEADER: 상단 고정 -->
       <header class="header">
         <div class="header-inner">
@@ -22,6 +23,18 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
+
+        <div class="system-status" id="system-health-box" title="데이터 수신 상태">
+            <div class="status-indicator">
+              <div class="status-dot"></div>
+              <div class="status-pulse"></div>
+            </div>
+            <div class="status-info">
+              <span class="status-label">실시간율</span>
+              <span class="status-value" id="system-health-rate">--%</span>
+            </div>
+          </div>
+
           <div class="weather-card">
             <div class="weather-icon">🌙</div>
             <div class="weather-info">
@@ -38,6 +51,7 @@
               </div>
             </div>
           </div>
+          
         </div>
       </header>
 
