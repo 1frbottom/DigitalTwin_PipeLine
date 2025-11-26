@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import time
 
+
+
 def get_active_incidents(db: Session):
     """
     최근 30분 이내에 업데이트된 돌발 정보 중,
@@ -11,9 +13,9 @@ def get_active_incidents(db: Session):
     # 1. 현재 시간(초 단위 timestamp) 구하기
     current_ts = time.time()
     
-    # 2. 유효 시간 기준 설정 (현재 시간 - 1800초 = 30분 전)
+    # 2. 유효 시간 기준 설정 (현재 시간 - 86400초 = 24시간 전)
     # 이 시간보다 이전 데이터는 '종료된 상황'으로 간주하고 API에서 제외합니다.
-    limit_ts = current_ts - 1800 
+    limit_ts = current_ts - 86400
     
     # 3. Raw SQL 작성
     # 서브쿼리(latest): 30분 이내 데이터 중 ID별 Max timestamp 구함
