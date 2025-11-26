@@ -1,28 +1,47 @@
-// ---------------- 갱신 시간 관리 ----------------
+// -------------------------- config --------------------------
 
-// 각 카드별 갱신 간격 (밀리초)
+const API_BASE_URL = "http://localhost:58000";
+const TARGET_AREA_NAME = "강남역"
+
+// -------------------------- 갱신 --------------------------
+
+  // api 호출 주기 (ms)
 const REFRESH_INTERVALS = {
-  population: 300000,     // 5분 - 인구현황
-  subway: 10000,          // 10초 - 실시간 지하철 도착현황
-  traffic: 300000,        // 5분 - 도로소통
-  transport: 300000,      // 5분 - 대중교통 승하차
-  weather: 600000,        // 10분 - 기상현황
-  incidents: 5000,        // 5초 - 실시간 돌발정보
-  culture: 86400000,      // 1일 - 문화행사
+
+  // 실시간 돌발정보
+  incidents: 60000,       // 1분
+
+  // 인구현황
+  population: 60000,      // 1분
+
+  // 도로소통
+  traffic: 300000,        // 5분
+
+  // 실시간 지하철 도착현황
+  subway: 60000,          // 1분
+
+  // 대중교통 승하차
+  transport: 300000,      // 5분
+
+  // 기상현황
+  weather: 600000,        // 10분
+
+  //문화행사
+  culture: 3600000,       // 1시간
 };
 
-// 각 카드별 마지막 갱신 시간 저장
+  // 각 카드별 마지막 갱신 시간 저장
 const lastUpdateTimes = {};
 
-// 이전 인구 데이터 저장 (변동률 계산용)
+  // 이전 인구 데이터 저장 (변동률 계산용)
 let previousPopulationData = null;
 
-// 갱신 시간 표시 업데이트 함수
+  // 갱신 시간 표시 업데이트 함수
 function updateTimestamps(cardName) {
   const now = new Date();
   lastUpdateTimes[cardName] = now;
 
-  // 최근 갱신 시간 표시
+    // 최근 갱신 시간 표시
   const lastEl = document.getElementById(`${cardName}-last`);
   if (lastEl) {
     lastEl.textContent = now.toLocaleTimeString('ko-KR', {
@@ -34,7 +53,7 @@ function updateTimestamps(cardName) {
     console.warn(`갱신 시간 요소를 찾을 수 없음: ${cardName}-last`);
   }
 
-  // 다음 갱신 시간 계산 및 표시
+    // 다음 갱신 시간 계산 및 표시
   const nextUpdate = new Date(now.getTime() + REFRESH_INTERVALS[cardName]);
   const nextEl = document.getElementById(`${cardName}-next`);
   if (nextEl) {
@@ -47,11 +66,11 @@ function updateTimestamps(cardName) {
     console.warn(`다음 갱신 요소를 찾을 수 없음: ${cardName}-next`);
   }
 
-  // 카드에 갱신 애니메이션 추가
+    // 카드에 갱신 애니메이션 추가
   addUpdateAnimation(cardName);
 }
 
-// 카드 갱신 애니메이션
+  // 카드 갱신 애니메이션
 function addUpdateAnimation(cardName) {
   const cardElement = document.getElementById(`card-${cardName}`);
   if (cardElement) {
@@ -69,47 +88,98 @@ function addUpdateAnimation(cardName) {
 
 // 다음 갱신까지 남은 시간 실시간 업데이트
 function updateCountdowns() {
-  Object.keys(lastUpdateTimes).forEach(cardName => {
-    const lastUpdate = lastUpdateTimes[cardName];
-    if (!lastUpdate) return;
-
-    const nextUpdate = new Date(lastUpdate.getTime() + REFRESH_INTERVALS[cardName]);
-    const now = new Date();
-    const remaining = nextUpdate - now;
-
-    if (remaining <= 0) return;
-
-    const seconds = Math.floor(remaining / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const secs = seconds % 60;
-    const mins = minutes % 60;
-
+  const now = new Date().getTime(); // timestamp로 변환
+  
+  Object.keys(REFRESH_INTERVALS).forEach(cardName => {
+    const interval = REFRESH_INTERVALS[cardName];
+    // 공식: (현재시간 ÷ 주기)의 올림값 * 주기 = 다음 정각 시간
+    const nextTickTime = Math.ceil(now / interval) * interval;
+    
+    const remaining = nextTickTime - now;
     const nextEl = document.getElementById(`${cardName}-next`);
+    
     if (nextEl) {
-      // 갱신 주기에 따라 다른 형식으로 표시
-      if (days > 0) {
-        // 1일 이상: "N일 H시간 후"
-        nextEl.textContent = `${days}일 ${hours % 24}시간 후`;
-      } else if (hours > 0) {
-        // 1시간 이상: "N시간 M분 후"
-        nextEl.textContent = `${hours}시간 ${mins}분 후`;
-      } else if (minutes > 0) {
-        // 1분 이상: "N분 S초 후"
-        nextEl.textContent = `${minutes}분 ${secs}초 후`;
+      if (remaining <= 0) {
+        nextEl.textContent = "갱신 중...";
       } else {
-        // 1분 미만: "N초 후"
-        nextEl.textContent = `${seconds}초 후`;
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        
+        // 1분 이상 남았을 때와 미만일 때 구분
+        if (minutes > 0) {
+           nextEl.textContent = `${minutes}분 ${seconds}초 후`;
+        } else {
+           nextEl.textContent = `${seconds}초 후`;
+        }
       }
     }
   });
 }
 
-// 1초마다 카운트다운 업데이트
-setInterval(updateCountdowns, 1000);
+// ---------------------- 실시간율 ----------------------
 
-// ---------------- 혼잡도 태그 색/스타일 ----------------
+function updateSystemHealth() {
+  const now = new Date().getTime();
+  const serviceKeys = Object.keys(REFRESH_INTERVALS);
+  const totalServices = serviceKeys.length;
+  
+  let totalFreshness = 0;
+  let delayedServices = [];
+
+  serviceKeys.forEach(key => {
+    const interval = REFRESH_INTERVALS[key];
+    const lastUpdate = lastUpdateTimes[key];
+
+    // 데이터가 없거나 2주기 이상 지연 시 0점
+    if (!lastUpdate || (now - lastUpdate.getTime() > interval * 2)) {
+      totalFreshness += 0;
+      delayedServices.push(key);
+    } else {
+      // 정각 사이클 내 신선도 계산
+      const elapsedInCycle = now % interval; 
+      let freshness = (interval - elapsedInCycle) / interval;
+      
+      // 보정: 갱신 직후는 100% 유지
+      if (freshness > 0.95) freshness = 1;
+      if (freshness < 0) freshness = 0;
+      
+      totalFreshness += freshness;
+    }
+  });
+
+  const rate = totalServices === 0 ? 0 : Math.round((totalFreshness / totalServices) * 100);
+  renderHealthUI(rate, delayedServices);
+}
+
+function renderHealthUI(rate, delayedServices) {
+  const box = document.getElementById('system-health-box');
+  const valueEl = document.getElementById('system-health-rate');
+  
+  if (!box || !valueEl) return;
+
+  // 값 업데이트
+  valueEl.textContent = `${rate}%`;
+
+  // 상태 색상 변경
+  box.classList.remove('status-safe', 'status-warn', 'status-danger');
+
+  if (rate >= 75) {
+    box.classList.add('status-safe');
+  } else if (rate >= 35) {
+    box.classList.add('status-warn');
+  } else {
+    box.classList.add('status-danger');
+  }
+
+  // 툴팁 설정
+  if (delayedServices.length > 0) {
+    box.title = `지연됨: ${delayedServices.join(', ')}`;
+  } else {
+    box.title = "모든 데이터가 최신입니다.";
+  }
+}
+
+// ------------------  혼잡도 태그 색/스타일 -------------------
 
 function getColorByLevel(level) {
   if (!level) return { color: "#9ca3af", className: "tag" };
@@ -127,12 +197,12 @@ function getColorByLevel(level) {
   }
 }
 
-// ---------------- 실시간 인구 현황 ----------------
+// ---------------------- 실시간 인구 현황 ----------------------
 
 async function fetchPopulationData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/current?area_name=강남역"
+      `${API_BASE_URL}/city/population/current?area_name=${TARGET_AREA_NAME}`
     );
     if (!response.ok) throw new Error("Current API Error");
     const data = await response.json();
@@ -199,7 +269,7 @@ async function fetchPopulationData() {
 async function fetchForecastData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/forecast?area_name=강남역"
+      `${API_BASE_URL}/city/population/forecast?area_name=${TARGET_AREA_NAME}`
     );
 
     const container = document.getElementById("forecast-chart");
@@ -270,7 +340,9 @@ async function fetchForecastData() {
 
 async function fetchSubwayData() {
   try {
-    const response = await fetch("http://localhost:58000/subway/arrival/area?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/subway/arrival/area?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) throw new Error("Subway API Error");
 
     const data = await response.json();
@@ -385,7 +457,9 @@ function setTrafficIndicator(stage) {
 
 async function fetchTrafficData() {
   try {
-    const response = await fetch("http://localhost:58000/city/traffic/road?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/traffic/road?area_name=${TARGET_AREA_NAME}`
+    );
 
     if (!response.ok) {
       console.log("도로 소통 데이터 없음");
@@ -437,7 +511,9 @@ function updateTrafficData() {
 
 async function fetchTransportData() {
   try {
-    const response = await fetch("http://localhost:58000/city/transit/passenger?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/transit/passenger?area_name=${TARGET_AREA_NAME}`
+    );
 
     const transportBody = document.querySelector('#card-transport .card-body');
     if (!transportBody) return;
@@ -535,7 +611,7 @@ function updateTransportData() {
 
 async function fetchIncidentsData() {
   try {
-    const response = await fetch("http://localhost:58000/incident/active");
+    const response = await fetch(`${API_BASE_URL}/incident/active`);
     if (!response.ok) throw new Error("Incident API Error");
 
     const incidents = await response.json();
@@ -677,7 +753,9 @@ function updatePredictionData() {
 
 async function fetchWeatherData() {
   try {
-    const response = await fetch("http://localhost:58000/city/weather/current?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/weather/current?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) {
       console.log("기상현황 데이터 없음");
       updateTimestamps('weather');
@@ -742,7 +820,9 @@ function updateWeatherData() {
 
 async function fetchCultureData() {
   try {
-    const response = await fetch("http://localhost:58000/city/events/cultural?area_name=강남역&limit=5");
+    const response = await fetch(
+      `${API_BASE_URL}/city/events/cultural?area_name=${TARGET_AREA_NAME}&limit=5`
+    );
 
     const cultureBody = document.querySelector('#card-culture .card-body .culture-list');
     if (!cultureBody) return;
@@ -822,33 +902,44 @@ function initDashboard() {
   updateWeatherData();
   updateIncidentsData();
   updateCultureData();
+
+  // 실시간율
+  updateSystemHealth();
 }
 
 // 각 데이터별 갱신 인터벌 설정
 function setupRefreshIntervals() {
-  // 인구현황 - 5분마다
+  const now = new Date().getTime();
+
+  // 각 데이터별 실행할 함수 정의
+  const schedules = [
+    { key: 'population', func: () => { fetchPopulationData(); fetchForecastData(); } },
+    { key: 'subway', func: updateSubwayData },
+    { key: 'traffic', func: updateTrafficData },
+    { key: 'transport', func: updateTransportData },
+    { key: 'weather', func: updateWeatherData },
+    { key: 'incidents', func: updateIncidentsData },
+    { key: 'culture', func: updateCultureData }
+  ];
+
+  schedules.forEach(item => {
+    const interval = REFRESH_INTERVALS[item.key];
+    // 다음 정각까지 남은 시간 계산 (예: 현재 12:00:40, 주기 1분 -> 20초 대기)
+    const delay = interval - (now % interval);
+
+    // 1. 첫 번째 실행은 "다음 정각"에 수행하도록 예약
+    setTimeout(() => {
+      item.func(); // 정각 실행
+      // 2. 그 이후부터는 주기적으로 실행
+      setInterval(item.func, interval);
+    }, delay);
+  });
+
+  // UI 갱신 (실시간율, 카운트다운)은 1초마다 계속 실행
   setInterval(() => {
-    fetchPopulationData();
-    fetchForecastData();
-  }, REFRESH_INTERVALS.population);
-
-  // 지하철 도착 - 10초마다
-  setInterval(updateSubwayData, REFRESH_INTERVALS.subway);
-
-  // 도로소통 - 5분마다
-  setInterval(updateTrafficData, REFRESH_INTERVALS.traffic);
-
-  // 대중교통 승하차 - 5분마다
-  setInterval(updateTransportData, REFRESH_INTERVALS.transport);
-
-  // 기상현황 - 10분마다
-  setInterval(updateWeatherData, REFRESH_INTERVALS.weather);
-
-  // 실시간 돌발정보 - 5초마다
-  setInterval(updateIncidentsData, REFRESH_INTERVALS.incidents);
-
-  // 문화행사 - 1시간마다
-  setInterval(updateCultureData, REFRESH_INTERVALS.culture);
+    updateCountdowns();
+    updateSystemHealth();
+  }, 1000);
 }
 
 // 초기화 실행 (DOM 로드 후)
