@@ -8,10 +8,11 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=2" />
   </head>
   <body>
     <div class="app">
+      <!-- HEADER: 상단 고정 -->
       <header class="header">
         <div class="header-inner">
           <div class="header-left">
@@ -21,8 +22,8 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
-          <div class="weather-block">
-            <div class="weather-icon">--</div>
+          <div class="weather-card">
+            <div class="weather-icon">🌙</div>
             <div class="weather-info">
               <div class="weather-temp">--℃</div>
               <div class="weather-air">
@@ -30,39 +31,75 @@
                 <span class="air-value">--</span>
                 <span class="air-divider">·</span>
                 <span class="air-label">초미세</span>
-                <span class="air-value">--</span>
+                <span class="air-value">보통</span>
+              </div>
+              <div class="weather-last-update">
+                갱신: <span id="weather-last">--:--</span>
               </div>
             </div>
           </div>
         </div>
-        <div class="header-bar"></div>
       </header>
 
+      <!-- MAP BACKGROUND: 전체 화면 배경 -->
+      <div class="map-background">
+        <div id="google-map"></div>
+      </div>
+
+      <!-- FLOATING CHIP BAR: 지도 위에 떠 있는 반투명 네비게이션 바 -->
+      <div class="floating-chip-bar">
+        <div class="chip" data-panel="panel-population">
+          <span class="chip-icon">👥</span>
+          <span class="chip-text">실시간 인구수</span>
+        </div>
+        <div class="chip" data-panel="panel-subway">
+          <span class="chip-icon">🚇</span>
+          <span class="chip-text">지하철 도착</span>
+        </div>
+        <div class="chip" data-panel="panel-transport">
+          <span class="chip-icon">🚌</span>
+          <span class="chip-text">대중교통 승하차</span>
+        </div>
+        <div class="chip" data-panel="panel-road">
+          <span class="chip-icon">🚗</span>
+          <span class="chip-text">도로 소통</span>
+        </div>
+        <div class="chip" data-panel="panel-incident">
+          <span class="chip-icon">⚠️</span>
+          <span class="chip-text">실시간 돌발정보</span>
+        </div>
+        <div class="chip" data-panel="panel-events">
+          <span class="chip-icon">🎭</span>
+          <span class="chip-text">문화·행사 정보</span>
+        </div>
+      </div>
+
       <main class="layout">
-        <!-- LEFT COLUMN -->
-        <section class="col-left">
-          <!-- 실시간 인구수 -->
+        <!-- OVERLAY PANELS: 지도 위에 떠 있는 패널들 -->
+
+        <!-- 1) 실시간 인구수 패널 -->
+        <section class="overlay-panel" id="panel-population">
           <article class="card card-population" id="card-population">
             <div class="card-header">
               <div class="card-title">실시간 인구수</div>
               <div id="population-congest" class="tag">데이터 수신중</div>
             </div>
-            
+
             <div class="people-main">
-              <div>
-                <div class="range-label">추정 범위</div>
-                <div class="range-value">
-                  <span id="population-min">0</span>
-                  <span> ~ </span>
-                  <span id="population-max">0</span>
-                  <span> 명</span>
-                </div>
+              <div class="range-label">추정 범위</div>
+              <div class="range-value">
+                <span id="pop-min">0</span>
+                <span class="range-separator"> ~ </span>
+                <span id="pop-max">0</span>
+                <span class="range-unit"> 명</span>
               </div>
             </div>
-            
+
             <div class="people-footer">
-              <span class="dot"></span>
-              <span>변동률 <span id="population-change" class="text-muted">-</span></span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="dot"></span>
+                <span>변동률 <span id="pop-change" style="color:#9ca3af">-</span></span>
+              </div>
             </div>
 
             <div id="forecast-chart" class="forecast-wrap"></div>
@@ -76,99 +113,211 @@
               </div>
             </div>
           </article>
+        </section>
 
-          <!-- 지하철 실시간 도착 -->
-          <article class="card" id="card-subway_arrv">
+        <!-- 2) 지하철 실시간 도착 패널 -->
+        <section class="overlay-panel" id="panel-subway">
+          <article class="card card-subway" id="bway">
             <div class="card-header">
               <div class="card-title">지하철 실시간 도착</div>
-              <div class="tag">강남역 기준</div>
-            </div>
-            <div class="card-body" id="subway-arrival-list">
-              <div class="loading-msg">데이터 로딩중...</div>
-            </div>
-
-            <div class="card-timestamp-row">
-              <div class="last-refresh">
-                최근 갱신: <span id="subway_arrv-last">--:--:--</span>
-              </div>
-              <div class="next-refresh">
-                다음 갱신: <span id="subway_arrv-next">--:--:--</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- 대중교통 승하차 인원 -->
-          <article class="card" id="card-transit_accm">
-            <div class="card-header">
-              <div class="card-title">대중교통 승하차 현황</div>
-              <div class="tag">오늘 누적</div>
-            </div>
-            <div class="card-body" id="transit_accm-passenger-chart">
-              <div class="loading-msg">데이터 로딩중...</div>
-            </div>
-
-            <div class="card-timestamp-row">
-              <div class="last-refresh">
-                최근 갱신: <span id="transit_accm-last">--:--:--</span>
-              </div>
-              <div class="next-refresh">
-                다음 갱신: <span id="transit_accm-next">--:--:--</span>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <!-- CENTER COLUMN -->
-        <section class="col-center">
-          <!-- 디지털트윈 뷰 - 박스 없이 지도만 -->
-          <div class="dt-map-full">
-            <div id="google-map"></div>
-            <button class="dt-btn-overlay" type="button">3D 보기 전환</button>
-          </div>
-
-          <!-- 도로 소통 단계 -->
-          <article class="card card-muted mt-4" id="card-traffic">
-            <div class="card-header">
-              <div class="card-title">도로 소통 단계</div>
-              <div class="tag">강남역 기준</div>
+              <div class="tag">강남역 (2호선,신분당선,9호선)</div>
             </div>
             <div class="card-body">
-              <div class="card-row">
-                <div>
-                  <div class="label-sm">현재 단계</div>
-                  <div class="value-lg">--</div>
-                  <div class="label-sm">평균 속도 <span class="text-strong">--km/h</span></div>
+              <!-- 2호선 -->
+              <div class="subway-section-title">2호선 (순환)</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-2">2</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">외선 (잠실 방면)</div>
+                  <div class="subway-detail">2분 후 도착 (교대)</div>
                 </div>
-                <div class="icon-badge">🚗</div>
+                <div class="subway-arrival-time normal">2분</div>
               </div>
-              <div class="traffic-bar-wrap">
-                <div class="traffic-bar-bg">
-                  <div class="traffic-bar-fg"></div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-2">2</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">내선 (시청 방면)</div>
+                  <div class="subway-detail">5분 후 도착 (역삼)</div>
                 </div>
-                <div class="bar-caption">
-                  <span class="text-strong">정체 가능성</span>
+                <div class="subway-arrival-time normal">5분</div>
+              </div>
+
+              <!-- 신분당선 -->
+              <div class="subway-section-title">신분당선</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-sinbundang">신분당</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">신사행</div>
+                  <div class="subway-detail">1분 후 도착 (양재)</div>
                 </div>
+                <div class="subway-arrival-time soon">1분</div>
+              </div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-sinbundang">신분당</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">광교행</div>
+                  <div class="subway-detail">3분 후 도착 (양재시민의숲)</div>
+                </div>
+                <div class="subway-arrival-time normal">3분</div>
+              </div>
+
+              <!-- 9호선 -->
+              <div class="subway-section-title">9호선</div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-9">9</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">개화행 - 사평방면</div>
+                  <div class="subway-detail">7분 30초 후 (봉은사)</div>
+                </div>
+                <div class="subway-arrival-time normal">7분</div>
+              </div>
+
+              <div class="subway-arrival-row">
+                <div class="subway-line-badge subway-line-9">9</div>
+                <div class="subway-arrival-info">
+                  <div class="subway-direction">김포공항행 - 사평방면 (급행)</div>
+                  <div class="subway-detail">전역 출발</div>
+                </div>
+                <div class="subway-arrival-time urgent">곧 도착</div>
               </div>
             </div>
+
             <div class="card-timestamp-row">
-              <div class="last-refresh">최근 갱신: <span id="traffic-last">--:--:--</span></div>
-              <div class="next-refresh">다음 갱신: <span id="traffic-next">--:--:--</span></div>
+              <div class="last-refresh">
+                최근 갱신: <span id="subway-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="subway-next">--:--:--</span>
+              </div>
             </div>
           </article>
         </section>
 
-        <!-- RIGHT COLUMN -->
-        <section class="col-right">
-          <!-- 실시간 돌발정보 -->
-          <article class="card" id="card-incidents">
-
+        <!-- 3) 대중교통 승하차 현황 패널 -->
+        <section class="overlay-panel" id="panel-transport">
+          <article class="card card-public" id="card-transport">
+            
             <div class="card-header">
-              <div class="card-title">실시간 돌발정보</div>
-              <div class="tag-amber tag">--건</div>
+              <div class="card-title">대중교통</div>
+              <button class="link-button">상세보기 ›</button>
             </div>
 
-            <div class="card-body incidents-list">
-              <div class="loading-msg">데이터 로딩중...</div>
+            <div class="card-body">
+
+              <!-- 지하철 -->
+              <div class="public-row-line">
+                <div class="public-icon-wrap subway">
+                  🚇
+                </div>
+                <div class="public-info">
+                  <div class="public-title">지하철</div>
+                  <div class="public-desc">오늘 승하차 누적</div>
+                </div>
+                <div class="public-right transport-values">
+                  <span class="transport-up"  id="subway-up">▲ 0</span>
+                  <span class="transport-down" id="subway-down">▼ 0</span>
+                </div>
+              </div>
+
+              <!-- 버스 -->
+              <div class="public-row-line">
+                <div class="public-icon-wrap bus">
+                  🚌
+                </div>
+                <div class="public-info">
+                  <div class="public-title">버스</div>
+                  <div class="public-desc">오늘 승하차 누적</div>
+                </div>
+                <div class="public-right transport-values">
+                  <span class="transport-up"  id="bus-up">▲ 0</span>
+                  <span class="transport-down" id="bus-down">▼ 0</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="transport-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="transport-next">--초 후</span>
+              </div>
+            </div>
+          </article>
+        </section>
+        <!-- 4) 도로 소통 단계 패널 -->
+        <section class="overlay-panel" id="panel-road">
+          <article class="card card-muted" id="card-traffic">
+            <div class="card-header">
+              <div class="card-title">도로 소통 단계</div>
+              <div class="tag">강남역 사거리 기준</div>
+            </div>
+            <div class="card-body">
+              <div class="traffic-info-row">
+                <div class="traffic-text-info">
+                  <div style="font-size: 11px; color: var(--text-sub)">
+                    현재 단계
+                  </div>
+                  <div id="traffic-status-text" style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                    서행
+                  </div>
+                  <div style="font-size: 11px; margin-top: 2px">
+                    전체 평균 속도
+                    <span class="text-strong" id="traffic-speed">34km/h</span>
+                  </div>
+                </div>
+                <div class="icon-badge" style="background: #eff6ff">🚗</div>
+              </div>
+
+              <!-- 도로 소통 단계 게이지 -->
+              <div class="traffic-gauge">
+                <div class="traffic-bar-container">
+                  <div class="traffic-bar">
+                    <div class="traffic-segment traffic-segment-green"></div>
+                    <div class="traffic-segment traffic-segment-yellow"></div>
+                    <div class="traffic-segment traffic-segment-red"></div>
+
+                    <!-- 포인터 -->
+                    <div class="traffic-indicator" id="traffic-indicator"></div>
+                  </div>
+                </div>
+
+                <div class="traffic-labels">
+                  <span>원활</span>
+                  <span>서행</span>
+                  <span>정체</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="traffic-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="traffic-next">--:--:--</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- 5) 실시간 돌발정보 패널 -->
+        <section class="overlay-panel" id="panel-incident">
+          <article class="card card-incidents" id="card-incidents">
+            <div class="card-header">
+              <div class="card-title">실시간 돌발정보</div>
+              <div class="tag-amber tag">0건</div>
+            </div>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
+              <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
+                데이터를 불러오는 중...
+              </div>
             </div>
 
             <div class="card-timestamp-row">
@@ -181,18 +330,42 @@
             </div>
 
           </article>
+        </section>
 
-          <!-- 주변 문화·행사 정보 -->
+        <!-- 6) 주변 문화·행사 정보 패널 -->
+        <section class="overlay-panel" id="panel-events">
           <article class="card" id="card-culture">
             <div class="card-header">
               <div class="card-title">주변 문화·행사 정보</div>
-              <div class="icon-emoji">🎭</div>
+              <div style="font-size: 18px">🎭</div>
             </div>
             <div class="card-body">
               <div class="culture-list">
-                <div class="loading-msg">데이터 로딩중...</div>
+                <div class="culture-item">
+                  <div class="culture-title">강남역 버스킹 공연</div>
+                  <div class="culture-meta">
+                    <span>오늘 19:00 ~ 21:00</span>
+                    <span>2번 출구 광장</span>
+                  </div>
+                </div>
+                <div class="culture-item">
+                  <div class="culture-title">도심 야간 플리마켓</div>
+                  <div class="culture-meta">
+                    <span>토요일 17:00 ~ 22:00</span>
+                    <span>역삼 문화의 거리</span>
+                  </div>
+                </div>
+                <div class="culture-item">
+                  <div class="culture-title">지하철 갤러리 전시 &lt;디지털 강남&gt;</div>
+                  <div class="culture-meta">
+                    <span>상시 전시</span>
+                    <span>강남역 지하상가 G-1 전시장</span>
+                  </div>
+                </div>
               </div>
-              <div class="card-footnote">* 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.</div>
+              <div style="margin-top:8px;font-size:10px;color:var(--text-sub);text-align:right;">
+                * 문화행사 정보는 서울시·구청 공공데이터를 기반으로 합니다.
+              </div>
             </div>
 
             <div class="card-timestamp-row">
@@ -205,11 +378,11 @@
             </div>
           </article>
         </section>
+
       </main>
     </div>
 
-<script src="script.js"></script>
-    
+    <script src="script.js?v=6"></script>
     <script
       async
       defer
