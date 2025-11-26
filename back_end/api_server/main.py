@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router_cctv, router_city, router_incident, router_subway, router_realtime
+from .routers import router_cctv, router_city, router_incident, router_subway
 
 
 app = FastAPI(
@@ -23,7 +23,6 @@ app.include_router(router_cctv.router)
 app.include_router(router_city.router)
 app.include_router(router_incident.router)
 app.include_router(router_subway.router)
-app.include_router(router_realtime.router)
 
 @app.get("/")
 def read_root():
