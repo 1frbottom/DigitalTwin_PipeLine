@@ -126,15 +126,16 @@ def get_transit_ppltn_cumulative(db: Session, area_name: str):
     현재 시각 기준 직전 24시간(버스+지하철 합산) 승하차 집계를 시간대별로 반환합니다.
     """
     # data_date + hour_slot → KST 기준 시각이라고 가정
+    # make_interval는 키워드 인자를 허용하지 않아 시간은 5번째 위치 인자로 전달한다.
     bucket_ts = cast(
         schema_subway.TransitPpltn.data_date
-        + func.make_interval(hours=schema_subway.TransitPpltn.hour_slot),
+        + func.make_interval(0, 0, 0, 0, schema_subway.TransitPpltn.hour_slot),
         DateTime,
     )
 
     # DB는 UTC지만, now()를 Asia/Seoul 기준 시각으로 변환
     now_kst = func.timezone("Asia/Seoul", func.now())
-    window_start = now_kst - func.make_interval(hours=24)
+    window_start = now_kst - func.make_interval(0, 0, 0, 0, 24)
 
     return (
         db.query(
@@ -166,12 +167,12 @@ def get_transit_ppltn_cumulative_by_type(db: Session, area_name: str):
     """
     bucket_ts = cast(
         schema_subway.TransitPpltn.data_date
-        + func.make_interval(hours=schema_subway.TransitPpltn.hour_slot),
+        + func.make_interval(0, 0, 0, 0, schema_subway.TransitPpltn.hour_slot),
         DateTime,
     )
 
     now_kst = func.timezone("Asia/Seoul", func.now())
-    window_start = now_kst - func.make_interval(hours=24)
+    window_start = now_kst - func.make_interval(0, 0, 0, 0, 24)
 
     return (
         db.query(
