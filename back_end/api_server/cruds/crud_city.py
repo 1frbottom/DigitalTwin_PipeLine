@@ -3,14 +3,15 @@ from ..models import model_city
 from ..schemas import schema_city
 from ..database import engine
 from datetime import datetime
+import json
 
 
 
 # DB에 테이블이 없으면 생성 (init.sql에 이미 있으나, ORM 사용 시 명시)
-# model_city.Base.metadata.create_all(bind=engine) 
+# model_city.Base.metadata.create_all(bind=engine)
 
 # (1) 실시간 인구 현황 데이터 조회 함수
-def get_live_ppltn_proc(db: Session, area_name: str, limit: int = 1):
+def get_city_live_ppltn_proc(db: Session, area_name: str, limit: int = 1):
     """특정 지역의 최신 인구 현황 데이터를 조회합니다."""
     return db.query(schema_city.LivePpltnProc) \
              .filter(schema_city.LivePpltnProc.area_nm == area_name) \
@@ -19,9 +20,9 @@ def get_live_ppltn_proc(db: Session, area_name: str, limit: int = 1):
              .all()
 
 # (2) 인구 예측 데이터 조회 함수
-def get_live_ppltn_forecast(db: Session, area_name: str, base_time: datetime = None):
+def get_city_live_ppltn_forecast(db: Session, area_name: str, base_time: datetime = None):
     """특정 지역의 예측 데이터를 조회합니다. (base_time이 없으면 최신 기준 시각 데이터)"""
-    
+
     # base_time이 주어지지 않은 경우, 최신 기준 시각을 찾습니다.
     if base_time is None:
         latest_time = db.query(schema_city.LivePpltnForecast.base_ppltn_time) \
@@ -40,3 +41,119 @@ def get_live_ppltn_forecast(db: Session, area_name: str, base_time: datetime = N
              ) \
              .order_by(schema_city.LivePpltnForecast.fcst_time.asc()) \
              .all()
+
+# (3) 도로 소통 현황 조회 함수
+def get_city_road_traffic(db: Session, area_name: str):
+    """특정 지역의 최신 도로 소통 현황 데이터를 조회합니다."""
+    return db.query(schema_city.LiveRoadTrafficAvg) \
+             .filter(schema_city.LiveRoadTrafficAvg.area_nm == area_name) \
+             .order_by(schema_city.LiveRoadTrafficAvg.road_traffic_time.desc()) \
+             .limit(1) \
+             .first()
+
+# (4) 기상 현황 조회 함수
+def get_city_weather_proc(db: Session, area_name: str):
+    """특정 지역의 최신 기상 현황 데이터를 조회합니다."""
+    # 가장 최근 측정 시간(weather_time) 중 가장 최근 수집된(ingest_timestamp) 데이터를 1건 가져옵니다.
+    return db.query(schema_city.CityWeatherProc) \
+             .filter(schema_city.CityWeatherProc.area_nm == area_name) \
+             .order_by(
+                 schema_city.CityWeatherProc.weather_time.desc(),
+                 schema_city.CityWeatherProc.ingest_timestamp.desc()
+             ) \
+             .limit(1) \
+             .first()
+
+# (5) 기상 예측 조회 함수
+def get_city_weather_forecast(db: Session, area_name: str):
+    """특정 지역의 최신 기상 예측 목록을 조회합니다."""
+
+    # 1. 해당 지역의 가장 최근 수집 시각(ingest_timestamp)을 먼저 찾습니다.
+    # (예보 데이터는 한 번에 24개가 들어오므로, 최신 배치를 통째로 가져와야 합니다)
+    latest_ingest = db.query(schema_city.CityWeatherForecast.ingest_timestamp) \
+                      .filter(schema_city.CityWeatherForecast.area_nm == area_name) \
+                      .order_by(schema_city.CityWeatherForecast.ingest_timestamp.desc()) \
+                      .limit(1) \
+                      .scalar()
+
+    if latest_ingest is None:
+        return []
+
+    # 2. 찾은 수집 시각에 해당하는 예보 데이터를 시간순으로 가져옵니다.
+    return db.query(schema_city.CityWeatherForecast) \
+             .filter(
+                 schema_city.CityWeatherForecast.area_nm == area_name,
+                 schema_city.CityWeatherForecast.ingest_timestamp == latest_ingest
+             ) \
+             .order_by(schema_city.CityWeatherForecast.fcst_dt.asc()) \
+             .all()
+
+# (6) 문화행사 현황 조회 함수
+def get_city_cultural_events(db: Session, area_name: str, limit: int = 10):
+    """특정 지역의 최신 문화행사 목록을 조회합니다."""
+    from sqlalchemy import func
+
+    # 최신 타임스탬프 조회
+    latest_timestamp = db.query(func.max(schema_city.CulturalEventProc.ingest_timestamp)) \
+                         .filter(schema_city.CulturalEventProc.area_nm == area_name) \
+                         .scalar()
+
+    if latest_timestamp is None:
+        return []
+
+    return db.query(schema_city.CulturalEventProc) \
+             .filter(
+                 schema_city.CulturalEventProc.area_nm == area_name,
+                 schema_city.CulturalEventProc.ingest_timestamp == latest_timestamp
+             ) \
+             .limit(limit) \
+             .all()
+
+# (7) 대중교통 승하차 현황 조회 함수
+def get_transit_passenger_data(db: Session, area_name: str):
+    """특정 지역의 최신 대중교통 승하차 현황 데이터를 조회합니다."""
+    raw_data = db.query(schema_city.CityDataRaw) \
+                 .filter(schema_city.CityDataRaw.area_nm == area_name) \
+                 .order_by(schema_city.CityDataRaw.timestamp.desc()) \
+                 .first()
+
+    if not raw_data:
+        return None
+
+    result = {
+        "area_nm": area_name,
+        "subway": None,
+        "bus": None
+    }
+
+    # 지하철 데이터 파싱
+    if raw_data.live_sub_ppltn:
+        try:
+            sub_data = json.loads(raw_data.live_sub_ppltn)
+            result["subway"] = {
+                "transport_type": "subway",
+                "get_on_min": int(sub_data.get("SUB_ACML_GTON_PPLTN_MIN", 0)),
+                "get_on_max": int(sub_data.get("SUB_ACML_GTON_PPLTN_MAX", 0)),
+                "get_off_min": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MIN", 0)),
+                "get_off_max": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MAX", 0)),
+                "station_count": int(sub_data.get("SUB_STN_CNT", 0))
+            }
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 버스 데이터 파싱
+    if raw_data.live_bus_ppltn:
+        try:
+            bus_data = json.loads(raw_data.live_bus_ppltn)
+            result["bus"] = {
+                "transport_type": "bus",
+                "get_on_min": int(bus_data.get("BUS_ACML_GTON_PPLTN_MIN", 0)),
+                "get_on_max": int(bus_data.get("BUS_ACML_GTON_PPLTN_MAX", 0)),
+                "get_off_min": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MIN", 0)),
+                "get_off_max": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MAX", 0)),
+                "station_count": int(bus_data.get("BUS_STN_CNT", 0))
+            }
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return result

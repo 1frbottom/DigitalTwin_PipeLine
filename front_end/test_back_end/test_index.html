@@ -3,49 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교통 데이터 API 연동 프로토타입</title>
-    <link rel="stylesheet" href="style.css">
+    <title>교통 데이터 API call test</title>
+    <link rel="stylesheet" href="test_style.css">
 </head>
 <body>
     <div class="container">
-        <h1>교통 데이터 API 프로토타입</h1>
+        <h1>교통 데이터 API call test</h1>
         
-        <!-- 섹션 1: 최근 교통 데이터 -->
-        <div class="api-section">
-            <h2>최근 교통 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/recent</p>
-            <div class="button-group">
-                <button onclick="getRecentTraffic()">조회하기</button>
-                <input type="number" id="minutes" placeholder="분 (기본: 10)" value="10" min="1" max="60">
-                <input type="number" id="limit" placeholder="개수 (기본: 100)" value="100" min="1" max="500">
-            </div>
-            <div id="recent-status" class="status loading" style="display:none;"></div>
-            <div id="recent-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 2: 특정 링크 데이터 -->
-        <div class="api-section">
-            <h2>특정 링크 ID 데이터 조회</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/link/{link_id}</p>
-            <div class="button-group">
-                <input type="text" id="linkId" placeholder="링크 ID (예: 101000100)" value="101000100">
-                <button onclick="getTrafficByLink()">조회하기</button>
-            </div>
-            <div id="link-status" class="status loading" style="display:none;"></div>
-            <div id="link-response" class="response-box"></div>
-        </div>
-        
-        <!-- 섹션 3: 통계 데이터 -->
-        <div class="api-section">
-            <h2>링크별 평균 속도 통계</h2>
-            <p style="margin-bottom: 10px; color: #666;">GET /api/traffic/stats</p>
-            <button onclick="getTrafficStats()">조회하기</button>
-            <div id="stats-status" class="status loading" style="display:none;"></div>
-            <div id="stats-response" class="response-box"></div>
-            <div id="stats-table"></div>
-        </div>
-        
-        <!-- 섹션 4: 헬스 체크 -->
+        <!-- 섹션 1: 헬스 체크 -->
         <div class="api-section">
             <h2>서버 상태 확인</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /health</p>
@@ -54,7 +19,7 @@
             <div id="health-response" class="response-box"></div>
         </div>
 
-        <!-- 섹션 5: CCTV 스트리밍 -->
+        <!-- 섹션 2: CCTV 스트리밍 -->
         <div class="api-section">
             <h2>실시간 CCTV 모니터링</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /cctv/streams</p>
@@ -81,7 +46,7 @@
             </div>
         </div>
 
-        <!--섹션 6: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
+        <!--섹션 3: 실시간 도시 데이터 (인구현황, LIVE_PPLTN_STTS)-->
         <div class="api-section">
             <h2>실시간 도시 데이터 (인구)</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /city/population/...</p>
@@ -106,7 +71,7 @@
             <div id="city-forecast-table"></div>
         </div>
     
-        <!--섹션 7: 실시간 돌발 정보 -->
+        <!--섹션 4: 실시간 돌발 정보 -->
         <div class="api-section">
             <h2>실시간 돌발 정보 (사고/공사)</h2>
             <p style="margin-bottom: 10px; color: #666;">GET /incident/active (최근 30분 내 갱신된 정보)</p>
@@ -125,16 +90,124 @@
             <div id="incident-table"></div>
         </div>
     
-    
-    
-    
-    
+        <!--섹션 5: 실시간 도로소통 정보 -->
+        <div class="api-section">
+            <h2>실시간 도로 소통 현황 (AVG)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/traffic/road</p>
+            
+            <div class="button-group">
+                <input type="text" id="roadAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityRoadTraffic()">조회하기</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="city-road-status" class="status loading" style="display:none;"></span>
+            </h3>
+            
+            <div id="city-road-response" class="response-box" style="display: none;"></div>
+            
+            <div id="city-road-table"></div>
+        </div>
+
+        <!--섹션 6: 지하철 실시간 도착 정보 현황판 -->
+        <div class="api-section">
+            <h2>지하철 실시간 도착 정보 현황판</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/arrival/board</p>
+
+            <div class="button-group">
+                <input type="text" id="subwayAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getSubwayArrivalBoard()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                현황판
+                <span id="subway-arrival-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="subway-arrival-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <div id="subway-arrival-board"></div>
+        </div>
+
+        <!--섹션 7: 대중교통 승하차 누적 현황 (버스/지하철 분리) -->
+        <div class="api-section">
+            <h2>대중교통 승하차 누적 현황</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /subway/passenger/cumulative/chart</p>
+
+            <div class="button-group">
+                <input type="text" id="transitChartAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getTransitPassengerChart()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                승하차 누적 그래프
+                <span id="transit-chart-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="transit-chart-updated" style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--font-size-sm);"></div>
+
+            <!-- 차트 -->
+            <div style="margin-top: var(--space-16); background: var(--color-bg-secondary); padding: var(--space-16); border-radius: 8px;">
+                <canvas id="transitChart" width="800" height="400"></canvas>
+            </div>
+
+            <!-- 표 -->
+            <div id="transit-chart-table" style="margin-top: var(--space-16);"></div>
+        </div>
+
+        <div class="api-section">
+            <h2>실시간 기상 정보 (Weather)</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/weather/...</p>
+            
+            <div class="button-group">
+                <input type="text" id="weatherAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCityWeatherCurrent()">기상 현황 조회</button>
+                <button onclick="getCityWeatherForecast()">기상 예측 조회 (24시간)</button>
+            </div>
+            
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                기상 현황 (Current)
+                <span id="weather-current-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="weather-current-response" class="response-box" style="display: none;"></div>
+            <div id="weather-current-ui" style="margin-top: 10px;"></div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                기상 예측 (Forecast)
+                <span id="weather-forecast-status" class="status loading" style="display:none;"></span>
+            </h3>
+            <div id="weather-forecast-response" class="response-box" style="display: none;"></div>
+            <div id="weather-forecast-table"></div>
+        </div>
+
+                <!--섹션 8: 문화행사 현황 -->
+        <div class="api-section">
+            <h2>주변 문화행사 정보</h2>
+            <p style="margin-bottom: 10px; color: #666;">GET /city/events/cultural</p>
+
+            <div class="button-group">
+                <input type="text" id="culturalAreaName" placeholder="지역명 (예: 강남역)" value="강남역">
+                <button onclick="getCulturalEvents()">조회하기</button>
+            </div>
+
+            <h3 style="font-size: var(--font-size-lg); margin-top: var(--space-16);">
+                조회 결과
+                <span id="cultural-count" style="margin-left: 10px; color: var(--color-primary);"></span>
+                <span id="cultural-status" class="status loading" style="display:none;"></span>
+            </h3>
+
+            <div id="cultural-response" class="response-box" style="display: none;"></div>
+
+            <div id="cultural-table"></div>
+        </div>
     </div>
 
-    
+
     <!-- ------------------------------------------------------- -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="test_script.js"></script>
     <script>
         // 페이지 로드 즉시 CCTV 스트림 자동 로드
         console.log('=== 자동 로드 스크립트 실행 ===');
