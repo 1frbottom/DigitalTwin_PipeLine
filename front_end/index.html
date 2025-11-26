@@ -13,6 +13,7 @@
   <body>
     <div class="app">
       <header class="header">
+
         <div class="header-inner">
           <div class="header-left">
             <div class="header-pill"></div>
@@ -21,6 +22,18 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
           </div>
+
+          <div class="system-status" id="system-health-box">
+            <div class="status-indicator">
+              <div class="status-dot"></div>
+              <div class="status-pulse"></div>
+            </div>
+            <div class="status-info">
+              <span class="status-label">실시간율</span>
+              <span class="status-value" id="system-health-rate">--%</span>
+            </div>
+          </div>
+
           <div class="weather-block">
             <div class="weather-icon">--</div>
             <div class="weather-info">
@@ -34,6 +47,8 @@
               </div>
             </div>
           </div>
+
+
         </div>
         <div class="header-bar"></div>
       </header>

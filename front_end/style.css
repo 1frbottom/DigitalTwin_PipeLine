@@ -888,3 +888,78 @@ body {
     from { opacity: 0; transform: translateX(20px); }
     to { opacity: 1; transform: translateX(0); }
 }
+
+/* ========== 실시간율 배지 ========== */
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--bg-soft);
+  border-radius: 12px;
+  margin-left: auto; /* 우측 정렬 보조 */
+}
+
+/* 점멸하는 상태 표시등 */
+.status-indicator {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--safe); /* 기본값 */
+  z-index: 2;
+  transition: background-color 0.3s ease;
+}
+
+/* 퍼지는 애니메이션 (pulse) */
+.status-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--safe);
+  opacity: 0.5;
+  z-index: 1;
+  animation: pulse 2s infinite;
+  transition: background-color 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  70% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.status-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.status-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.status-value {
+  font-weight: 700;
+  color: var(--text-main);
+  min-width: 36px; /* 숫자 바뀌어도 흔들림 방지 */
+  text-align: right;
+}
+
+/* 상태별 색상 클래스 (JS에서 제어) */
+.status-safe .status-dot, .status-safe .status-pulse { background: var(--safe); }
+.status-warn .status-dot, .status-warn .status-pulse { background: var(--warn); }
+.status-danger .status-dot, .status-danger .status-pulse { background: var(--danger); }
