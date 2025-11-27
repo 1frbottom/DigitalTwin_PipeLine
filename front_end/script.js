@@ -1160,8 +1160,6 @@ window.initMap = initMap;
 function addCctvMarkers() {
   if (!map || cctvLocations.length === 0) return;
 
-  const infoWindow = new google.maps.InfoWindow();
-
   cctvLocations.forEach((cctv) => {
     // 위도/경도가 없는 경우 스킵
     if (!cctv.lat || !cctv.lng) {
@@ -1188,26 +1186,7 @@ function addCctvMarkers() {
     });
 
     marker.addListener("click", () => {
-      const html = `
-        <div style="min-width: 160px;">
-          <div style="font-weight:600; margin-bottom:4px;">${cctv.name}</div>
-          <button 
-            style="
-              padding:4px 8px;
-              font-size:11px;
-              border-radius:999px;
-              border:1px solid #3b82f6;
-              background:#eff6ff;
-              cursor:pointer;
-            "
-            onclick="openCctv('${cctv.id}')"
-          >
-            CCTV 보기
-          </button>
-        </div>
-      `;
-      infoWindow.setContent(html);
-      infoWindow.open(map, marker);
+      openCctv(cctv.id);
     });
   });
 }
