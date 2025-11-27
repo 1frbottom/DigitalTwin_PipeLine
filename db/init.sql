@@ -16,6 +16,9 @@ INSERT INTO cctv_streams (id, name, stream_url, latitude, longitude) VALUES
     37.504058, 127.024304),
     ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8', 
     37.510832, 127.021142)
+        ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8', 
+    37.510832, 127.021142)
+
 ON CONFLICT (id) DO NOTHING;
 
 -- 실시간 돌발정보
