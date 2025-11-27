@@ -1172,41 +1172,72 @@ body {
 }
 
 .forecast-wrap {
-  margin-top: 16px;
-  margin-bottom: 12px;
+  position: relative;
+  margin-top: 24px;
+  margin-bottom: 30px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: flex-end;
-  height: 70px;
-  gap: 6px;
+  height: 100px;
+  gap: 4px;
+  z-index: 1;
+  padding-left: 25px;
+  padding-right: 5px;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-top: 1px dashed #e5e7eb;
+  z-index: -1;
+  font-size: 0;
+}
+
+.grid-line span {
+  position: absolute;
+  left: 0;
+  top: -8px;
+  font-size: 9px;
+  color: #9ca3af;
+  background-color: transparent;
+  width: 20px;
+  text-align: right;
 }
 
 .forecast-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 0;
   flex: 1;
   height: 100%;
+  z-index: 5;
 }
 
 .bar-graph {
-  width: 100%;
-  max-width: 35px;
-  border-radius: 6px 6px 0 0;
+  width: 24px;
+  border-radius: 4px 4px 0 0;
   background-color: #e5e7eb;
-  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
-  min-height: 10px; /* 최소 높이를 더 크게 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 그림자 추가로 더 눈에 띄게 */
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+  opacity: 0.9;
 }
 
 .time-label {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
   font-size: 11px;
   color: #6b7280;
   font-weight: 500;
   white-space: nowrap;
 }
+
 /* 대중교통 누적 값 스타일 */
 .transport-values {
   display: flex;
@@ -1278,7 +1309,7 @@ body {
 
 .traffic-bar {
   position: relative;
-  width: 100%; /* 카드 전체 폭의 100% */
+  width: 100%;
   height: 24px;
   border-radius: 999px;
   overflow: hidden;
@@ -1289,7 +1320,7 @@ body {
 /* 3등분 구간 - 비율: 각 33.33% */
 .traffic-segment {
   height: 100%;
-  flex: 1; /* 균등하게 3등분 */
+  flex: 1;
 }
 
 .traffic-segment-green {

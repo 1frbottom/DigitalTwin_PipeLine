@@ -6,6 +6,8 @@ from ..database import get_db
 from ..cruds import crud_incident
 from ..models import model_incident
 
+
+
 router = APIRouter(
     prefix="/incident",
     tags=["Traffic Incident - 돌발 정보"],

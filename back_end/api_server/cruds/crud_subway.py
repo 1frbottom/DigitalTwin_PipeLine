@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from ..schemas import schema_subway
 
+
+
 # ========== 지하철 실시간 도착 정보 ==========
 
 def get_subway_arrivals_by_area(db: Session, area_name: str, limit: int = 50):

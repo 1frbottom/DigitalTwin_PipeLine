@@ -131,3 +131,20 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - default
+
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./front_end:/usr/share/nginx/html
+    env_file:
+      - .env
+    environment:
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    command: >
+      /bin/sh -c "echo \"window.ENV = { 
+      API_BASE_URL: 'http://localhost:${HOST_PORT_API}', 
+      GOOGLE_MAPS_API_KEY: '${GOOGLE_MAPS_API_KEY}' 
+      };\" > /usr/share/nginx/html/env_config.js && nginx -g 'daemon off;'"
