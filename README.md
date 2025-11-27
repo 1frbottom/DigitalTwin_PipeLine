@@ -23,7 +23,10 @@
 	- 루트에 .env 파일을 만들고 아래 붙여넣기<br>
 		```
 		# 서울 열린데이터 광장 (https://data.seoul.go.kr)
-		SEOUL_API_KEY=64496f53736974733530424d6b4b4a
+		SEOUL_API_KEY=
+
+		# Google Cloud Maps API Key
+		GOOGLE_MAPS_API_KEY=
 
 		# 1. API Server
 		HOST_PORT_API=58000
@@ -35,7 +38,7 @@
 		HOST_PORT_DB=54320
 
 		# 4. Spark Master UI
-		HOST_PORT_SPARK_UI=58080q
+		HOST_PORT_SPARK_UI=58080
 		```
 		<br>
 
