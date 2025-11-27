@@ -1185,6 +1185,9 @@ function initMap() {
   // CCTV 데이터 로드 후 마커 추가
   if (cctvLocations.length > 0) {
     addCctvMarkers();
+  } else {
+    // 아직 데이터가 없으면 다시 로드 시도
+    fetchCctvLocations();
   }
 }
 

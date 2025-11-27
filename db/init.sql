@@ -8,21 +8,21 @@ CREATE TABLE cctv_streams (
 );
 
 INSERT INTO cctv_streams (id, name, stream_url, latitude, longitude) VALUES
-    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8', 
+    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8',
     37.498222, 127.027833),
-    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8', 
+    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8',
     37.501361, 127.026194),
-    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8', 
+    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8',
     37.504058, 127.024304),
-    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8', 
-    37.510832, 127.021142)
-    ('5', '역삼역', 'https://strm4.spatic.go.kr/live/338.stream/playlist.m3u8', 
-    37.500696, 127.036562)
-    ('6', '양재역', 'https://strm2.spatic.go.kr/live/208.stream/playlist.m3u8', 
-    37.484350, 127.033936)
-    ('7', '서초대로', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8', 
-    37.497135, 127.024347) -- url 수정 필요(현재 논현역과 동일)
-    ('8', '교대역', 'https://strm3.spatic.go.kr/live/318.stream/playlist.m3u8', 
+    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8',
+    37.510832, 127.021142),
+    ('5', '역삼역', 'https://strm4.spatic.go.kr/live/338.stream/playlist.m3u8',
+    37.500696, 127.036562),
+    ('6', '양재역', 'https://strm2.spatic.go.kr/live/208.stream/playlist.m3u8',
+    37.484350, 127.033936),
+    ('7', '서초대로', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8',
+    37.497135, 127.024347),
+    ('8', '교대역', 'https://strm3.spatic.go.kr/live/318.stream/playlist.m3u8',
     37.493891, 127.013694)
 
 ON CONFLICT (id) DO NOTHING;
