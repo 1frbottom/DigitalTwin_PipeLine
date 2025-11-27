@@ -1228,73 +1228,73 @@ function addCctvMarkers() {
 window.openCctv = function (cctvId) {
   console.log("CCTV 클릭:", cctvId);
 
-  // CCTV 정보 찾기
   const cctv = cctvLocations.find(c => c.id === cctvId);
   if (!cctv) {
     console.error("CCTV를 찾을 수 없습니다:", cctvId);
     return;
   }
 
-  // 모달 열기
   const modal = document.getElementById('cctvModal');
   const titleEl = document.getElementById('cctvModalTitle');
   const videoContainer = document.getElementById('cctvVideoContainer');
 
-  if (!modal || !titleEl || !videoContainer) {
-    console.error("모달 요소를 찾을 수 없습니다");
-    return;
-  }
+  if (!modal || !titleEl || !videoContainer) return;
 
-  // 제목 설정
   titleEl.textContent = cctv.name;
+  videoContainer.innerHTML = ''; // 초기화
 
-  // 비디오 컨테이너 초기화
-  videoContainer.innerHTML = '<div class="cctv-loading">CCTV 스트림을 로딩 중...</div>';
-
-  // stream_url이 있으면 비디오 표시
   if (cctv.stream_url) {
-    // HLS 스트림인 경우 (m3u8)
-    if (cctv.stream_url.includes('.m3u8')) {
-      videoContainer.innerHTML = `
-        <video controls autoplay muted>
-          <source src="${cctv.stream_url}" type="application/x-mpegURL">
-          Your browser does not support HLS video.
-        </video>
-      `;
-    }
-    // YouTube 링크인 경우
-    else if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
+    // 1. YouTube 링크인 경우
+    if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
       const videoId = extractYouTubeId(cctv.stream_url);
-      if (videoId) {
-        videoContainer.innerHTML = `
-          <iframe
-            src="https://www.youtube.com/embed/${videoId}?autoplay=1"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
-        `;
+      videoContainer.innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+          style="width:100%; height:100%;"
+        ></iframe>
+      `;
+    } 
+    // 2. HLS(.m3u8) 스트림인 경우 (★수정된 부분★)
+    else if (cctv.stream_url.includes('.m3u8')) {
+      const video = document.createElement('video');
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.controls = true;
+      video.autoplay = true;
+      video.muted = true; // 자동재생을 위해 음소거 필수
+
+      videoContainer.appendChild(video);
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(cctv.stream_url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(e => console.log("자동재생 차단됨:", e));
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // 사파리(iOS/Mac)용 네이티브 지원
+        video.src = cctv.stream_url;
+        video.addEventListener('loadedmetadata', function() {
+          video.play();
+        });
       }
-    }
-    // 일반 비디오 URL
+    } 
+    // 3. 일반 MP4 등
     else {
       videoContainer.innerHTML = `
-        <video controls autoplay muted>
+        <video controls autoplay muted style="width:100%; height:100%;">
           <source src="${cctv.stream_url}">
-          Your browser does not support the video tag.
         </video>
       `;
     }
   } else {
-    videoContainer.innerHTML = `
-      <div class="cctv-error">
-        CCTV 스트림 URL이 없습니다.<br>
-        <small>백엔드 API 서버가 실행 중인지 확인하세요.</small>
-      </div>
-    `;
+    videoContainer.innerHTML = '<div class="cctv-error">CCTV URL 없음</div>';
   }
 
-  // 모달 열기
   modal.classList.add('is-open');
 };
 
