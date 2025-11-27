@@ -33,6 +33,23 @@ const ACC_TYPE_MAP = {
   'A13': '단순정보'
 };
 
+// 돌발정보 카테고리별 색상 매핑
+const ACC_COLOR_MAP = {
+  'A01': '#F55', // 교통사고 - Red
+  'A02': '#FF8C42', // 차량고장 - Orange
+  'A03': '#FF6B6B', // 보행사고 - Light Red
+  'A04': '#F9B233', // 공사 - Yellow
+  'A05': '#9B59B6', // 낙하물 - Purple
+  'A06': '#E74C3C', // 버스사고 - Red variant
+  'A07': '#C0392B', // 지하철사고 - Dark Red
+  'A08': '#DC143C', // 화재 - Crimson
+  'A09': '#34495E', // 기상/재난 - Dark Gray
+  'A10': '#3498DB', // 집회및행사 - Blue
+  'A11': '#95A5A6', // 기타 - Gray
+  'A12': '#16A085', // 제보 - Teal
+  'A13': '#7F8C8D' // 단순정보 - Light Gray
+};
+
 // -------------------------- 갱신 --------------------------
 
   // api 호출 주기 (ms)
@@ -549,9 +566,9 @@ async function fetchTrafficData() {
 
     // 도로소통 단계 색상 매핑
     const statusColorMap = {
-      '원활': { color: '#10b981', text: '원활' },
-      '서행': { color: '#f59e0b', text: '서행' },
-      '정체': { color: '#ef4444', text: '정체' }
+      '원활': { color: '#3CB371', text: '원활' },
+      '서행': { color: '#E8A43A', text: '서행' },
+      '정체': { color: '#D9534F', text: '정체' }
     };
 
     const statusInfo = statusColorMap[data.road_traffic_idx] || { color: '#6b7280', text: data.road_traffic_idx || '정보없음' };
@@ -706,6 +723,14 @@ function updateTransportData() {
 
 // ---------------- 실시간 돌발정보 ----------------
 
+// 돌발 유형별 CSS 클래스 매핑 (카테고리 dot 색상용)
+const INCIDENT_TYPE_CLASS_MAP = {
+  'A01': 'accident',      // 교통사고
+  'A04': 'construction',  // 공사
+  'A10': 'event',         // 집회/행사
+  'A02': 'breakdown',     // 차량고장
+};
+
 async function fetchIncidentsData() {
   try {
     const response = await fetch(`${API_BASE_URL}/incident/active`);
@@ -713,47 +738,63 @@ async function fetchIncidentsData() {
 
     const incidents = await response.json();
 
-    // 돌발정보 카드 업데이트
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (!incidentsContainer) return;
 
     // 기존 내용 초기화
     incidentsContainer.innerHTML = '';
 
-    if (incidents.length === 0) {
+    if (!incidents || incidents.length === 0) {
+      // 0건일 때
       incidentsContainer.innerHTML = `
         <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
           현재 진행 중인 돌발정보가 없습니다.
         </div>
       `;
     } else {
-      // 최대 5개까지만 표시
-      const displayIncidents = incidents.slice(0, 5);
-
-      displayIncidents.forEach(incident => {
-      const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
-      // 여기가 매핑된 한글 유형 (예: "공사")
-      const incidentType = ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
-      const incidentIcon = getIncidentIcon(incident.acc_type);
-      
-      const incidentHtml = `
-        <div class="incident-item">
-          <div class="incident-icon-block">
-            <div class="incident-icon-circle">${incidentIcon}</div>
-          </div>
-
-          <div class="incident-main">
-            <div class="incident-header">
-              <div class="incident-type">${incidentType}</div>
-              <div class="incident-time">${incidentTime}</div>
-            </div>
-            <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
-          </div>
-        </div>
+      // 1) 리스트 컨테이너(ul) 한 번 생성
+      incidentsContainer.innerHTML = `
+        <ul class="incident-list" id="incident-list"></ul>
       `;
+      const listEl = document.getElementById('incident-list');
+      listEl.innerHTML = '';
 
-      incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
-    });
+      // 2) 각 항목 li.incident-item 로 추가
+      incidents.forEach(incident => {
+        const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
+
+        // 매핑된 한글 유형 (예: "공사")
+        const incidentType =
+          ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
+
+        const incidentIcon = getIncidentIcon(incident.acc_type);
+
+        // 카테고리별 CSS 클래스 (dot 색상용)
+        const dotClass = INCIDENT_TYPE_CLASS_MAP[incident.acc_type] || '';
+
+        const detailText = incident.acc_info || '상세 정보 없음';
+
+        const incidentHtml = `
+          <li class="incident-item">
+            <div class="incident-icon-block">
+              <div class="incident-icon-circle">${incidentIcon}</div>
+            </div>
+
+            <div class="incident-main">
+              <div class="incident-header">
+                <div class="incident-type">
+                  <span class="incident-type-dot ${dotClass}"></span>
+                  <span>${incidentType}</span>
+                </div>
+                <div class="incident-time">${incidentTime}</div>
+              </div>
+              <div class="incident-detail">${detailText}</div>
+            </div>
+          </li>
+        `;
+
+        listEl.insertAdjacentHTML('beforeend', incidentHtml);
+      });
     }
 
     // 돌발정보 건수 업데이트
@@ -768,7 +809,6 @@ async function fetchIncidentsData() {
   } catch (error) {
     console.error("돌발정보 수신 실패:", error);
 
-    // 에러 시 기본 메시지 표시
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (incidentsContainer) {
       incidentsContainer.innerHTML = `
@@ -904,14 +944,20 @@ async function fetchWeatherData() {
     }
 
     // 미세먼지/초미세먼지 정보 업데이트
+    // API는 air_idx (통합 지수)와 air_idx_main (주요 오염물질)을 반환
     const pm10Status = document.getElementById('pm10-status');
     const pm25Status = document.getElementById('pm25-status');
 
-    if (pm10Status && data.pm10_status) {
-      pm10Status.textContent = data.pm10_status;
-    }
-    if (pm25Status && data.pm25_status) {
-      pm25Status.textContent = data.pm25_status;
+    if (data.air_idx) {
+      // 통합 대기질 지수를 PM10과 PM2.5 모두에 표시
+      if (pm10Status) {
+        pm10Status.textContent = data.air_idx;
+      }
+      if (pm25Status) {
+        pm25Status.textContent = data.air_idx;
+      }
+    } else {
+      console.warn('대기질 데이터 없음:', data);
     }
 
     updateTimestamps('weather');
@@ -1059,20 +1105,41 @@ document.addEventListener('DOMContentLoaded', () => {
   initPanelToggle();
   init3DToggleButton();
   initTransportDetailButton();
+  fetchCctvLocations(); // CCTV 위치 데이터 로드
 });
 
 // ---------------- Google Map + CCTV 마커 ----------------
 
 const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심
 
-const CCTV_LOCATIONS = [
-  // 신논현역 출구별 CCTV 위치
-  { id: 1, name: "신논현역 5번 출구", lat: 37.50418, lng: 127.02510 },  // 5번 출구 (역 동쪽)
-  { id: 2, name: "신논현역 6번 출구", lat: 37.50380, lng: 127.02490 },  // 6번 출구 (역 남동쪽)
-  { id: 3, name: "신논현역 교보타워 앞", lat: 37.50465, lng: 127.02380 },  // 교보타워 방향 (역 북서쪽)
-];
-
+let cctvLocations = [];
 let map;
+
+// CCTV 데이터를 API에서 가져오기
+async function fetchCctvLocations() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cctv/streams`);
+    if (!response.ok) {
+      console.error('CCTV 데이터 로드 실패');
+      return;
+    }
+    const result = await response.json();
+    cctvLocations = result.data.map(cctv => ({
+      id: cctv.id,
+      name: cctv.name,
+      lat: cctv.latitude,
+      lng: cctv.longitude,
+      stream_url: cctv.stream_url
+    }));
+
+    // 지도가 이미 로드되었으면 마커 추가
+    if (map) {
+      addCctvMarkers();
+    }
+  } catch (error) {
+    console.error('CCTV 위치 데이터 로드 오류:', error);
+  }
+}
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("google-map"), {
@@ -1081,16 +1148,27 @@ function initMap() {
     disableDefaultUI: true,
   });
 
-  addCctvMarkers();
+  // CCTV 데이터 로드 후 마커 추가
+  if (cctvLocations.length > 0) {
+    addCctvMarkers();
+  }
 }
 
   // 전역 객체 연결
 window.initMap = initMap;
 
 function addCctvMarkers() {
+  if (!map || cctvLocations.length === 0) return;
+
   const infoWindow = new google.maps.InfoWindow();
 
-  CCTV_LOCATIONS.forEach((cctv) => {
+  cctvLocations.forEach((cctv) => {
+    // 위도/경도가 없는 경우 스킵
+    if (!cctv.lat || !cctv.lng) {
+      console.warn(`CCTV ${cctv.name}: 위치 정보 없음`);
+      return;
+    }
+
     const marker = new google.maps.Marker({
       position: { lat: cctv.lat, lng: cctv.lng },
       map,
