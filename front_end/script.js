@@ -20,6 +20,40 @@ const AREA_META_INFO = {
   "양재역": { subway: "3호선, 신분당선", traffic: "양재역 사거리 기준" }
 };
 
+// 각 구역의 영역 좌표 (시계 방향 또는 반시계 방향 순서대로 입력)
+const AREA_PATHS = {
+  "강남역": [
+    { lat: 37.510624, lng: 127.019734 }, // 좌상단
+    { lat: 37.511467, lng: 127.022783 }, // 우상단
+    { lat: 37.505456, lng: 127.027709 }, // 우하단
+    { lat: 37.503953, lng: 127.022783 }  // 좌하단
+  ],
+  "신논현역·논현역": [
+      { lat: 37.503912, lng: 127.022861 },
+      { lat: 37.505453, lng: 127.028111 },
+      { lat: 37.494186, lng: 127.033755 },
+      { lat: 37.492476, lng: 127.028263 }
+  ],
+  "역삼역": [
+    { lat: 37.501695, lng: 127.031722 },
+    { lat: 37.504073, lng: 127.041969 },
+    { lat: 37.498441, lng: 127.044553 },
+    { lat: 37.496205, lng: 127.034210 }
+  ],
+  "교대역": [
+    { lat: 37.493506, lng: 127.010688 },
+    { lat: 37.495155, lng: 127.017410 },
+    { lat: 37.488353, lng: 127.014436 },
+    { lat: 37.487835, lng: 127.012661 }
+  ],
+  "양재역": [
+    { lat: 37.486885, lng: 127.029078 },
+    { lat: 37.488485, lng: 127.034539 },
+    { lat: 37.483544, lng: 127.038035 },
+    { lat: 37.482410, lng: 127.034667 }
+  ]
+};
+
   // .html
 const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
 if (!MAP_API_KEY) {
@@ -1173,26 +1207,61 @@ async function fetchCctvLocations() {
 }
 
 function initMap() {
-  // 현재 선택된 지역의 좌표 가져오기
-  const initialCoords = AREA_COORDINATES[TARGET_AREA_NAME] || SINNONHYEON;
+  // 현재 선택된 지역의 폴리곤 경로 가져오기
+  const initialPath = AREA_PATHS[TARGET_AREA_NAME];
+  
+  // 초기 중심 좌표 결정: 폴리곤 중심이 있으면 그거 쓰고, 없으면 기존 좌표 사용
+  let centerCoords = AREA_COORDINATES[TARGET_AREA_NAME] || SINNONHYEON;
+  if (initialPath) {
+    const calculatedCenter = getPolygonCenter(initialPath); // 위에서 만든 함수 활용
+    if (calculatedCenter) centerCoords = calculatedCenter;
+  }
 
   map = new google.maps.Map(document.getElementById("google-map"), {
-    center: initialCoords,
+    center: centerCoords,
     zoom: 16,
     disableDefaultUI: true,
   });
+
+  // [수정] 지도가 생성되자마자 현재 타겟 구역의 폴리곤 그리기 실행
+  drawAreaPolygon(TARGET_AREA_NAME);
 
   // CCTV 데이터 로드 후 마커 추가
   if (cctvLocations.length > 0) {
     addCctvMarkers();
   } else {
-    // 아직 데이터가 없으면 다시 로드 시도
     fetchCctvLocations();
   }
 }
 
   // 전역 객체 연결
 window.initMap = initMap;
+
+  // 지도 영역 매핑 start ---------
+let currentPolygon = null; // 현재 그려진 폴리곤을 저장할 변수
+
+function drawAreaPolygon(areaName) {
+  if (currentPolygon) {
+    currentPolygon.setMap(null);
+  }
+
+  const path = AREA_PATHS[areaName];
+  if (!path) return;
+
+  currentPolygon = new google.maps.Polygon({
+    paths: path,
+    strokeColor: "#FF0000",   // 테두리 색상 (빨강)
+    strokeOpacity: 0.8,       // 테두리 투명도
+    strokeWeight: 2,          // 테두리 두께
+    fillColor: "#FF0000",     // 채우기 색상 (빨강)
+    fillOpacity: 0.15,        // 채우기 투명도 (이미지처럼 반투명하게)
+  });
+
+  if (map) {
+    currentPolygon.setMap(map);
+  }
+}
+  // 지도 영역 매핑 end ---------
 
 function addCctvMarkers() {
   if (!map || cctvLocations.length === 0) return;
@@ -1815,10 +1884,13 @@ function applyLocationChange(newArea) {
   // 2. 지도 이동
   moveMapToLocation(newArea);
 
-  // 3. UI 초기화
+  // 3. 구역 매핑 폴리곤 그리기
+  drawAreaPolygon(newArea);
+
+  // 4. UI 초기화
   resetDashboardUI(newArea);
 
-  // 4. 대시보드 전체 리로드
+  // 5. 대시보드 전체 리로드
   initDashboard();
 }
 
@@ -1931,8 +2003,39 @@ function resetDashboardUI(areaName) {
   document.getElementById('weather-icon').textContent = '--';
 }
 
+function getPolygonCenter(path) {
+  if (!path || path.length === 0) return null;
+
+  let latSum = 0;
+  let lngSum = 0;
+
+  path.forEach(coord => {
+    latSum += coord.lat;
+    lngSum += coord.lng;
+  });
+
+  return {
+    lat: latSum / path.length,
+    lng: lngSum / path.length
+  };
+}
+
 function moveMapToLocation(areaName) {
   if (!map) return;
+
+  const path = AREA_PATHS[areaName];
+  
+  // 1순위: 폴리곤 경로가 있다면 그 중심점으로 이동
+  if (path) {
+    const center = getPolygonCenter(path);
+    if (center) {
+      map.panTo(center);
+      map.setZoom(16); // 줌 레벨은 필요에 따라 조정
+      return; 
+    }
+  }
+
+  // 2순위: 폴리곤이 없는 경우 기존 좌표(AREA_COORDINATES) 사용 (예외 처리)
   const coords = AREA_COORDINATES[areaName];
   if (coords) {
     map.panTo(coords);
