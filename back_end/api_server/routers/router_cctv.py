@@ -19,6 +19,8 @@ class CCTVStream(BaseModel):
     id: str
     name: str
     stream_url: str
+    latitude: float = None
+    longitude: float = None
 
     class Config:
         from_attributes = True
