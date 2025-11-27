@@ -17,10 +17,10 @@
 
 - api 지역 바꿀 경우
 	1. producer_city_data의 TARGET_AREAS에 원하는 지역 추가
-
-	2. producer 컨테이너 재시작 (docker compose restart producer)
 	
-	3. js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경
+	2. js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경
+
+	3. producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기
 
 	4. 대시보드 새로고침
 
