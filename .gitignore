@@ -1,5 +1,6 @@
 ### Custom ###
 env_config.js
+.DS_Store
 
 ### Java ###
 # Compiled class file
