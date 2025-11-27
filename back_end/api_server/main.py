@@ -6,7 +6,6 @@ except ImportError:
     from routers import router_cctv, router_city, router_incident, router_subway
 
 
-
 app = FastAPI(
     title="디지털 트윈 교통 데이터 API",
     description="실시간 교통/CCTV/돌발상황/도시 정보 조회 API",
