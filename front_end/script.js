@@ -1,7 +1,20 @@
 // -------------------------- config --------------------------
+const ENV = window.ENV || {};
 
-const API_BASE_URL = "http://localhost:58000";
+const API_BASE_URL = ENV.API_BASE_URL
 const TARGET_AREA_NAME = "강남역"
+
+  // .html
+const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
+if (!MAP_API_KEY) {
+  console.error("API Key가 설정되지 않았습니다. .env 파일을 확인하세요.");
+} else {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAP_API_KEY}&callback=initMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
 
   // 돌발정보 코드 매핑
 const ACC_TYPE_MAP = {
@@ -1070,6 +1083,9 @@ function initMap() {
 
   addCctvMarkers();
 }
+
+  // 전역 객체 연결
+window.initMap = initMap;
 
 function addCctvMarkers() {
   const infoWindow = new google.maps.InfoWindow();
