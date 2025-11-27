@@ -1117,27 +1117,40 @@ let map;
 
 // CCTV 데이터를 API에서 가져오기
 async function fetchCctvLocations() {
+  const requestUrl = `${API_BASE_URL}/cctv/streams`; // 호출하려는 주소
+  
   try {
-    const response = await fetch(`${API_BASE_URL}/cctv/streams`);
+    console.log(`[CCTV 요청] URL: ${requestUrl}`); // 1. 어떤 주소로 요청하는지 확인
+    
+    const response = await fetch(requestUrl);
+    
+    // 2. 상태 코드 확인 (404면 주소 틀림, 500이면 서버 오류)
     if (!response.ok) {
-      console.error('CCTV 데이터 로드 실패');
+      console.error(`[CCTV 에러] 상태 코드: ${response.status}, 상태 메시지: ${response.statusText}`);
       return;
     }
-    const result = await response.json();
-    cctvLocations = result.data.map(cctv => ({
-      id: cctv.id,
-      name: cctv.name,
-      lat: cctv.latitude,
-      lng: cctv.longitude,
-      stream_url: cctv.stream_url
-    }));
 
-    // 지도가 이미 로드되었으면 마커 추가
+    const result = await response.json();
+    
+    // 3. 데이터 구조 확인 (데이터가 비어있는지)
+    if (!result.data) {
+       console.warn("[CCTV 경고] 응답에 'data' 필드가 없습니다:", result);
+       cctvLocations = [];
+    } else {
+       cctvLocations = result.data.map(cctv => ({
+        id: cctv.id,
+        name: cctv.name,
+        lat: cctv.latitude,
+        lng: cctv.longitude,
+        stream_url: cctv.stream_url
+      }));
+    }
+
     if (map) {
       addCctvMarkers();
     }
   } catch (error) {
-    console.error('CCTV 위치 데이터 로드 오류:', error);
+    console.error('CCTV 위치 데이터 로드 오류(네트워크/코드):', error);
   }
 }
 
