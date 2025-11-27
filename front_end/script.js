@@ -1,7 +1,20 @@
 // -------------------------- config --------------------------
+const ENV = window.ENV || {};
 
-const API_BASE_URL = "http://localhost:58000";
+const API_BASE_URL = ENV.API_BASE_URL
 const TARGET_AREA_NAME = "강남역"
+
+  // .html
+const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
+if (!MAP_API_KEY) {
+  console.error("API Key가 설정되지 않았습니다. .env 파일을 확인하세요.");
+} else {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAP_API_KEY}&callback=initMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
 
   // 돌발정보 코드 매핑
 const ACC_TYPE_MAP = {
@@ -18,6 +31,23 @@ const ACC_TYPE_MAP = {
   'A11': '기타',
   'A12': '제보',
   'A13': '단순정보'
+};
+
+// 돌발정보 카테고리별 색상 매핑
+const ACC_COLOR_MAP = {
+  'A01': '#F55', // 교통사고 - Red
+  'A02': '#FF8C42', // 차량고장 - Orange
+  'A03': '#FF6B6B', // 보행사고 - Light Red
+  'A04': '#F9B233', // 공사 - Yellow
+  'A05': '#9B59B6', // 낙하물 - Purple
+  'A06': '#E74C3C', // 버스사고 - Red variant
+  'A07': '#C0392B', // 지하철사고 - Dark Red
+  'A08': '#DC143C', // 화재 - Crimson
+  'A09': '#34495E', // 기상/재난 - Dark Gray
+  'A10': '#3498DB', // 집회및행사 - Blue
+  'A11': '#95A5A6', // 기타 - Gray
+  'A12': '#16A085', // 제보 - Teal
+  'A13': '#7F8C8D' // 단순정보 - Light Gray
 };
 
 // -------------------------- 갱신 --------------------------
@@ -272,17 +302,16 @@ async function fetchPopulationData() {
 
       if (changePercent > 0) {
         popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626"; // 빨간색
+        popChangeEl.style.color = "#dc2626";
       } else if (changePercent < 0) {
         popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb"; // 파란색
+        popChangeEl.style.color = "#2563eb";
       } else {
-        popChangeEl.textContent = "0%";
-        popChangeEl.style.color = "#6b7280"; // 회색
+        popChangeEl.textContent = ""; // 0%일 때 빈칸
       }
+
     } else if (popChangeEl) {
-      popChangeEl.textContent = "-";
-      popChangeEl.style.color = "#9ca3af";
+      popChangeEl.textContent = ""; 
     }
 
     // 현재 데이터를 이전 데이터로 저장
@@ -299,7 +328,7 @@ async function fetchPopulationData() {
   }
 }
 
-// ---------------- 예측 데이터 ----------------
+// ---------------------- 인구현황 예측 ----------------------
 
 async function fetchForecastData() {
   try {
@@ -308,56 +337,77 @@ async function fetchForecastData() {
     );
 
     const container = document.getElementById("forecast-chart");
-    if (!container) {
-      console.warn("HTML에 'forecast-chart' ID를 가진 요소가 없습니다.");
-      return;
-    }
+    if (!container) return;
 
     container.innerHTML = "";
 
     if (!response.ok) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
       return;
     }
 
     const list = await response.json();
-    console.log("예측 데이터 수신:", list);
-
     if (!list || list.length === 0) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
       return;
     }
 
     const next6 = list.slice(0, 6);
-    console.log("향후 6시간 데이터:", next6);
-
-    const values = next6.map((d) => d.fcst_max);
-    const minVal = Math.min(...values);
+    
+    // 1. 데이터 최댓값 구하기
+    const values = next6.map(d => d.fcst_max);
     const maxVal = Math.max(...values);
-    const range = maxVal - minVal;
-    console.log(`그래프 범위: ${minVal} ~ ${maxVal}, range: ${range}`);
 
-    next6.forEach((item, index) => {
+    // [핵심 로직 변경]
+    // 10,000 단위 스텝 사용
+    const STEP = 10000; 
+
+    // yMax: 데이터 최댓값을 포함하는 10,000 단위 올림값 (예: 92,000 -> 100,000)
+    let yMax = Math.ceil(maxVal / STEP) * STEP;
+    if (yMax === 0) yMax = STEP;
+
+    // yMin: yMax 기준으로 무조건 4칸(40,000) 아래로 설정
+    // 예: yMax가 10만이면 yMin은 6만 (눈금: 6, 7, 8, 9, 10만 -> 5개)
+    // 예: yMax가 5만이면 yMin은 1만 (눈금: 1, 2, 3, 4, 5만)
+    let yMin = yMax - (4 * STEP);
+
+    // 음수가 나오면 0으로 고정
+    if (yMin < 0) yMin = 0;
+
+    const range = yMax - yMin;
+
+    // 2. 배경 눈금선 그리기 (yMin ~ yMax)
+    for (let i = yMin; i <= yMax; i += STEP) {
+
+      const posPercent = ((i - yMin) / range) * 100;
+      
+      const lineHtml = `
+        <div class="grid-line" style="bottom: ${posPercent}%;">
+          <span>${(i / 10000)}만</span>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", lineHtml);
+    }
+
+    // 3. 그래프 바 그리기
+    next6.forEach((item) => {
       const fTime = new Date(item.fcst_time);
       const hourLabel = fTime.getHours() + "시";
       const styleInfo = getColorByLevel(item.fcst_congest_lvl);
 
-      let heightPercent = 100;
-      if (range > 0) {
-        const ratio = (item.fcst_max - minVal) / range;
-        heightPercent = 20 + ratio * 80;
-      }
-
-      console.log(`${hourLabel} | ${item.fcst_congest_lvl} | 높이: ${heightPercent.toFixed(1)}% | 색상: ${styleInfo.color}`);
+      // 높이 계산
+      let heightPercent = ((item.fcst_max - yMin) / range) * 100;
+      
+      // 최소 높이 1% 안전장치
+      if (heightPercent < 1) heightPercent = 1;
+      if (heightPercent > 100) heightPercent = 100;
 
       const barHtml = `
         <div class="forecast-item">
           <div
             class="bar-graph"
-            title="${item.fcst_congest_lvl} (${item.fcst_min.toLocaleString()}~${item.fcst_max.toLocaleString()}명)"
-            style="height: ${heightPercent}%; background-color: ${styleInfo.color};"
+            title="${item.fcst_congest_lvl} (최대 ${item.fcst_max.toLocaleString()}명)"
+            style="height: ${heightPercent.toFixed(1)}%; background-color: ${styleInfo.color};"
           ></div>
           <div class="time-label">${hourLabel}</div>
         </div>
@@ -365,7 +415,6 @@ async function fetchForecastData() {
       container.insertAdjacentHTML("beforeend", barHtml);
     });
 
-    console.log("예측 그래프 렌더링 완료!");
   } catch (error) {
     console.error("예측 데이터 수신 실패:", error);
   }
@@ -517,9 +566,9 @@ async function fetchTrafficData() {
 
     // 도로소통 단계 색상 매핑
     const statusColorMap = {
-      '원활': { color: '#10b981', text: '원활' },
-      '서행': { color: '#f59e0b', text: '서행' },
-      '정체': { color: '#ef4444', text: '정체' }
+      '원활': { color: '#3CB371', text: '원활' },
+      '서행': { color: '#E8A43A', text: '서행' },
+      '정체': { color: '#D9534F', text: '정체' }
     };
 
     const statusInfo = statusColorMap[data.road_traffic_idx] || { color: '#6b7280', text: data.road_traffic_idx || '정보없음' };
@@ -678,6 +727,14 @@ function updateTransportData() {
 
 // ---------------- 실시간 돌발정보 ----------------
 
+// 돌발 유형별 CSS 클래스 매핑 (카테고리 dot 색상용)
+const INCIDENT_TYPE_CLASS_MAP = {
+  'A01': 'accident',      // 교통사고
+  'A04': 'construction',  // 공사
+  'A10': 'event',         // 집회/행사
+  'A02': 'breakdown',     // 차량고장
+};
+
 async function fetchIncidentsData() {
   try {
     const response = await fetch(`${API_BASE_URL}/incident/active`);
@@ -685,47 +742,63 @@ async function fetchIncidentsData() {
 
     const incidents = await response.json();
 
-    // 돌발정보 카드 업데이트
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (!incidentsContainer) return;
 
     // 기존 내용 초기화
     incidentsContainer.innerHTML = '';
 
-    if (incidents.length === 0) {
+    if (!incidents || incidents.length === 0) {
+      // 0건일 때
       incidentsContainer.innerHTML = `
         <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
           현재 진행 중인 돌발정보가 없습니다.
         </div>
       `;
     } else {
-      // 최대 5개까지만 표시
-      const displayIncidents = incidents.slice(0, 5);
-
-      displayIncidents.forEach(incident => {
-      const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
-      // 여기가 매핑된 한글 유형 (예: "공사")
-      const incidentType = ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
-      const incidentIcon = getIncidentIcon(incident.acc_type);
-      
-      const incidentHtml = `
-        <div class="incident-item">
-          <div class="incident-icon-block">
-            <div class="incident-icon-circle">${incidentIcon}</div>
-          </div>
-
-          <div class="incident-main">
-            <div class="incident-header">
-              <div class="incident-type">${incidentType}</div>
-              <div class="incident-time">${incidentTime}</div>
-            </div>
-            <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
-          </div>
-        </div>
+      // 1) 리스트 컨테이너(ul) 한 번 생성
+      incidentsContainer.innerHTML = `
+        <ul class="incident-list" id="incident-list"></ul>
       `;
+      const listEl = document.getElementById('incident-list');
+      listEl.innerHTML = '';
 
-      incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
-    });
+      // 2) 각 항목 li.incident-item 로 추가
+      incidents.forEach(incident => {
+        const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
+
+        // 매핑된 한글 유형 (예: "공사")
+        const incidentType =
+          ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
+
+        const incidentIcon = getIncidentIcon(incident.acc_type);
+
+        // 카테고리별 CSS 클래스 (dot 색상용)
+        const dotClass = INCIDENT_TYPE_CLASS_MAP[incident.acc_type] || '';
+
+        const detailText = incident.acc_info || '상세 정보 없음';
+
+        const incidentHtml = `
+          <li class="incident-item">
+            <div class="incident-icon-block">
+              <div class="incident-icon-circle">${incidentIcon}</div>
+            </div>
+
+            <div class="incident-main">
+              <div class="incident-header">
+                <div class="incident-type">
+                  <span class="incident-type-dot ${dotClass}"></span>
+                  <span>${incidentType}</span>
+                </div>
+                <div class="incident-time">${incidentTime}</div>
+              </div>
+              <div class="incident-detail">${detailText}</div>
+            </div>
+          </li>
+        `;
+
+        listEl.insertAdjacentHTML('beforeend', incidentHtml);
+      });
     }
 
     // 돌발정보 건수 업데이트
@@ -740,7 +813,6 @@ async function fetchIncidentsData() {
   } catch (error) {
     console.error("돌발정보 수신 실패:", error);
 
-    // 에러 시 기본 메시지 표시
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (incidentsContainer) {
       incidentsContainer.innerHTML = `
@@ -876,14 +948,20 @@ async function fetchWeatherData() {
     }
 
     // 미세먼지/초미세먼지 정보 업데이트
+    // API는 air_idx (통합 지수)와 air_idx_main (주요 오염물질)을 반환
     const pm10Status = document.getElementById('pm10-status');
     const pm25Status = document.getElementById('pm25-status');
 
-    if (pm10Status && data.pm10_status) {
-      pm10Status.textContent = data.pm10_status;
-    }
-    if (pm25Status && data.pm25_status) {
-      pm25Status.textContent = data.pm25_status;
+    if (data.air_idx) {
+      // 통합 대기질 지수를 PM10과 PM2.5 모두에 표시
+      if (pm10Status) {
+        pm10Status.textContent = data.air_idx;
+      }
+      if (pm25Status) {
+        pm25Status.textContent = data.air_idx;
+      }
+    } else {
+      console.warn('대기질 데이터 없음:', data);
     }
 
     updateTimestamps('weather');
@@ -1031,20 +1109,41 @@ document.addEventListener('DOMContentLoaded', () => {
   initPanelToggle();
   init3DToggleButton();
   initTransportDetailButton();
+  fetchCctvLocations(); // CCTV 위치 데이터 로드
 });
 
 // ---------------- Google Map + CCTV 마커 ----------------
 
 const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심
 
-const CCTV_LOCATIONS = [
-  // 신논현역 출구별 CCTV 위치
-  { id: 1, name: "신논현역 5번 출구", lat: 37.50418, lng: 127.02510 },  // 5번 출구 (역 동쪽)
-  { id: 2, name: "신논현역 6번 출구", lat: 37.50380, lng: 127.02490 },  // 6번 출구 (역 남동쪽)
-  { id: 3, name: "신논현역 교보타워 앞", lat: 37.50465, lng: 127.02380 },  // 교보타워 방향 (역 북서쪽)
-];
-
+let cctvLocations = [];
 let map;
+
+// CCTV 데이터를 API에서 가져오기
+async function fetchCctvLocations() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cctv/streams`);
+    if (!response.ok) {
+      console.error('CCTV 데이터 로드 실패');
+      return;
+    }
+    const result = await response.json();
+    cctvLocations = result.data.map(cctv => ({
+      id: cctv.id,
+      name: cctv.name,
+      lat: cctv.latitude,
+      lng: cctv.longitude,
+      stream_url: cctv.stream_url
+    }));
+
+    // 지도가 이미 로드되었으면 마커 추가
+    if (map) {
+      addCctvMarkers();
+    }
+  } catch (error) {
+    console.error('CCTV 위치 데이터 로드 오류:', error);
+  }
+}
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("google-map"), {
@@ -1053,13 +1152,27 @@ function initMap() {
     disableDefaultUI: true,
   });
 
-  addCctvMarkers();
+  // CCTV 데이터 로드 후 마커 추가
+  if (cctvLocations.length > 0) {
+    addCctvMarkers();
+  }
 }
 
+  // 전역 객체 연결
+window.initMap = initMap;
+
 function addCctvMarkers() {
+  if (!map || cctvLocations.length === 0) return;
+
   const infoWindow = new google.maps.InfoWindow();
 
-  CCTV_LOCATIONS.forEach((cctv) => {
+  cctvLocations.forEach((cctv) => {
+    // 위도/경도가 없는 경우 스킵
+    if (!cctv.lat || !cctv.lng) {
+      console.warn(`CCTV ${cctv.name}: 위치 정보 없음`);
+      return;
+    }
+
     const marker = new google.maps.Marker({
       position: { lat: cctv.lat, lng: cctv.lng },
       map,
@@ -1241,7 +1354,7 @@ async function fetchTransportDetail() {
   try {
     // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
     // 실제 API가 없으면 더미 데이터로 그래프 생성
-    const response = await fetch('http://localhost:58000/city/transit/hourly?area_name=강남역');
+    const response = await fetch(`${API_BASE_URL}/city/transit/hourly?area_name=${TARGET_AREA_NAME}`);
 
     let data;
 

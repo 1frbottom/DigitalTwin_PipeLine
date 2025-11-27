@@ -3,6 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
+
+
 # PostgreSQL 연결 정보
 # 기본값은 docker-compose 환경 (hostname: db)
 # 로컬 실행 시 DATABASE_URL 환경변수로 오버라이드 가능

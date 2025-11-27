@@ -132,13 +132,13 @@ def get_transit_passenger_data(db: Session, area_name: str):
             sub_data = json.loads(raw_data.live_sub_ppltn)
             result["subway"] = {
                 "transport_type": "subway",
-                "get_on_min": int(sub_data.get("SUB_ACML_GTON_PPLTN_MIN", 0)),
-                "get_on_max": int(sub_data.get("SUB_ACML_GTON_PPLTN_MAX", 0)),
-                "get_off_min": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MIN", 0)),
-                "get_off_max": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MAX", 0)),
-                "station_count": int(sub_data.get("SUB_STN_CNT", 0))
+                "get_on_min": int(sub_data.get("SUB_ACML_GTON_PPLTN_MIN") or 0),
+                "get_on_max": int(sub_data.get("SUB_ACML_GTON_PPLTN_MAX") or 0),
+                "get_off_min": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MIN") or 0),
+                "get_off_max": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MAX") or 0),
+                "station_count": int(sub_data.get("SUB_STN_CNT") or 0)
             }
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError, TypeError):
             pass
 
     # 버스 데이터 파싱
@@ -147,13 +147,13 @@ def get_transit_passenger_data(db: Session, area_name: str):
             bus_data = json.loads(raw_data.live_bus_ppltn)
             result["bus"] = {
                 "transport_type": "bus",
-                "get_on_min": int(bus_data.get("BUS_ACML_GTON_PPLTN_MIN", 0)),
-                "get_on_max": int(bus_data.get("BUS_ACML_GTON_PPLTN_MAX", 0)),
-                "get_off_min": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MIN", 0)),
-                "get_off_max": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MAX", 0)),
-                "station_count": int(bus_data.get("BUS_STN_CNT", 0))
+                "get_on_min": int(bus_data.get("BUS_ACML_GTON_PPLTN_MIN") or 0),
+                "get_on_max": int(bus_data.get("BUS_ACML_GTON_PPLTN_MAX") or 0),
+                "get_off_min": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MIN") or 0),
+                "get_off_max": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MAX") or 0),
+                "station_count": int(bus_data.get("BUS_STN_CNT") or 0)
             }
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError, TypeError):
             pass
 
     return result
