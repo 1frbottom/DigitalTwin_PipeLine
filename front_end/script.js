@@ -601,6 +601,10 @@ function updateTrafficData() {
   fetchTrafficData();
 }
 
+function updateTrafficData() {
+  fetchTrafficData();
+}
+
 // ---------------- 대중교통 ----------------
 
 async function fetchTransportData() {
