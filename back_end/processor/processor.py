@@ -212,7 +212,7 @@ forecast_df = parsed_ppltn_df \
 
 
     # 두 테이블에 대한 DB Write 함수 정의
-def write_proc_to_postgres(df):
+def write_proc_to_postgres(df, epoch_id):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
@@ -220,7 +220,7 @@ def write_proc_to_postgres(df):
       .mode("append") \
       .save()
 
-def write_forecast_to_postgres(df):
+def write_forecast_to_postgres(df, epoch_id):
     
     if df.rdd.isEmpty():
         return
