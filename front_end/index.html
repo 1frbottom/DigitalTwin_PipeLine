@@ -29,16 +29,7 @@
               <h1>강남역 부근 실시간 모니터링</h1>
             </div>
 
-          </div> <div class="system-status" id="system-health-box">
-              <div class="status-indicator">
-                <div class="status-dot"></div>
-                <div class="status-pulse"></div>
-              </div>
-              <div class="status-info">
-                <span class="status-label">실시간율</span>
-                <span class="status-value" id="system-health-rate">--%</span>
-              </div>
-            </div>
+          </div>
 
           <div class="weather-bar">
             <span class="weather-icon" id="weather-icon">--</span>
@@ -72,9 +63,21 @@
         <span class="btn-text">3D 변환</span>
       </button>
 
-      <!-- FLOATING CHIP BAR: 지도 위에 떠 있는 반투명 네비게이션 바 -->
-      <div class="floating-chip-bar">
-        <div class="chip" data-panel="panel-population">
+      <!-- FLOATING TOP ROW: 실시간율 + 칩 바 -->
+      <div class="floating-top-row">
+        <div class="system-status" id="system-health-box">
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <div class="status-pulse"></div>
+          </div>
+          <div class="status-info">
+            <span class="status-label">실시간율</span>
+            <span class="status-value" id="system-health-rate">--%</span>
+          </div>
+        </div>
+
+        <div class="floating-chip-bar">
+          <div class="chip" data-panel="panel-population">
           <span class="chip-icon">👥</span>
           <span class="chip-text">실시간 인구수</span>
         </div>
@@ -97,6 +100,7 @@
         <div class="chip" data-panel="panel-events">
           <span class="chip-icon">🎭</span>
           <span class="chip-text">문화·행사 정보</span>
+        </div>
         </div>
       </div>
 
@@ -435,6 +439,27 @@
       </main>
     </div>
 
-    <script type="module" src="./script.js?v=1001"></script>
+    <!-- CCTV 모달 -->
+    <div class="cctv-modal" id="cctvModal">
+      <div class="cctv-modal-overlay" id="cctvModalOverlay"></div>
+      <div class="cctv-modal-content">
+        <div class="cctv-modal-header">
+          <h3 id="cctvModalTitle">CCTV</h3>
+          <button class="cctv-modal-close" id="cctvModalClose">✕</button>
+        </div>
+        <div class="cctv-modal-body">
+          <div id="cctvVideoContainer" class="cctv-video-container">
+            <div class="cctv-loading">CCTV 스트림을 로딩 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js?v=999"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
+      async
+      defer
+    ></script>
   </body>
 </html>
