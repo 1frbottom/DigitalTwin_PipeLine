@@ -1,30 +1,64 @@
-// config
+// -------------------------- config --------------------------
+
 const API_BASE_URL = "http://localhost:58000";
 const TARGET_AREA_NAME = "강남역"
 
-  // 각 카드별 갱신 간격 (ms)
+  // 돌발정보 코드 매핑
+const ACC_TYPE_MAP = {
+  'A01': '교통사고',
+  'A02': '차량고장',
+  'A03': '보행사고',
+  'A04': '공사',
+  'A05': '낙하물',
+  'A06': '버스사고',
+  'A07': '지하철사고',
+  'A08': '화재',
+  'A09': '기상/재난',
+  'A10': '집회및행사',
+  'A11': '기타',
+  'A12': '제보',
+  'A13': '단순정보'
+};
+
+// -------------------------- 갱신 --------------------------
+
+  // api 호출 주기 (ms)
 const REFRESH_INTERVALS = {
-  population: 300000,     // 5분 - 인구현황
-  subway: 10000,          // 10초 - 실시간 지하철 도착현황
-  traffic: 300000,        // 5분 - 도로소통
-  transport: 300000,      // 5분 - 대중교통 승하차
-  weather: 600000,        // 10분 - 기상현황
-  incidents: 5000,        // 5초 - 실시간 돌발정보
-  culture: 86400000,      // 1일 - 문화행사
+
+  // 실시간 돌발정보
+  incidents: 60000,       // 1분
+
+  // 인구현황
+  population: 60000,      // 1분
+
+  // 도로소통
+  traffic: 300000,        // 5분
+
+  // 실시간 지하철 도착현황
+  subway: 60000,          // 1분
+
+  // 대중교통 승하차
+  transport: 300000,      // 5분
+
+  // 기상현황
+  weather: 600000,        // 10분
+
+  //문화행사
+  culture: 3600000,       // 1시간
 };
 
   // 각 카드별 마지막 갱신 시간 저장
 const lastUpdateTimes = {};
 
-// 이전 인구 데이터 저장 (변동률 계산용)
+  // 이전 인구 데이터 저장 (변동률 계산용)
 let previousPopulationData = null;
 
-// 갱신 시간 표시 업데이트 함수
+  // 갱신 시간 표시 업데이트 함수
 function updateTimestamps(cardName) {
   const now = new Date();
   lastUpdateTimes[cardName] = now;
 
-  // 최근 갱신 시간 표시
+    // 최근 갱신 시간 표시
   const lastEl = document.getElementById(`${cardName}-last`);
   if (lastEl) {
     lastEl.textContent = now.toLocaleTimeString('ko-KR', {
@@ -36,7 +70,7 @@ function updateTimestamps(cardName) {
     console.warn(`갱신 시간 요소를 찾을 수 없음: ${cardName}-last`);
   }
 
-  // 다음 갱신 시간 계산 및 표시
+    // 다음 갱신 시간 계산 및 표시
   const nextUpdate = new Date(now.getTime() + REFRESH_INTERVALS[cardName]);
   const nextEl = document.getElementById(`${cardName}-next`);
   if (nextEl) {
@@ -49,69 +83,138 @@ function updateTimestamps(cardName) {
     console.warn(`다음 갱신 요소를 찾을 수 없음: ${cardName}-next`);
   }
 
-  // 카드에 갱신 애니메이션 추가
+    // 카드에 갱신 애니메이션 추가
   addUpdateAnimation(cardName);
 }
 
-// 카드 갱신 애니메이션
+  // 카드 갱신 애니메이션
 function addUpdateAnimation(cardName) {
   const cardElement = document.getElementById(`card-${cardName}`);
   if (cardElement) {
-    cardElement.classList.remove('card-update');
-    // 리플로우 강제
-    void cardElement.offsetWidth;
-    cardElement.classList.add('card-update');
-    
-    // 애니메이션 종료 후 클래스 제거
-    setTimeout(() => {
+    // 해당 카드의 패널이 열려있는지 확인
+    const panelId = `panel-${cardName}`;
+    const panel = document.getElementById(panelId);
+    const isPanelOpen = panel && panel.classList.contains('is-active');
+
+    if (isPanelOpen) {
+      // 패널이 열려있으면 카드에 애니메이션
       cardElement.classList.remove('card-update');
-    }, 600);
+      void cardElement.offsetWidth;
+      cardElement.classList.add('card-update');
+
+      setTimeout(() => {
+        cardElement.classList.remove('card-update');
+      }, 600);
+    } else {
+      // 패널이 닫혀있으면 해당 칩에 애니메이션
+      const chipElement = document.querySelector(`[data-panel="${panelId}"]`);
+      if (chipElement) {
+        chipElement.classList.remove('chip-update');
+        void chipElement.offsetWidth;
+        chipElement.classList.add('chip-update');
+
+        setTimeout(() => {
+          chipElement.classList.remove('chip-update');
+        }, 600);
+      }
+    }
   }
 }
 
 // 다음 갱신까지 남은 시간 실시간 업데이트
 function updateCountdowns() {
-  Object.keys(lastUpdateTimes).forEach(cardName => {
-    const lastUpdate = lastUpdateTimes[cardName];
-    if (!lastUpdate) return;
-
-    const nextUpdate = new Date(lastUpdate.getTime() + REFRESH_INTERVALS[cardName]);
-    const now = new Date();
-    const remaining = nextUpdate - now;
-
-    if (remaining <= 0) return;
-
-    const seconds = Math.floor(remaining / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const secs = seconds % 60;
-    const mins = minutes % 60;
-
+  const now = new Date().getTime(); // timestamp로 변환
+  
+  Object.keys(REFRESH_INTERVALS).forEach(cardName => {
+    const interval = REFRESH_INTERVALS[cardName];
+    // 공식: (현재시간 ÷ 주기)의 올림값 * 주기 = 다음 정각 시간
+    const nextTickTime = Math.ceil(now / interval) * interval;
+    
+    const remaining = nextTickTime - now;
     const nextEl = document.getElementById(`${cardName}-next`);
+    
     if (nextEl) {
-      // 갱신 주기에 따라 다른 형식으로 표시
-      if (days > 0) {
-        // 1일 이상: "N일 H시간 후"
-        nextEl.textContent = `${days}일 ${hours % 24}시간 후`;
-      } else if (hours > 0) {
-        // 1시간 이상: "N시간 M분 후"
-        nextEl.textContent = `${hours}시간 ${mins}분 후`;
-      } else if (minutes > 0) {
-        // 1분 이상: "N분 S초 후"
-        nextEl.textContent = `${minutes}분 ${secs}초 후`;
+      if (remaining <= 0) {
+        nextEl.textContent = "갱신 중...";
       } else {
-        // 1분 미만: "N초 후"
-        nextEl.textContent = `${seconds}초 후`;
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        
+        // 1분 이상 남았을 때와 미만일 때 구분
+        if (minutes > 0) {
+           nextEl.textContent = `${minutes}분 ${seconds}초 후`;
+        } else {
+           nextEl.textContent = `${seconds}초 후`;
+        }
       }
     }
   });
 }
 
-// 1초마다 카운트다운 업데이트
-setInterval(updateCountdowns, 1000);
+// ---------------------- 실시간율 ----------------------
 
-// ---------------- 혼잡도 태그 색/스타일 ----------------
+function updateSystemHealth() {
+  const now = new Date().getTime();
+  const serviceKeys = Object.keys(REFRESH_INTERVALS);
+  const totalServices = serviceKeys.length;
+  
+  let totalFreshness = 0;
+  let delayedServices = [];
+
+  serviceKeys.forEach(key => {
+    const interval = REFRESH_INTERVALS[key];
+    const lastUpdate = lastUpdateTimes[key];
+
+    // 데이터가 없거나 2주기 이상 지연 시 0점
+    if (!lastUpdate || (now - lastUpdate.getTime() > interval * 2)) {
+      totalFreshness += 0;
+      delayedServices.push(key);
+    } else {
+      // 정각 사이클 내 신선도 계산
+      const elapsedInCycle = now % interval; 
+      let freshness = (interval - elapsedInCycle) / interval;
+      
+      // 보정: 갱신 직후는 100% 유지
+      if (freshness > 0.95) freshness = 1;
+      if (freshness < 0) freshness = 0;
+      
+      totalFreshness += freshness;
+    }
+  });
+
+  const rate = totalServices === 0 ? 0 : Math.round((totalFreshness / totalServices) * 100);
+  renderHealthUI(rate, delayedServices);
+}
+
+function renderHealthUI(rate, delayedServices) {
+  const box = document.getElementById('system-health-box');
+  const valueEl = document.getElementById('system-health-rate');
+  
+  if (!box || !valueEl) return;
+
+  // 값 업데이트
+  valueEl.textContent = `${rate}%`;
+
+  // 상태 색상 변경
+  box.classList.remove('status-safe', 'status-warn', 'status-danger');
+
+  if (rate >= 75) {
+    box.classList.add('status-safe');
+  } else if (rate >= 35) {
+    box.classList.add('status-warn');
+  } else {
+    box.classList.add('status-danger');
+  }
+
+  // 툴팁 설정
+  if (delayedServices.length > 0) {
+    box.title = `지연됨: ${delayedServices.join(', ')}`;
+  } else {
+    box.title = "모든 데이터가 최신입니다.";
+  }
+}
+
+// ------------------  혼잡도 태그 색/스타일 -------------------
 
 function getColorByLevel(level) {
   if (!level) return { color: "#9ca3af", className: "tag" };
@@ -129,12 +232,12 @@ function getColorByLevel(level) {
   }
 }
 
-// ---------------- 실시간 인구 현황 ----------------
+// ---------------------- 실시간 인구 현황 ----------------------
 
 async function fetchPopulationData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/current?area_name=강남역"
+      `${API_BASE_URL}/city/population/current?area_name=${TARGET_AREA_NAME}`
     );
     if (!response.ok) throw new Error("Current API Error");
     const data = await response.json();
@@ -142,7 +245,7 @@ async function fetchPopulationData() {
     console.log("인구 데이터 수신:", data);
 
     // (1) 혼잡도 태그 업데이트
-    const congestEl = document.getElementById("population-congest");
+    const congestEl = document.getElementById("pop-congest");
     const styleInfo = getColorByLevel(data.congest_lvl);
 
     congestEl.textContent = data.congest_lvl;
@@ -157,8 +260,8 @@ async function fetchPopulationData() {
     }
 
     // (2) 인구수 업데이트
-    document.getElementById("population-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
-    document.getElementById("population-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
+    document.getElementById("pop-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
+    document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
     // (3) 변동률 계산 및 업데이트
     const popChangeEl = document.getElementById("pop-change");
@@ -201,7 +304,7 @@ async function fetchPopulationData() {
 async function fetchForecastData() {
   try {
     const response = await fetch(
-      "http://localhost:58000/city/population/forecast?area_name=강남역"
+      `${API_BASE_URL}/city/population/forecast?area_name=${TARGET_AREA_NAME}`
     );
 
     const container = document.getElementById("forecast-chart");
@@ -272,7 +375,9 @@ async function fetchForecastData() {
 
 async function fetchSubwayData() {
   try {
-    const response = await fetch("http://localhost:58000/subway/arrival/area?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/subway/arrival/area?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) throw new Error("Subway API Error");
 
     const data = await response.json();
@@ -323,9 +428,19 @@ async function fetchSubwayData() {
         const timeClass = arrivalTime <= 1 ? 'urgent' :
                          arrivalTime <= 3 ? 'soon' : 'normal';
 
-        const lineClass = lineName.includes('2호선') ? 'subway-line-2' :
-                         lineName.includes('신분당선') ? 'subway-line-sinbundang' :
-                         'subway-line-2';
+        const cleaned = lineName.replace(/[^0-9가-힣]/g, '');  
+
+        let lineClass;
+
+        if (cleaned.includes('2호선') || cleaned.includes('2')) {
+          lineClass = 'subway-line-2';
+        } else if (cleaned.includes('신분당선') || cleaned.includes('신분당')) {
+          lineClass = 'subway-line-sinbundang';
+        } else if (cleaned.includes('9호선') || cleaned.includes('9')) {
+          lineClass = 'subway-line-9';
+        } else {
+          lineClass = 'subway-line-1';
+        }
 
         const arrivalHtml = `
           <div class="subway-arrival-row">
@@ -387,7 +502,9 @@ function setTrafficIndicator(stage) {
 
 async function fetchTrafficData() {
   try {
-    const response = await fetch("http://localhost:58000/city/traffic/road?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/traffic/road?area_name=${TARGET_AREA_NAME}`
+    );
 
     if (!response.ok) {
       console.log("도로 소통 데이터 없음");
@@ -443,7 +560,9 @@ function updateTrafficData() {
 
 async function fetchTransportData() {
   try {
-    const response = await fetch("http://localhost:58000/city/transit/passenger?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/transit/passenger?area_name=${TARGET_AREA_NAME}`
+    );
 
     const transportBody = document.querySelector('#card-transport .card-body');
     if (!transportBody) return;
@@ -487,8 +606,18 @@ async function fetchTransportData() {
             <div class="public-desc">오늘 누적 승하차</div>
           </div>
           <div class="transport-values">
-            <div class="transport-up">▲ ${subwayAvg.toLocaleString('ko-KR')}</div>
-            <div class="transport-down">▼ ${subwayOffAvg.toLocaleString('ko-KR')}</div>
+            <div class="transport-row">
+              <span class="transport-label-up">승차</span>
+              <span class="transport-number">
+                ${subwayAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <div class="transport-row">
+              <span class="transport-label-down">하차</span>
+              <span class="transport-number">
+                ${subwayOffAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
           </div>
         </div>
       `;
@@ -508,8 +637,18 @@ async function fetchTransportData() {
             <div class="public-desc">오늘 누적 승하차</div>
           </div>
           <div class="transport-values">
-            <div class="transport-up">▲ ${busAvg.toLocaleString('ko-KR')}</div>
-            <div class="transport-down">▼ ${busOffAvg.toLocaleString('ko-KR')}</div>
+            <div class="transport-row">
+              <span class="transport-label-up">승차</span>
+              <span class="transport-number">
+                ${busAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <div class="transport-row">
+              <span class="transport-label-down">하차</span>
+              <span class="transport-number">
+                ${busOffAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
           </div>
         </div>
       `;
@@ -541,7 +680,7 @@ function updateTransportData() {
 
 async function fetchIncidentsData() {
   try {
-    const response = await fetch("http://localhost:58000/incident/active");
+    const response = await fetch(`${API_BASE_URL}/incident/active`);
     if (!response.ok) throw new Error("Incident API Error");
 
     const incidents = await response.json();
@@ -564,28 +703,29 @@ async function fetchIncidentsData() {
       const displayIncidents = incidents.slice(0, 5);
 
       displayIncidents.forEach(incident => {
-        const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
-        const incidentType = getIncidentType(incident.acc_type, incident.acc_dtype);
-        const incidentIcon = getIncidentIcon(incident.acc_type);
-
-        const incidentHtml = `
-          <div class="incident-item">
-            <div class="incident-icon-block">
-              <div class="incident-icon-circle">${incidentIcon}</div>
-              <div class="incident-link">${incident.link_id || '-'}</div>
-            </div>
-
-            <div class="incident-main">
-              <div class="incident-type">${incidentType}</div>
-              <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
-            </div>
-
-            <div class="incident-time">${incidentTime}</div>
+      const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
+      // 여기가 매핑된 한글 유형 (예: "공사")
+      const incidentType = ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
+      const incidentIcon = getIncidentIcon(incident.acc_type);
+      
+      const incidentHtml = `
+        <div class="incident-item">
+          <div class="incident-icon-block">
+            <div class="incident-icon-circle">${incidentIcon}</div>
           </div>
-        `;
 
-        incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
-      });
+          <div class="incident-main">
+            <div class="incident-header">
+              <div class="incident-type">${incidentType}</div>
+              <div class="incident-time">${incidentTime}</div>
+            </div>
+            <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
+          </div>
+        </div>
+      `;
+
+      incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
+    });
     }
 
     // 돌발정보 건수 업데이트
@@ -613,15 +753,23 @@ async function fetchIncidentsData() {
 }
 
 // 돌발정보 타입에 따른 아이콘 반환
-function getIncidentIcon(accType) {
-  if (!accType) return '⚠️';
-
-  if (accType.includes('사고')) return '🚗';
-  if (accType.includes('공사')) return '🚧';
-  if (accType.includes('행사')) return '🎪';
-  if (accType.includes('통제')) return '⛔';
-
-  return '⚠️';
+function getIncidentIcon(code) {
+  const icons = {
+    'A01': '🚗', // 교통사고
+    'A02': '🔧', // 차량고장
+    'A03': '🚶', // 보행사고
+    'A04': '🚧', // 공사
+    'A05': '📦', // 낙하물
+    'A06': '🚌', // 버스사고
+    'A07': '🚇', // 지하철사고
+    'A08': '🔥', // 화재
+    'A09': '⛈️', // 기상/재난
+    'A10': '📢', // 집회및행사
+    'A11': '⚠️', // 기타
+    'A12': '📞', // 제보
+    'A13': 'ℹ️'  // 단순정보
+  };
+  return icons[code] || '⚠️';
 }
 
 // 돌발정보 타입 텍스트 반환
@@ -683,7 +831,9 @@ function updatePredictionData() {
 
 async function fetchWeatherData() {
   try {
-    const response = await fetch("http://localhost:58000/city/weather/current?area_name=강남역");
+    const response = await fetch(
+      `${API_BASE_URL}/city/weather/current?area_name=${TARGET_AREA_NAME}`
+    );
     if (!response.ok) {
       console.log("기상현황 데이터 없음");
       updateTimestamps('weather');
@@ -694,8 +844,8 @@ async function fetchWeatherData() {
     console.log("기상현황 데이터 수신:", data);
 
     // 헤더의 날씨 정보 업데이트
-    const weatherTemp = document.querySelector('.weather-temp');
-    const weatherIcon = document.querySelector('.weather-icon');
+    const weatherTemp = document.getElementById('weather-temp');
+    const weatherIcon = document.getElementById('weather-icon');
 
     if (weatherTemp && data.temp !== undefined) {
       weatherTemp.textContent = `${data.temp}℃`;
@@ -725,11 +875,15 @@ async function fetchWeatherData() {
       weatherIcon.textContent = icon;
     }
 
-    // 미세먼지/초미세먼지 정보 업데이트 (데이터가 있다면)
-    const airLabels = document.querySelectorAll('.air-value');
-    if (airLabels.length >= 2) {
-      if (data.pm10_status) airLabels[0].textContent = data.pm10_status;
-      if (data.pm25_status) airLabels[1].textContent = data.pm25_status;
+    // 미세먼지/초미세먼지 정보 업데이트
+    const pm10Status = document.getElementById('pm10-status');
+    const pm25Status = document.getElementById('pm25-status');
+
+    if (pm10Status && data.pm10_status) {
+      pm10Status.textContent = data.pm10_status;
+    }
+    if (pm25Status && data.pm25_status) {
+      pm25Status.textContent = data.pm25_status;
     }
 
     updateTimestamps('weather');
@@ -748,7 +902,9 @@ function updateWeatherData() {
 
 async function fetchCultureData() {
   try {
-    const response = await fetch("http://localhost:58000/city/events/cultural?area_name=강남역&limit=5");
+    const response = await fetch(
+      `${API_BASE_URL}/city/events/cultural?area_name=${TARGET_AREA_NAME}&limit=5`
+    );
 
     const cultureBody = document.querySelector('#card-culture .card-body .culture-list');
     if (!cultureBody) return;
@@ -828,33 +984,44 @@ function initDashboard() {
   updateWeatherData();
   updateIncidentsData();
   updateCultureData();
+
+  // 실시간율
+  updateSystemHealth();
 }
 
 // 각 데이터별 갱신 인터벌 설정
 function setupRefreshIntervals() {
-  // 인구현황 - 5분마다
+  const now = new Date().getTime();
+
+  // 각 데이터별 실행할 함수 정의
+  const schedules = [
+    { key: 'population', func: () => { fetchPopulationData(); fetchForecastData(); } },
+    { key: 'subway', func: updateSubwayData },
+    { key: 'traffic', func: updateTrafficData },
+    { key: 'transport', func: updateTransportData },
+    { key: 'weather', func: updateWeatherData },
+    { key: 'incidents', func: updateIncidentsData },
+    { key: 'culture', func: updateCultureData }
+  ];
+
+  schedules.forEach(item => {
+    const interval = REFRESH_INTERVALS[item.key];
+    // 다음 정각까지 남은 시간 계산 (예: 현재 12:00:40, 주기 1분 -> 20초 대기)
+    const delay = interval - (now % interval);
+
+    // 1. 첫 번째 실행은 "다음 정각"에 수행하도록 예약
+    setTimeout(() => {
+      item.func(); // 정각 실행
+      // 2. 그 이후부터는 주기적으로 실행
+      setInterval(item.func, interval);
+    }, delay);
+  });
+
+  // UI 갱신 (실시간율, 카운트다운)은 1초마다 계속 실행
   setInterval(() => {
-    fetchPopulationData();
-    fetchForecastData();
-  }, REFRESH_INTERVALS.population);
-
-  // 지하철 도착 - 10초마다
-  setInterval(updateSubwayData, REFRESH_INTERVALS.subway);
-
-  // 도로소통 - 5분마다
-  setInterval(updateTrafficData, REFRESH_INTERVALS.traffic);
-
-  // 대중교통 승하차 - 5분마다
-  setInterval(updateTransportData, REFRESH_INTERVALS.transport);
-
-  // 기상현황 - 10분마다
-  setInterval(updateWeatherData, REFRESH_INTERVALS.weather);
-
-  // 실시간 돌발정보 - 5초마다
-  setInterval(updateIncidentsData, REFRESH_INTERVALS.incidents);
-
-  // 문화행사 - 1시간마다
-  setInterval(updateCultureData, REFRESH_INTERVALS.culture);
+    updateCountdowns();
+    updateSystemHealth();
+  }, 1000);
 }
 
 // 초기화 실행 (DOM 로드 후)
@@ -862,24 +1029,26 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboard();
   setupRefreshIntervals();
   initPanelToggle();
+  init3DToggleButton();
+  initTransportDetailButton();
 });
 
 // ---------------- Google Map + CCTV 마커 ----------------
 
+const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심
+
 const CCTV_LOCATIONS = [
-  { id: 1, name: "강남역 10번 출구", lat: 37.498006, lng: 127.02762 },
-  { id: 2, name: "강남역 11번 출구", lat: 37.49772, lng: 127.02845 },
-  { id: 3, name: "강남대로 횡단보도 앞", lat: 37.4985, lng: 127.0268 },
+  // 신논현역 출구별 CCTV 위치
+  { id: 1, name: "신논현역 5번 출구", lat: 37.50418, lng: 127.02510 },  // 5번 출구 (역 동쪽)
+  { id: 2, name: "신논현역 6번 출구", lat: 37.50380, lng: 127.02490 },  // 6번 출구 (역 남동쪽)
+  { id: 3, name: "신논현역 교보타워 앞", lat: 37.50465, lng: 127.02380 },  // 교보타워 방향 (역 북서쪽)
 ];
 
 let map;
 
 function initMap() {
-  // 강남역 기준에서 약간 위로 조정하여 UI 밸런스 개선
-  const gangnam = { lat: 37.4985, lng: 127.0276 };
-
   map = new google.maps.Map(document.getElementById("google-map"), {
-    center: gangnam,
+    center: SINNONHYEON,
     zoom: 16,
     disableDefaultUI: true,
   });
@@ -980,5 +1149,402 @@ function initPanelToggle() {
       }
     });
   });
+}
+
+// ==============================================
+// 1. 구글맵 2D ↔ 3D 변환 기능
+// ==============================================
+
+let is3DMode = false; // 현재 3D 모드 여부를 추적
+
+/**
+ * 구글맵 2D/3D 모드 전환 함수
+ * - 2D → 3D: 45도 틸트 + 회전 가능 활성화
+ * - 3D → 2D: 틸트 0도 + 기본 뷰로 복귀
+ * - 현재 중심 좌표와 줌 레벨 유지
+ */
+function toggle3DMode() {
+  const button = document.getElementById('toggle3DButton');
+  const btnText = button.querySelector('.btn-text');
+  const btnIcon = button.querySelector('.btn-icon');
+
+  if (!map) {
+    console.error('지도 객체가 초기화되지 않았습니다.');
+    return;
+  }
+
+  // 현재 지도 중심과 줌 레벨 저장
+  const currentCenter = map.getCenter();
+  const currentZoom = map.getZoom();
+
+  if (!is3DMode) {
+    // 2D → 3D 전환
+    map.setMapTypeId(google.maps.MapTypeId.SATELLITE); // 위성 뷰로 변경
+    map.setTilt(45); // 45도 기울임
+
+    // 줌 레벨을 18 이상으로 설정해야 3D 건물이 보임
+    if (currentZoom < 18) {
+      map.setZoom(18);
+    }
+
+    // 버튼 상태 변경
+    button.classList.add('is-3d');
+    btnText.textContent = '2D 변환';
+    btnIcon.textContent = '🌐';
+    is3DMode = true;
+
+  } else {
+    // 3D → 2D 전환
+    map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // 일반 지도로 변경
+    map.setTilt(0); // 틸트 제거
+
+    // 버튼 상태 변경
+    button.classList.remove('is-3d');
+    btnText.textContent = '3D 변환';
+    btnIcon.textContent = '🗺️';
+    is3DMode = false;
+
+    // 원래 줌 레벨로 복원
+    map.setZoom(currentZoom);
+  }
+
+  // 중심 좌표 복원
+  map.setCenter(currentCenter);
+}
+
+/**
+ * 2D/3D 토글 버튼 초기화
+ */
+function init3DToggleButton() {
+  const button = document.getElementById('toggle3DButton');
+  if (button) {
+    button.addEventListener('click', toggle3DMode);
+  }
+}
+
+// ==============================================
+// 3. 대중교통 승하차 상세보기 그래프 기능
+// ==============================================
+
+let transportChart = null; // Chart.js 인스턴스 저장
+
+/**
+ * 대중교통 상세 데이터 가져오기
+ * API에서 시간대별 승하차 데이터를 받아옴
+ */
+async function fetchTransportDetail() {
+  const chartContainer = document.querySelector('.chart-container');
+
+  // 로딩 표시
+  chartContainer.innerHTML = '<div class="chart-loading">데이터 로딩 중...</div><canvas id="transportChart"></canvas>';
+
+  try {
+    // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
+    // 실제 API가 없으면 더미 데이터로 그래프 생성
+    const response = await fetch('http://localhost:58000/city/transit/hourly?area_name=강남역');
+
+    let data;
+
+    if (!response.ok) {
+      console.warn('시간대별 API 응답 없음, 더미 데이터로 대체');
+      // 더미 데이터 생성 (0시부터 23시까지)
+      data = Array.from({ length: 24 }, (_, i) => ({
+        time_slot: String(i).padStart(2, '0'),
+        subway: {
+          get_on_min: Math.floor(Math.random() * 5000) + 1000,
+          get_on_max: Math.floor(Math.random() * 5000) + 6000,
+          get_off_min: Math.floor(Math.random() * 5000) + 1000,
+          get_off_max: Math.floor(Math.random() * 5000) + 6000
+        },
+        bus: {
+          get_on_min: Math.floor(Math.random() * 3000) + 500,
+          get_on_max: Math.floor(Math.random() * 3000) + 3500,
+          get_off_min: Math.floor(Math.random() * 3000) + 500,
+          get_off_max: Math.floor(Math.random() * 3000) + 3500
+        }
+      }));
+    } else {
+      data = await response.json();
+
+      // 데이터 검증
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('빈 데이터 응답, 더미 데이터로 대체');
+        data = Array.from({ length: 24 }, (_, i) => ({
+          time_slot: String(i).padStart(2, '0'),
+          subway: {
+            get_on_min: Math.floor(Math.random() * 5000) + 1000,
+            get_on_max: Math.floor(Math.random() * 5000) + 6000,
+            get_off_min: Math.floor(Math.random() * 5000) + 1000,
+            get_off_max: Math.floor(Math.random() * 5000) + 6000
+          },
+          bus: {
+            get_on_min: Math.floor(Math.random() * 3000) + 500,
+            get_on_max: Math.floor(Math.random() * 3000) + 3500,
+            get_off_min: Math.floor(Math.random() * 3000) + 500,
+            get_off_max: Math.floor(Math.random() * 3000) + 3500
+          }
+        }));
+      }
+    }
+
+    // 시간대별 데이터 추출
+    const timeLabels = data.map(item => {
+      const hour = item.time_slot || item.hour || '00';
+      return `${hour}시`;
+    });
+
+    const subwayBoardings = data.map(item => {
+      const subway = item.subway || {};
+      return Math.round((subway.get_on_min + subway.get_on_max) / 2) || 0;
+    });
+
+    const subwayAlightings = data.map(item => {
+      const subway = item.subway || {};
+      return Math.round((subway.get_off_min + subway.get_off_max) / 2) || 0;
+    });
+
+    const busBoardings = data.map(item => {
+      const bus = item.bus || {};
+      return Math.round((bus.get_on_min + bus.get_on_max) / 2) || 0;
+    });
+
+    const busAlightings = data.map(item => {
+      const bus = item.bus || {};
+      return Math.round((bus.get_off_min + bus.get_off_max) / 2) || 0;
+    });
+
+    console.log('그래프 데이터:', {
+      timeLabels,
+      subwayBoardings,
+      subwayAlightings,
+      busBoardings,
+      busAlightings
+    });
+
+    // 그래프 그리기
+    drawTransportChart({
+      time_labels: timeLabels,
+      subway_boardings: subwayBoardings,
+      subway_alightings: subwayAlightings,
+      bus_boardings: busBoardings,
+      bus_alightings: busAlightings
+    });
+
+  } catch (error) {
+    console.error('대중교통 상세 데이터 오류:', error);
+    chartContainer.innerHTML = `<div class="chart-loading" style="color: #ef4444;">데이터를 불러올 수 없습니다<br/><small>${error.message}</small></div>`;
+  }
+}
+
+/**
+ * Chart.js를 사용하여 승하차 그래프 그리기
+ * @param {Object} data - API에서 받아온 데이터
+ */
+function drawTransportChart(data) {
+  const canvas = document.getElementById('transportChart');
+  if (!canvas) return;
+
+  // 기존 차트가 있다면 제거
+  if (transportChart) {
+    transportChart.destroy();
+  }
+
+  const ctx = canvas.getContext('2d');
+
+  // Chart.js 설정
+  transportChart = new Chart(ctx, {
+    type: 'line', // 점선 그래프
+    data: {
+      labels: data.time_labels, // X축: 시간대
+      datasets: [
+        {
+          label: '지하철 승차',
+          data: data.subway_boardings,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          tension: 0.3,
+        },
+        {
+          label: '지하철 하차',
+          data: data.subway_alightings,
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96, 165, 250, 0.1)',
+          pointBackgroundColor: '#60a5fa',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          tension: 0.3,
+        },
+        {
+          label: '버스 승차',
+          data: data.bus_boardings,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          pointBackgroundColor: '#10b981',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          tension: 0.3,
+        },
+        {
+          label: '버스 하차',
+          data: data.bus_alightings,
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52, 211, 153, 0.1)',
+          pointBackgroundColor: '#34d399',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false, // 범례는 별도로 표시
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleColor: '#ffffff',
+          bodyColor: '#e2e8f0',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: true,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}명`;
+            }
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false,
+          },
+          ticks: {
+            color: '#94a3b8',
+            font: {
+              size: 11,
+              weight: '500',
+            },
+            maxRotation: 45,
+            minRotation: 0,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false,
+          },
+          ticks: {
+            color: '#94a3b8',
+            font: {
+              size: 11,
+              weight: '500',
+            },
+            callback: function(value) {
+              return value.toLocaleString() + '명';
+            },
+          },
+          title: {
+            display: true,
+            text: '승하차 인원',
+            color: '#e2e8f0',
+            font: {
+              size: 12,
+              weight: '600',
+            },
+          },
+        },
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
+  });
+}
+
+/**
+ * 상세보기 패널 열기
+ */
+function openTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+  const button = document.getElementById('transportDetailButton');
+
+  if (detailSection) {
+    detailSection.style.display = 'block';
+    button.textContent = '닫기 ›';
+
+    // 데이터 가져오기
+    fetchTransportDetail();
+  }
+}
+
+/**
+ * 상세보기 패널 닫기
+ */
+function closeTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+  const button = document.getElementById('transportDetailButton');
+
+  if (detailSection) {
+    detailSection.style.display = 'none';
+    button.textContent = '상세보기 ›';
+
+    // 차트 인스턴스 제거
+    if (transportChart) {
+      transportChart.destroy();
+      transportChart = null;
+    }
+  }
+}
+
+/**
+ * 상세보기 버튼 토글
+ */
+function toggleTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+
+  if (detailSection.style.display === 'none' || !detailSection.style.display) {
+    openTransportDetail();
+  } else {
+    closeTransportDetail();
+  }
+}
+
+/**
+ * 대중교통 상세보기 버튼 초기화
+ */
+function initTransportDetailButton() {
+  const detailButton = document.getElementById('transportDetailButton');
+  const closeButton = document.getElementById('closeDetailButton');
+
+  if (detailButton) {
+    detailButton.addEventListener('click', toggleTransportDetail);
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener('click', closeTransportDetail);
+  }
 }
 
