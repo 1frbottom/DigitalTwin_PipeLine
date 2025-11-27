@@ -1117,27 +1117,40 @@ let map;
 
 // CCTV 데이터를 API에서 가져오기
 async function fetchCctvLocations() {
+  const requestUrl = `${API_BASE_URL}/cctv/streams`; // 호출하려는 주소
+  
   try {
-    const response = await fetch(`${API_BASE_URL}/cctv/streams`);
+    console.log(`[CCTV 요청] URL: ${requestUrl}`); // 1. 어떤 주소로 요청하는지 확인
+    
+    const response = await fetch(requestUrl);
+    
+    // 2. 상태 코드 확인 (404면 주소 틀림, 500이면 서버 오류)
     if (!response.ok) {
-      console.error('CCTV 데이터 로드 실패');
+      console.error(`[CCTV 에러] 상태 코드: ${response.status}, 상태 메시지: ${response.statusText}`);
       return;
     }
-    const result = await response.json();
-    cctvLocations = result.data.map(cctv => ({
-      id: cctv.id,
-      name: cctv.name,
-      lat: cctv.latitude,
-      lng: cctv.longitude,
-      stream_url: cctv.stream_url
-    }));
 
-    // 지도가 이미 로드되었으면 마커 추가
+    const result = await response.json();
+    
+    // 3. 데이터 구조 확인 (데이터가 비어있는지)
+    if (!result.data) {
+       console.warn("[CCTV 경고] 응답에 'data' 필드가 없습니다:", result);
+       cctvLocations = [];
+    } else {
+       cctvLocations = result.data.map(cctv => ({
+        id: cctv.id,
+        name: cctv.name,
+        lat: cctv.latitude,
+        lng: cctv.longitude,
+        stream_url: cctv.stream_url
+      }));
+    }
+
     if (map) {
       addCctvMarkers();
     }
   } catch (error) {
-    console.error('CCTV 위치 데이터 로드 오류:', error);
+    console.error('CCTV 위치 데이터 로드 오류(네트워크/코드):', error);
   }
 }
 
@@ -1194,73 +1207,73 @@ function addCctvMarkers() {
 window.openCctv = function (cctvId) {
   console.log("CCTV 클릭:", cctvId);
 
-  // CCTV 정보 찾기
   const cctv = cctvLocations.find(c => c.id === cctvId);
   if (!cctv) {
     console.error("CCTV를 찾을 수 없습니다:", cctvId);
     return;
   }
 
-  // 모달 열기
   const modal = document.getElementById('cctvModal');
   const titleEl = document.getElementById('cctvModalTitle');
   const videoContainer = document.getElementById('cctvVideoContainer');
 
-  if (!modal || !titleEl || !videoContainer) {
-    console.error("모달 요소를 찾을 수 없습니다");
-    return;
-  }
+  if (!modal || !titleEl || !videoContainer) return;
 
-  // 제목 설정
   titleEl.textContent = cctv.name;
+  videoContainer.innerHTML = ''; // 초기화
 
-  // 비디오 컨테이너 초기화
-  videoContainer.innerHTML = '<div class="cctv-loading">CCTV 스트림을 로딩 중...</div>';
-
-  // stream_url이 있으면 비디오 표시
   if (cctv.stream_url) {
-    // HLS 스트림인 경우 (m3u8)
-    if (cctv.stream_url.includes('.m3u8')) {
-      videoContainer.innerHTML = `
-        <video controls autoplay muted>
-          <source src="${cctv.stream_url}" type="application/x-mpegURL">
-          Your browser does not support HLS video.
-        </video>
-      `;
-    }
-    // YouTube 링크인 경우
-    else if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
+    // 1. YouTube 링크인 경우
+    if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
       const videoId = extractYouTubeId(cctv.stream_url);
-      if (videoId) {
-        videoContainer.innerHTML = `
-          <iframe
-            src="https://www.youtube.com/embed/${videoId}?autoplay=1"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
-        `;
+      videoContainer.innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+          style="width:100%; height:100%;"
+        ></iframe>
+      `;
+    } 
+    // 2. HLS(.m3u8) 스트림인 경우 (★수정된 부분★)
+    else if (cctv.stream_url.includes('.m3u8')) {
+      const video = document.createElement('video');
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.controls = true;
+      video.autoplay = true;
+      video.muted = true; // 자동재생을 위해 음소거 필수
+
+      videoContainer.appendChild(video);
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(cctv.stream_url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(e => console.log("자동재생 차단됨:", e));
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // 사파리(iOS/Mac)용 네이티브 지원
+        video.src = cctv.stream_url;
+        video.addEventListener('loadedmetadata', function() {
+          video.play();
+        });
       }
-    }
-    // 일반 비디오 URL
+    } 
+    // 3. 일반 MP4 등
     else {
       videoContainer.innerHTML = `
-        <video controls autoplay muted>
+        <video controls autoplay muted style="width:100%; height:100%;">
           <source src="${cctv.stream_url}">
-          Your browser does not support the video tag.
         </video>
       `;
     }
   } else {
-    videoContainer.innerHTML = `
-      <div class="cctv-error">
-        CCTV 스트림 URL이 없습니다.<br>
-        <small>백엔드 API 서버가 실행 중인지 확인하세요.</small>
-      </div>
-    `;
+    videoContainer.innerHTML = '<div class="cctv-error">CCTV URL 없음</div>';
   }
 
-  // 모달 열기
   modal.classList.add('is-open');
 };
 
