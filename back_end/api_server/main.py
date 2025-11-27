@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 try:
     from .routers import router_cctv, router_city, router_incident, router_subway
 except ImportError:
@@ -13,10 +14,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS 설정 (프론트엔드 연동용)
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 프로덕션에서는 특정 도메인만 허용
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
