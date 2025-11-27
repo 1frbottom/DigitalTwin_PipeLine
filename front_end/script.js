@@ -2,7 +2,7 @@
 const ENV = window.ENV || {};
 
 const API_BASE_URL = ENV.API_BASE_URL
-const TARGET_AREA_NAME = "강남역"
+const TARGET_AREA_NAME = "올림픽공원"
 
   // .html
 const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
