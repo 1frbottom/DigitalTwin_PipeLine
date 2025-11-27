@@ -15,6 +15,9 @@
 			api_server (api called) -><br><br>
 			front_end (api caller)<br><br>
 
+- api 지역 바꿀 경우 producer_city_data의 21번 AREA_NM과 
+js파일의 TARGET_AREA_NAME을 바꿀 지역으로 바꾸면 됩니다.
+
 - 사용법<br>
 	- 프로젝트 클론 후 본인 브랜치로 체크아웃<br><br>
 
@@ -23,7 +26,10 @@
 	- 루트에 .env 파일을 만들고 아래 붙여넣기<br>
 		```
 		# 서울 열린데이터 광장 (https://data.seoul.go.kr)
-		SEOUL_API_KEY=64496f53736974733530424d6b4b4a
+		SEOUL_API_KEY=
+
+		# Google Cloud Maps API Key
+		GOOGLE_MAPS_API_KEY=
 
 		# 1. API Server
 		HOST_PORT_API=58000
@@ -35,7 +41,7 @@
 		HOST_PORT_DB=54320
 
 		# 4. Spark Master UI
-		HOST_PORT_SPARK_UI=58080q
+		HOST_PORT_SPARK_UI=58080
 		```
 		<br>
 
