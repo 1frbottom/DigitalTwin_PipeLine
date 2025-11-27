@@ -93,10 +93,17 @@ class TransitPassengerResponse(BaseModel):
 
 # (6) 문화행사 모델
 class CulturalEventBase(BaseModel):
+    area_nm: str
     event_nm: str
     event_period: Optional[str] = None
     event_place: Optional[str] = None
+    event_x: Optional[float] = None
+    event_y: Optional[float] = None
+    thumbnail: Optional[str] = None
     url: Optional[str] = None
+    pay_yn: Optional[str] = None
+    event_etc_detail: Optional[str] = None
+    ingest_timestamp: datetime
 
     class Config:
         orm_mode = True
