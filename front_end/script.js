@@ -2,7 +2,23 @@
 const ENV = window.ENV || {};
 
 const API_BASE_URL = ENV.API_BASE_URL
-const TARGET_AREA_NAME = "강남역"
+let TARGET_AREA_NAME = "강남역";
+
+const AREA_COORDINATES = {
+  "강남역": { lat: 37.49795, lng: 127.02761 },          // 강남역 사거리
+  "신논현역·논현역": { lat: 37.50780, lng: 127.02330 },   // 신논현과 논현 사이 중간 지점
+  "역삼역": { lat: 37.50062, lng: 127.03649 },          // 역삼역 사거리
+  "교대역": { lat: 37.49341, lng: 127.01408 },          // 교대역 사거리
+  "양재역": { lat: 37.48414, lng: 127.03463 }           // 양재역 사거리
+};
+
+const AREA_META_INFO = {
+  "강남역": { subway: "2호선, 신분당선", traffic: "강남역 사거리 기준" },
+  "신논현역·논현역": { subway: "9호선, 신분당선, 7호선", traffic: "교보타워 사거리 기준" },
+  "역삼역": { subway: "2호선", traffic: "역삼역 사거리 기준" },
+  "교대역": { subway: "2호선, 3호선", traffic: "교대역 사거리 기준" },
+  "양재역": { subway: "3호선, 신분당선", traffic: "양재역 사거리 기준" }
+};
 
   // .html
 const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
@@ -1104,12 +1120,13 @@ function setupRefreshIntervals() {
 
 // 초기화 실행 (DOM 로드 후)
 document.addEventListener('DOMContentLoaded', () => {
+  initLocationSelector();
   initDashboard();
   setupRefreshIntervals();
   initPanelToggle();
   init3DToggleButton();
   initTransportDetailButton();
-  fetchCctvLocations(); // CCTV 위치 데이터 로드
+  fetchCctvLocations();
 });
 
 // ---------------- Google Map + CCTV 마커 ----------------
@@ -1784,3 +1801,78 @@ function initTransportDetailButton() {
   }
 }
 
+// multi area_nm test ==========================
+function initLocationSelector() {
+  const selector = document.getElementById('location-select');
+  if (!selector) return;
+
+  selector.addEventListener('change', (e) => {
+    const newArea = e.target.value;
+    console.log(`지역 변경: ${TARGET_AREA_NAME} -> ${newArea}`);
+    
+    // 1. 타겟 지역 변수 업데이트
+    TARGET_AREA_NAME = newArea;
+
+    // 2. 지도 이동
+    moveMapToLocation(newArea);
+
+    // 3. [중요] UI 초기화 (이전 데이터 지우기)
+    resetDashboardUI(newArea);
+
+    // 4. 대시보드 데이터 전체 새로고침
+    initDashboard();
+  });
+}
+
+function resetDashboardUI(areaName) {
+  // (1) 카드 헤더의 정적 텍스트 업데이트 (지하철 노선 정보 등)
+  const meta = AREA_META_INFO[areaName] || { subway: "", traffic: "사거리 기준" };
+  
+  // 지하철 카드 태그 찾아서 변경
+  const subwayTag = document.querySelector('#card-subway .tag');
+  if (subwayTag) subwayTag.textContent = `${areaName} (${meta.subway})`;
+
+  // 도로소통 카드 태그 찾아서 변경
+  const trafficTag = document.querySelector('#card-traffic .tag');
+  if (trafficTag) trafficTag.textContent = meta.traffic;
+
+  // (2) 데이터 값들을 '--' 또는 '로딩중'으로 초기화
+  // 인구
+  document.getElementById("pop-congest").textContent = "데이터 조회중...";
+  document.getElementById("pop-congest").className = "tag"; // 색상 초기화
+  document.getElementById("pop-congest").style = "";
+  document.getElementById("pop-min").textContent = "-";
+  document.getElementById("pop-max").textContent = "-";
+  document.getElementById("pop-change").textContent = "";
+  document.getElementById("forecast-chart").innerHTML = "";
+
+  // 도로 소통
+  document.getElementById("traffic-status-text").textContent = "조회중..";
+  document.getElementById("traffic-status-text").style.color = "#ccc";
+  document.getElementById("traffic-speed").textContent = "--km/h";
+
+  // 지하철 & 대중교통 & 돌발정보 리스트 비우기
+  const subwayBody = document.querySelector('#card-subway .card-body');
+  if (subwayBody) subwayBody.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">새 데이터를 불러오는 중...</div>';
+
+  const transportBody = document.querySelector('#card-transport .card-body');
+  if (transportBody) transportBody.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">새 데이터를 불러오는 중...</div>';
+
+  const incidentList = document.getElementById('incident-list');
+  if (incidentList) incidentList.innerHTML = '';
+  const incidentCount = document.getElementById('incident-count');
+  if (incidentCount) incidentCount.textContent = '-건';
+
+  // 날씨
+  document.getElementById('weather-temp').textContent = '--℃';
+  document.getElementById('weather-icon').textContent = '--';
+}
+
+function moveMapToLocation(areaName) {
+  if (!map) return;
+  const coords = AREA_COORDINATES[areaName];
+  if (coords) {
+    map.panTo(coords);
+    map.setZoom(16);
+  }
+}

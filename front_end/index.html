@@ -5,23 +5,17 @@
     <meta charset="UTF-8" />
     <title>디지털트윈 대시보드 - 강남역</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css?v=1001" />
-    <!-- Chart.js 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="env_config.js"></script>
 
-    <head>
-      <link rel="stylesheet" href="style.css?v=1001" />
-      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-      
-      <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> 
-      
-      <script src="env_config.js"></script>
-    </head>
+    <link rel="stylesheet" href="style.css?v=1001" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> 
+    <script src="env_config.js"></script>
 
   </head>
   <body>
@@ -35,7 +29,16 @@
             <div class="header-pill"></div>
             <div class="header-title">
               <small>Digital Twin Dashboard</small>
-              <h1>강남역 부근 실시간 모니터링</h1>
+
+           <div class="title-row">
+              <select id="location-select" class="location-select">
+                <option value="강남역" selected>강남역</option>
+                <option value="신논현역·논현역">신논현역·논현역</option>
+                <option value="역삼역">역삼역</option>
+                <option value="교대역">교대역</option>
+                <option value="양재역">양재역</option>
+              </select>
+              <h1>실시간 모니터링</h1>
             </div>
 
           </div>
@@ -465,10 +468,6 @@
     </div>
 
     <script src="script.js?v=999"></script>
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
-      async
-      defer
-    ></script>
+
   </body>
 </html>

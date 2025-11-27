@@ -109,9 +109,10 @@ def get_city_cultural_events(db: Session, area_name: str, limit: int = 10):
              .limit(limit) \
              .all()
 
-# (7) 대중교통 승하차 현황 조회 함수
+# (7) 대중교통 승하차 현황 조회 함수# [crud_city.py]의 get_transit_passenger_data 함수를 아래로 교체하세요.
 def get_transit_passenger_data(db: Session, area_name: str):
     """특정 지역의 최신 대중교통 승하차 현황 데이터를 조회합니다."""
+    # 가장 최신 timestamp의 Raw 데이터를 가져옴
     raw_data = db.query(schema_city.CityDataRaw) \
                  .filter(schema_city.CityDataRaw.area_nm == area_name) \
                  .order_by(schema_city.CityDataRaw.timestamp.desc()) \
@@ -126,17 +127,26 @@ def get_transit_passenger_data(db: Session, area_name: str):
         "bus": None
     }
 
+    # 헬퍼 함수: 여러 키 패턴 중 존재하는 값을 찾아 정수로 변환
+    def get_val(data_dict, *keys):
+        for key in keys:
+            val = data_dict.get(key)
+            if val is not None and val != "":
+                return int(val)
+        return 0
+
     # 지하철 데이터 파싱
     if raw_data.live_sub_ppltn:
         try:
             sub_data = json.loads(raw_data.live_sub_ppltn)
+            # 5분 이내(5WTHN) 데이터를 우선 보고, 없으면 누적(ACML) 데이터를 봅니다.
             result["subway"] = {
                 "transport_type": "subway",
-                "get_on_min": int(sub_data.get("SUB_ACML_GTON_PPLTN_MIN") or 0),
-                "get_on_max": int(sub_data.get("SUB_ACML_GTON_PPLTN_MAX") or 0),
-                "get_off_min": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MIN") or 0),
-                "get_off_max": int(sub_data.get("SUB_ACML_GTOFF_PPLTN_MAX") or 0),
-                "station_count": int(sub_data.get("SUB_STN_CNT") or 0)
+                "get_on_min": get_val(sub_data, "SUB_5WTHN_GTON_PPLTN_MIN", "SUB_ACML_GTON_PPLTN_MIN"),
+                "get_on_max": get_val(sub_data, "SUB_5WTHN_GTON_PPLTN_MAX", "SUB_ACML_GTON_PPLTN_MAX"),
+                "get_off_min": get_val(sub_data, "SUB_5WTHN_GTOFF_PPLTN_MIN", "SUB_ACML_GTOFF_PPLTN_MIN"),
+                "get_off_max": get_val(sub_data, "SUB_5WTHN_GTOFF_PPLTN_MAX", "SUB_ACML_GTOFF_PPLTN_MAX"),
+                "station_count": get_val(sub_data, "SUB_STN_CNT")
             }
         except (json.JSONDecodeError, ValueError, TypeError):
             pass
@@ -147,11 +157,11 @@ def get_transit_passenger_data(db: Session, area_name: str):
             bus_data = json.loads(raw_data.live_bus_ppltn)
             result["bus"] = {
                 "transport_type": "bus",
-                "get_on_min": int(bus_data.get("BUS_ACML_GTON_PPLTN_MIN") or 0),
-                "get_on_max": int(bus_data.get("BUS_ACML_GTON_PPLTN_MAX") or 0),
-                "get_off_min": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MIN") or 0),
-                "get_off_max": int(bus_data.get("BUS_ACML_GTOFF_PPLTN_MAX") or 0),
-                "station_count": int(bus_data.get("BUS_STN_CNT") or 0)
+                "get_on_min": get_val(bus_data, "BUS_5WTHN_GTON_PPLTN_MIN", "BUS_ACML_GTON_PPLTN_MIN"),
+                "get_on_max": get_val(bus_data, "BUS_5WTHN_GTON_PPLTN_MAX", "BUS_ACML_GTON_PPLTN_MAX"),
+                "get_off_min": get_val(bus_data, "BUS_5WTHN_GTOFF_PPLTN_MIN", "BUS_ACML_GTOFF_PPLTN_MIN"),
+                "get_off_max": get_val(bus_data, "BUS_5WTHN_GTOFF_PPLTN_MAX", "BUS_ACML_GTOFF_PPLTN_MAX"),
+                "station_count": get_val(bus_data, "BUS_STN_CNT")
             }
         except (json.JSONDecodeError, ValueError, TypeError):
             pass
