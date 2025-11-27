@@ -1029,10 +1029,11 @@ async function fetchCultureData() {
       return;
     }
 
-    // 각 문화행사 항목 표시 (최대 5개)
-    data.slice(0, 5).forEach(event => {
-      const eventHtml = `
-        <div class="culture-item">
+  // 각 문화행사 항목 표시 (최대 5개)
+  data.slice(0, 5).forEach(event => {
+    const url = event.url || null;
+    const eventHtml = `
+        <div class="culture-item"${url ? ` role="link" tabindex="0" onclick="window.open('${url}', '_blank')"` : ''}>
           <div class="culture-title">${event.event_nm || '행사명 없음'}</div>
           <div class="culture-meta">
             ${event.event_period ? `<span>${event.event_period}</span>` : ''}
