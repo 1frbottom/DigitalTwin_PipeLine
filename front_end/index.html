@@ -5,13 +5,16 @@
     <meta charset="UTF-8" />
     <title>디지털트윈 대시보드 - 강남역</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-    <link rel="stylesheet" href="style.css?v=2" />
-    <!-- Chart.js 라이브러리 -->
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css?v=1001" />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> 
     <script src="env_config.js"></script>
 
   </head>
@@ -26,19 +29,19 @@
             <div class="header-pill"></div>
             <div class="header-title">
               <small>Digital Twin Dashboard</small>
-              <h1>강남역 부근 실시간 모니터링</h1>
+
+           <div class="title-row">
+              <select id="location-select" class="location-select">
+                <option value="강남역" selected>강남역</option>
+                <option value="신논현역·논현역">신논현역·논현역</option>
+                <option value="역삼역">역삼역</option>
+                <option value="교대역">교대역</option>
+                <option value="양재역">양재역</option>
+              </select>
+              <h1>실시간 모니터링</h1>
             </div>
 
-          </div> <div class="system-status" id="system-health-box">
-              <div class="status-indicator">
-                <div class="status-dot"></div>
-                <div class="status-pulse"></div>
-              </div>
-              <div class="status-info">
-                <span class="status-label">실시간율</span>
-                <span class="status-value" id="system-health-rate">--%</span>
-              </div>
-            </div>
+          </div>
 
           <div class="weather-bar">
             <span class="weather-icon" id="weather-icon">--</span>
@@ -72,9 +75,21 @@
         <span class="btn-text">3D 변환</span>
       </button>
 
-      <!-- FLOATING CHIP BAR: 지도 위에 떠 있는 반투명 네비게이션 바 -->
-      <div class="floating-chip-bar">
-        <div class="chip" data-panel="panel-population">
+      <!-- FLOATING TOP ROW: 실시간율 + 칩 바 -->
+      <div class="floating-top-row">
+        <div class="system-status" id="system-health-box">
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <div class="status-pulse"></div>
+          </div>
+          <div class="status-info">
+            <span class="status-label">실시간율</span>
+            <span class="status-value" id="system-health-rate">--%</span>
+          </div>
+        </div>
+
+        <div class="floating-chip-bar">
+          <div class="chip" data-panel="panel-population">
           <span class="chip-icon">👥</span>
           <span class="chip-text">실시간 인구수</span>
         </div>
@@ -97,6 +112,7 @@
         <div class="chip" data-panel="panel-events">
           <span class="chip-icon">🎭</span>
           <span class="chip-text">문화·행사 정보</span>
+        </div>
         </div>
       </div>
 
@@ -321,12 +337,12 @@
                   <div style="font-size: 11px; color: var(--text-sub)">
                     현재 단계
                   </div>
-                  <div id="traffic-status-text" style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                  <div id="traffic-status-text" style="font-size: 20px; font-weight: 750; margin-top: 4px">
                     서행
                   </div>
-                  <div style="font-size: 11px; margin-top: 2px">
+                  <div style="font-size: 13px; margin-top: 3px; font-weight: 500;">
                     전체 평균 속도
-                    <span class="text-strong" id="traffic-speed">--km/h</span>
+                    <span style="font-size: 13px; font-weight: 500;" id="traffic-speed">--km/h</span>
                   </div>
                 </div>
                 <div class="icon-badge" style="background: #eff6ff">🚗</div>
@@ -369,21 +385,18 @@
           <article class="card card-incidents" id="card-incidents">
             <div class="card-header">
               <div class="card-title">실시간 돌발정보</div>
-              <div class="tag-amber tag">0건</div>
+              <div class="tag-amber tag" id="incident-count">0건</div>
             </div>
-            <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
-              <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
-                데이터를 불러오는 중...
-              </div>
+            
+            <div class="card-body">
+            <!-- 1) 로딩 상태 -->
+            <div id="incident-loading" 
+                style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
+              데이터를 불러오는 중...
             </div>
 
-            <div class="card-timestamp-row">
-              <div class="last-refresh">
-                최근 갱신: <span id="incidents-last">--:--:--</span>
-              </div>
-              <div class="next-refresh">
-                다음 갱신: <span id="incidents-next">--:--:--</span>
-              </div>
+            <!-- 실제 리스트 (JS에서 내용 채움) -->
+            <ul class="incident-list" id="incident-list"></ul>
             </div>
           </article>
         </section>
@@ -438,7 +451,23 @@
       </main>
     </div>
 
-    <script type="module" src="./script.js?v=6"></script>
+    <!-- CCTV 모달 -->
+    <div class="cctv-modal" id="cctvModal">
+      <div class="cctv-modal-overlay" id="cctvModalOverlay"></div>
+      <div class="cctv-modal-content">
+        <div class="cctv-modal-header">
+          <h3 id="cctvModalTitle">CCTV</h3>
+          <button class="cctv-modal-close" id="cctvModalClose">✕</button>
+        </div>
+        <div class="cctv-modal-body">
+          <div id="cctvVideoContainer" class="cctv-video-container">
+            <div class="cctv-loading">CCTV 스트림을 로딩 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js?v=999"></script>
 
   </body>
 </html>
