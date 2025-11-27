@@ -1173,8 +1173,11 @@ async function fetchCctvLocations() {
 }
 
 function initMap() {
+  // 현재 선택된 지역의 좌표 가져오기
+  const initialCoords = AREA_COORDINATES[TARGET_AREA_NAME] || SINNONHYEON;
+
   map = new google.maps.Map(document.getElementById("google-map"), {
-    center: SINNONHYEON,
+    center: initialCoords,
     zoom: 16,
     disableDefaultUI: true,
   });
