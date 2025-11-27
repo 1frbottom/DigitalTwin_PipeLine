@@ -6,6 +6,14 @@ import os
 from kafka import KafkaProducer
 
 
+# 구역 설정
+TARGET_AREAS = [
+    "강남역",
+    "신논현역·논현역",
+    "역삼역",
+    "교대역",
+    "양재역",
+    ]
 
 # Kafka
 KAFKA_SERVERS = ['kafka:29092']
@@ -17,9 +25,6 @@ API_KEY = os.environ.get("SEOUL_API_KEY")
 if not API_KEY:
     print("[ERROR] city_data : SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
-
-AREA_NM = "올림픽공원"
-API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/1000/{AREA_NM}"
 
 def connect_kafka_producer():
     """Kafka Producer에 연결을 시도하고, 성공 시 producer 객체를 반환합니다."""
@@ -36,10 +41,13 @@ def connect_kafka_producer():
         time.sleep(5)
         exit()
 
-def fetch_and_parse_city_data():
+def fetch_and_parse_city_data(area_nm):
     """
     도시 데이터를 API로부터 fetch하고 파싱하여 Kafka 메시지 형태로 반환합니다.
     """
+    
+    API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/5/{area_nm}"
+
     try:
         response = requests.get(API_URL, timeout=10)
         response.raise_for_status()
@@ -95,23 +103,30 @@ def fetch_and_parse_city_data():
 # --- 메인 실행 로직 (Main Execution) ---
 def main():
     producer = connect_kafka_producer()
-    
-    print("city_data : 수집을 시작합니다.")
+    print(f"city_data : 수집 대상 {len(TARGET_AREAS)}곳의 수집을 시작합니다.")
     
     while True:
-        print(f"city_data : {AREA_NM} 데이터 수집 주기 시작")
+        start_time = time.time()
         
-        message = fetch_and_parse_city_data()
-        
-        if message:
-            producer.send(KAFKA_TOPIC, value=message)
-            producer.flush()
-            print(f"city_data : {AREA_NM} 데이터 전송 완료.")
-        else:
-            print(f"city_data : {AREA_NM} 데이터 수신 실패.")
+        for area in TARGET_AREAS:
+            print(f"city_data : '{area}' 데이터 수집 시도...")
+            message = fetch_and_parse_city_data(area)
+            
+            if message:
+                producer.send(KAFKA_TOPIC, value=message)
+                # producer.flush() # 매번 flush하면 느려질 수 있으므로 루프 밖이나 배치 단위 추천 (선택사항)
+                print(f"city_data : '{area}' 전송 완료.")
+            
+            # API 호출 속도 조절 (너무 빠르면 차단될 수 있음)
+            time.sleep(2) 
 
-        print("city_data : 60초 후 다시 시작합니다.")
-        time.sleep(60)
+        producer.flush() # 한 바퀴 돌고 일괄 전송
+        print("city_data : 모든 지역 수집 완료. 60초 대기...")
+        
+        # 60초 주기 유지를 위한 로직 (선택사항)
+        elapsed = time.time() - start_time
+        sleep_time = max(0, 60 - elapsed)
+        time.sleep(sleep_time)
 
 if __name__ == "__main__":
     main()
