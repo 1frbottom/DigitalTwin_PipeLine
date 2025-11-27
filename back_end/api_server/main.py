@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import router_cctv, router_city, router_incident, router_subway
-
+try:
+    from .routers import router_cctv, router_city, router_incident, router_subway
+except ImportError:
+    from routers import router_cctv, router_city, router_incident, router_subway
 
 
 app = FastAPI(

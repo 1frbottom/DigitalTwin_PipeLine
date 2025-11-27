@@ -1,15 +1,21 @@
-CREATE TABLE IF NOT EXISTS cctv_streams (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+CREATE TABLE cctv_streams (
+    id VARCHAR PRIMARY KEY,
+    name VARCHAR NOT NULL,
     stream_url TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    latitude FLOAT,
+    longitude FLOAT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO cctv_streams (id, name, stream_url) VALUES
-    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8'),
-    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8'),
-    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8'),
-    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8')
+INSERT INTO cctv_streams (id, name, stream_url, latitude, longitude) VALUES
+    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8', 
+    37.498222, 127.027833),
+    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8', 
+    37.501361, 127.026194),
+    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8', 
+    37.504058, 127.024304),
+    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8', 
+    37.510832, 127.021142)
 ON CONFLICT (id) DO NOTHING;
 
 -- 실시간 돌발정보

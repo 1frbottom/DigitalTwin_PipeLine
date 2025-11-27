@@ -1,7 +1,54 @@
 // -------------------------- config --------------------------
+const ENV = window.ENV || {};
 
-const API_BASE_URL = "http://localhost:58000";
-const TARGET_AREA_NAME = "강남역"
+const API_BASE_URL = ENV.API_BASE_URL
+const TARGET_AREA_NAME = "올림픽공원"
+
+  // .html
+const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
+if (!MAP_API_KEY) {
+  console.error("API Key가 설정되지 않았습니다. .env 파일을 확인하세요.");
+} else {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAP_API_KEY}&callback=initMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+  // 돌발정보 코드 매핑
+const ACC_TYPE_MAP = {
+  'A01': '교통사고',
+  'A02': '차량고장',
+  'A03': '보행사고',
+  'A04': '공사',
+  'A05': '낙하물',
+  'A06': '버스사고',
+  'A07': '지하철사고',
+  'A08': '화재',
+  'A09': '기상/재난',
+  'A10': '집회및행사',
+  'A11': '기타',
+  'A12': '제보',
+  'A13': '단순정보'
+};
+
+// 돌발정보 카테고리별 색상 매핑
+const ACC_COLOR_MAP = {
+  'A01': '#F55', // 교통사고 - Red
+  'A02': '#FF8C42', // 차량고장 - Orange
+  'A03': '#FF6B6B', // 보행사고 - Light Red
+  'A04': '#F9B233', // 공사 - Yellow
+  'A05': '#9B59B6', // 낙하물 - Purple
+  'A06': '#E74C3C', // 버스사고 - Red variant
+  'A07': '#C0392B', // 지하철사고 - Dark Red
+  'A08': '#DC143C', // 화재 - Crimson
+  'A09': '#34495E', // 기상/재난 - Dark Gray
+  'A10': '#3498DB', // 집회및행사 - Blue
+  'A11': '#95A5A6', // 기타 - Gray
+  'A12': '#16A085', // 제보 - Teal
+  'A13': '#7F8C8D' // 단순정보 - Light Gray
+};
 
 // -------------------------- 갱신 --------------------------
 
@@ -74,15 +121,33 @@ function updateTimestamps(cardName) {
 function addUpdateAnimation(cardName) {
   const cardElement = document.getElementById(`card-${cardName}`);
   if (cardElement) {
-    cardElement.classList.remove('card-update');
-    // 리플로우 강제
-    void cardElement.offsetWidth;
-    cardElement.classList.add('card-update');
-    
-    // 애니메이션 종료 후 클래스 제거
-    setTimeout(() => {
+    // 해당 카드의 패널이 열려있는지 확인
+    const panelId = `panel-${cardName}`;
+    const panel = document.getElementById(panelId);
+    const isPanelOpen = panel && panel.classList.contains('is-active');
+
+    if (isPanelOpen) {
+      // 패널이 열려있으면 카드에 애니메이션
       cardElement.classList.remove('card-update');
-    }, 600);
+      void cardElement.offsetWidth;
+      cardElement.classList.add('card-update');
+
+      setTimeout(() => {
+        cardElement.classList.remove('card-update');
+      }, 600);
+    } else {
+      // 패널이 닫혀있으면 해당 칩에 애니메이션
+      const chipElement = document.querySelector(`[data-panel="${panelId}"]`);
+      if (chipElement) {
+        chipElement.classList.remove('chip-update');
+        void chipElement.offsetWidth;
+        chipElement.classList.add('chip-update');
+
+        setTimeout(() => {
+          chipElement.classList.remove('chip-update');
+        }, 600);
+      }
+    }
   }
 }
 
@@ -159,6 +224,11 @@ function renderHealthUI(rate, delayedServices) {
 
   // 값 업데이트
   valueEl.textContent = `${rate}%`;
+
+  // 🔥 반짝 애니메이션 실행
+  box.classList.remove('shine');
+  void box.offsetWidth; // 리플로우 → 애니메이션 재실행을 보장
+  box.classList.add('shine');
 
   // 상태 색상 변경
   box.classList.remove('status-safe', 'status-warn', 'status-danger');
@@ -237,17 +307,16 @@ async function fetchPopulationData() {
 
       if (changePercent > 0) {
         popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626"; // 빨간색
+        popChangeEl.style.color = "#dc2626";
       } else if (changePercent < 0) {
         popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb"; // 파란색
+        popChangeEl.style.color = "#2563eb";
       } else {
-        popChangeEl.textContent = "0%";
-        popChangeEl.style.color = "#6b7280"; // 회색
+        popChangeEl.textContent = ""; // 0%일 때 빈칸
       }
+
     } else if (popChangeEl) {
-      popChangeEl.textContent = "-";
-      popChangeEl.style.color = "#9ca3af";
+      popChangeEl.textContent = ""; 
     }
 
     // 현재 데이터를 이전 데이터로 저장
@@ -264,7 +333,7 @@ async function fetchPopulationData() {
   }
 }
 
-// ---------------- 예측 데이터 ----------------
+// ---------------------- 인구현황 예측 ----------------------
 
 async function fetchForecastData() {
   try {
@@ -273,56 +342,77 @@ async function fetchForecastData() {
     );
 
     const container = document.getElementById("forecast-chart");
-    if (!container) {
-      console.warn("HTML에 'forecast-chart' ID를 가진 요소가 없습니다.");
-      return;
-    }
+    if (!container) return;
 
     container.innerHTML = "";
 
     if (!response.ok) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
       return;
     }
 
     const list = await response.json();
-    console.log("예측 데이터 수신:", list);
-
     if (!list || list.length === 0) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
       return;
     }
 
     const next6 = list.slice(0, 6);
-    console.log("향후 6시간 데이터:", next6);
-
-    const values = next6.map((d) => d.fcst_max);
-    const minVal = Math.min(...values);
+    
+    // 1. 데이터 최댓값 구하기
+    const values = next6.map(d => d.fcst_max);
     const maxVal = Math.max(...values);
-    const range = maxVal - minVal;
-    console.log(`그래프 범위: ${minVal} ~ ${maxVal}, range: ${range}`);
 
-    next6.forEach((item, index) => {
+    // [핵심 로직 변경]
+    // 10,000 단위 스텝 사용
+    const STEP = 10000; 
+
+    // yMax: 데이터 최댓값을 포함하는 10,000 단위 올림값 (예: 92,000 -> 100,000)
+    let yMax = Math.ceil(maxVal / STEP) * STEP;
+    if (yMax === 0) yMax = STEP;
+
+    // yMin: yMax 기준으로 무조건 4칸(40,000) 아래로 설정
+    // 예: yMax가 10만이면 yMin은 6만 (눈금: 6, 7, 8, 9, 10만 -> 5개)
+    // 예: yMax가 5만이면 yMin은 1만 (눈금: 1, 2, 3, 4, 5만)
+    let yMin = yMax - (4 * STEP);
+
+    // 음수가 나오면 0으로 고정
+    if (yMin < 0) yMin = 0;
+
+    const range = yMax - yMin;
+
+    // 2. 배경 눈금선 그리기 (yMin ~ yMax)
+    for (let i = yMin; i <= yMax; i += STEP) {
+
+      const posPercent = ((i - yMin) / range) * 100;
+
+      const lineHtml = `
+        <div class="grid-line" style="bottom: ${posPercent}%;">
+          <span>${(i / 10000).toFixed(0)}만명</span>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", lineHtml);
+    }
+
+    // 3. 그래프 바 그리기
+    next6.forEach((item) => {
       const fTime = new Date(item.fcst_time);
       const hourLabel = fTime.getHours() + "시";
       const styleInfo = getColorByLevel(item.fcst_congest_lvl);
 
-      let heightPercent = 100;
-      if (range > 0) {
-        const ratio = (item.fcst_max - minVal) / range;
-        heightPercent = 20 + ratio * 80;
-      }
-
-      console.log(`${hourLabel} | ${item.fcst_congest_lvl} | 높이: ${heightPercent.toFixed(1)}% | 색상: ${styleInfo.color}`);
+      // 높이 계산
+      let heightPercent = ((item.fcst_max - yMin) / range) * 100;
+      
+      // 최소 높이 1% 안전장치
+      if (heightPercent < 1) heightPercent = 1;
+      if (heightPercent > 100) heightPercent = 100;
 
       const barHtml = `
         <div class="forecast-item">
           <div
             class="bar-graph"
-            title="${item.fcst_congest_lvl} (${item.fcst_min.toLocaleString()}~${item.fcst_max.toLocaleString()}명)"
-            style="height: ${heightPercent}%; background-color: ${styleInfo.color};"
+            title="${item.fcst_congest_lvl} (최대 ${item.fcst_max.toLocaleString()}명)"
+            style="height: ${heightPercent.toFixed(1)}%; background-color: ${styleInfo.color};"
           ></div>
           <div class="time-label">${hourLabel}</div>
         </div>
@@ -330,7 +420,6 @@ async function fetchForecastData() {
       container.insertAdjacentHTML("beforeend", barHtml);
     });
 
-    console.log("예측 그래프 렌더링 완료!");
   } catch (error) {
     console.error("예측 데이터 수신 실패:", error);
   }
@@ -393,9 +482,19 @@ async function fetchSubwayData() {
         const timeClass = arrivalTime <= 1 ? 'urgent' :
                          arrivalTime <= 3 ? 'soon' : 'normal';
 
-        const lineClass = lineName.includes('2호선') ? 'subway-line-2' :
-                         lineName.includes('신분당선') ? 'subway-line-sinbundang' :
-                         'subway-line-2';
+        const cleaned = lineName.replace(/[^0-9가-힣]/g, '');  
+
+        let lineClass;
+
+        if (cleaned.includes('2호선') || cleaned.includes('2')) {
+          lineClass = 'subway-line-2';
+        } else if (cleaned.includes('신분당선') || cleaned.includes('신분당')) {
+          lineClass = 'subway-line-sinbundang';
+        } else if (cleaned.includes('9호선') || cleaned.includes('9')) {
+          lineClass = 'subway-line-9';
+        } else {
+          lineClass = 'subway-line-1';
+        }
 
         const arrivalHtml = `
           <div class="subway-arrival-row">
@@ -472,9 +571,9 @@ async function fetchTrafficData() {
 
     // 도로소통 단계 색상 매핑
     const statusColorMap = {
-      '원활': { color: '#10b981', text: '원활' },
-      '서행': { color: '#f59e0b', text: '서행' },
-      '정체': { color: '#ef4444', text: '정체' }
+      '원활': { color: '#3CB371', text: '원활' },
+      '서행': { color: '#E8A43A', text: '서행' },
+      '정체': { color: '#D9534F', text: '정체' }
     };
 
     const statusInfo = statusColorMap[data.road_traffic_idx] || { color: '#6b7280', text: data.road_traffic_idx || '정보없음' };
@@ -501,6 +600,10 @@ async function fetchTrafficData() {
     console.error("도로 소통 정보 수신 실패:", error);
     updateTimestamps('traffic');
   }
+}
+
+function updateTrafficData() {
+  fetchTrafficData();
 }
 
 function updateTrafficData() {
@@ -557,8 +660,18 @@ async function fetchTransportData() {
             <div class="public-desc">오늘 누적 승하차</div>
           </div>
           <div class="transport-values">
-            <div class="transport-up">▲ ${subwayAvg.toLocaleString('ko-KR')}</div>
-            <div class="transport-down">▼ ${subwayOffAvg.toLocaleString('ko-KR')}</div>
+            <div class="transport-row">
+              <span class="transport-label-up">승차</span>
+              <span class="transport-number">
+                ${subwayAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <div class="transport-row">
+              <span class="transport-label-down">하차</span>
+              <span class="transport-number">
+                ${subwayOffAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
           </div>
         </div>
       `;
@@ -578,8 +691,18 @@ async function fetchTransportData() {
             <div class="public-desc">오늘 누적 승하차</div>
           </div>
           <div class="transport-values">
-            <div class="transport-up">▲ ${busAvg.toLocaleString('ko-KR')}</div>
-            <div class="transport-down">▼ ${busOffAvg.toLocaleString('ko-KR')}</div>
+            <div class="transport-row">
+              <span class="transport-label-up">승차</span>
+              <span class="transport-number">
+                ${busAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <div class="transport-row">
+              <span class="transport-label-down">하차</span>
+              <span class="transport-number">
+                ${busOffAvg.toLocaleString('ko-KR')}
+              </span>
+            </div>
           </div>
         </div>
       `;
@@ -609,6 +732,14 @@ function updateTransportData() {
 
 // ---------------- 실시간 돌발정보 ----------------
 
+// 돌발 유형별 CSS 클래스 매핑 (카테고리 dot 색상용)
+const INCIDENT_TYPE_CLASS_MAP = {
+  'A01': 'accident',      // 교통사고
+  'A04': 'construction',  // 공사
+  'A10': 'event',         // 집회/행사
+  'A02': 'breakdown',     // 차량고장
+};
+
 async function fetchIncidentsData() {
   try {
     const response = await fetch(`${API_BASE_URL}/incident/active`);
@@ -616,45 +747,62 @@ async function fetchIncidentsData() {
 
     const incidents = await response.json();
 
-    // 돌발정보 카드 업데이트
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (!incidentsContainer) return;
 
     // 기존 내용 초기화
     incidentsContainer.innerHTML = '';
 
-    if (incidents.length === 0) {
+    if (!incidents || incidents.length === 0) {
+      // 0건일 때
       incidentsContainer.innerHTML = `
         <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
           현재 진행 중인 돌발정보가 없습니다.
         </div>
       `;
     } else {
-      // 최대 5개까지만 표시
-      const displayIncidents = incidents.slice(0, 5);
+      // 1) 리스트 컨테이너(ul) 한 번 생성
+      incidentsContainer.innerHTML = `
+        <ul class="incident-list" id="incident-list"></ul>
+      `;
+      const listEl = document.getElementById('incident-list');
+      listEl.innerHTML = '';
 
-      displayIncidents.forEach(incident => {
+      // 2) 각 항목 li.incident-item 로 추가
+      incidents.forEach(incident => {
         const incidentTime = getRelativeTime(incident.occr_date, incident.occr_time);
-        const incidentType = getIncidentType(incident.acc_type, incident.acc_dtype);
+
+        // 매핑된 한글 유형 (예: "공사")
+        const incidentType =
+          ACC_TYPE_MAP[incident.acc_type] || incident.acc_type || '기타';
+
         const incidentIcon = getIncidentIcon(incident.acc_type);
 
+        // 카테고리별 CSS 클래스 (dot 색상용)
+        const dotClass = INCIDENT_TYPE_CLASS_MAP[incident.acc_type] || '';
+
+        const detailText = incident.acc_info || '상세 정보 없음';
+
         const incidentHtml = `
-          <div class="incident-item">
+          <li class="incident-item">
             <div class="incident-icon-block">
               <div class="incident-icon-circle">${incidentIcon}</div>
-              <div class="incident-link">${incident.link_id || '-'}</div>
             </div>
 
             <div class="incident-main">
-              <div class="incident-type">${incidentType}</div>
-              <div class="incident-detail">${incident.acc_info || '상세 정보 없음'}</div>
+              <div class="incident-header">
+                <div class="incident-type">
+                  <span class="incident-type-dot ${dotClass}"></span>
+                  <span>${incidentType}</span>
+                </div>
+                <div class="incident-time">${incidentTime}</div>
+              </div>
+              <div class="incident-detail">${detailText}</div>
             </div>
-
-            <div class="incident-time">${incidentTime}</div>
-          </div>
+          </li>
         `;
 
-        incidentsContainer.insertAdjacentHTML('beforeend', incidentHtml);
+        listEl.insertAdjacentHTML('beforeend', incidentHtml);
       });
     }
 
@@ -670,7 +818,6 @@ async function fetchIncidentsData() {
   } catch (error) {
     console.error("돌발정보 수신 실패:", error);
 
-    // 에러 시 기본 메시지 표시
     const incidentsContainer = document.querySelector('#card-incidents .card-body');
     if (incidentsContainer) {
       incidentsContainer.innerHTML = `
@@ -683,15 +830,23 @@ async function fetchIncidentsData() {
 }
 
 // 돌발정보 타입에 따른 아이콘 반환
-function getIncidentIcon(accType) {
-  if (!accType) return '⚠️';
-
-  if (accType.includes('사고')) return '🚗';
-  if (accType.includes('공사')) return '🚧';
-  if (accType.includes('행사')) return '🎪';
-  if (accType.includes('통제')) return '⛔';
-
-  return '⚠️';
+function getIncidentIcon(code) {
+  const icons = {
+    'A01': '🚗', // 교통사고
+    'A02': '🔧', // 차량고장
+    'A03': '🚶', // 보행사고
+    'A04': '🚧', // 공사
+    'A05': '📦', // 낙하물
+    'A06': '🚌', // 버스사고
+    'A07': '🚇', // 지하철사고
+    'A08': '🔥', // 화재
+    'A09': '⛈️', // 기상/재난
+    'A10': '📢', // 집회및행사
+    'A11': '⚠️', // 기타
+    'A12': '📞', // 제보
+    'A13': 'ℹ️'  // 단순정보
+  };
+  return icons[code] || '⚠️';
 }
 
 // 돌발정보 타입 텍스트 반환
@@ -766,8 +921,8 @@ async function fetchWeatherData() {
     console.log("기상현황 데이터 수신:", data);
 
     // 헤더의 날씨 정보 업데이트
-    const weatherTemp = document.querySelector('.weather-temp');
-    const weatherIcon = document.querySelector('.weather-icon');
+    const weatherTemp = document.getElementById('weather-temp');
+    const weatherIcon = document.getElementById('weather-icon');
 
     if (weatherTemp && data.temp !== undefined) {
       weatherTemp.textContent = `${data.temp}℃`;
@@ -797,11 +952,21 @@ async function fetchWeatherData() {
       weatherIcon.textContent = icon;
     }
 
-    // 미세먼지/초미세먼지 정보 업데이트 (데이터가 있다면)
-    const airLabels = document.querySelectorAll('.air-value');
-    if (airLabels.length >= 2) {
-      if (data.pm10_status) airLabels[0].textContent = data.pm10_status;
-      if (data.pm25_status) airLabels[1].textContent = data.pm25_status;
+    // 미세먼지/초미세먼지 정보 업데이트
+    // API는 air_idx (통합 지수)와 air_idx_main (주요 오염물질)을 반환
+    const pm10Status = document.getElementById('pm10-status');
+    const pm25Status = document.getElementById('pm25-status');
+
+    if (data.air_idx) {
+      // 통합 대기질 지수를 PM10과 PM2.5 모두에 표시
+      if (pm10Status) {
+        pm10Status.textContent = data.air_idx;
+      }
+      if (pm25Status) {
+        pm25Status.textContent = data.air_idx;
+      }
+    } else {
+      console.warn('대기질 데이터 없음:', data);
     }
 
     updateTimestamps('weather');
@@ -947,35 +1112,83 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboard();
   setupRefreshIntervals();
   initPanelToggle();
+  init3DToggleButton();
+  initTransportDetailButton();
+  fetchCctvLocations(); // CCTV 위치 데이터 로드
 });
 
 // ---------------- Google Map + CCTV 마커 ----------------
 
-const CCTV_LOCATIONS = [
-  { id: 1, name: "강남역 10번 출구", lat: 37.498006, lng: 127.02762 },
-  { id: 2, name: "강남역 11번 출구", lat: 37.49772, lng: 127.02845 },
-  { id: 3, name: "강남대로 횡단보도 앞", lat: 37.4985, lng: 127.0268 },
-];
+const SINNONHYEON = { lat: 37.50432, lng: 127.02453 };  // 신논현역 중심
 
+let cctvLocations = [];
 let map;
 
-function initMap() {
-  // 강남역 기준에서 약간 위로 조정하여 UI 밸런스 개선
-  const gangnam = { lat: 37.4985, lng: 127.0276 };
+// CCTV 데이터를 API에서 가져오기
+async function fetchCctvLocations() {
+  const requestUrl = `${API_BASE_URL}/cctv/streams`; // 호출하려는 주소
+  
+  try {
+    console.log(`[CCTV 요청] URL: ${requestUrl}`); // 1. 어떤 주소로 요청하는지 확인
+    
+    const response = await fetch(requestUrl);
+    
+    // 2. 상태 코드 확인 (404면 주소 틀림, 500이면 서버 오류)
+    if (!response.ok) {
+      console.error(`[CCTV 에러] 상태 코드: ${response.status}, 상태 메시지: ${response.statusText}`);
+      return;
+    }
 
+    const result = await response.json();
+    
+    // 3. 데이터 구조 확인 (데이터가 비어있는지)
+    if (!result.data) {
+       console.warn("[CCTV 경고] 응답에 'data' 필드가 없습니다:", result);
+       cctvLocations = [];
+    } else {
+       cctvLocations = result.data.map(cctv => ({
+        id: cctv.id,
+        name: cctv.name,
+        lat: cctv.latitude,
+        lng: cctv.longitude,
+        stream_url: cctv.stream_url
+      }));
+    }
+
+    if (map) {
+      addCctvMarkers();
+    }
+  } catch (error) {
+    console.error('CCTV 위치 데이터 로드 오류(네트워크/코드):', error);
+  }
+}
+
+function initMap() {
   map = new google.maps.Map(document.getElementById("google-map"), {
-    center: gangnam,
+    center: SINNONHYEON,
     zoom: 16,
     disableDefaultUI: true,
   });
 
-  addCctvMarkers();
+  // CCTV 데이터 로드 후 마커 추가
+  if (cctvLocations.length > 0) {
+    addCctvMarkers();
+  }
 }
 
-function addCctvMarkers() {
-  const infoWindow = new google.maps.InfoWindow();
+  // 전역 객체 연결
+window.initMap = initMap;
 
-  CCTV_LOCATIONS.forEach((cctv) => {
+function addCctvMarkers() {
+  if (!map || cctvLocations.length === 0) return;
+
+  cctvLocations.forEach((cctv) => {
+    // 위도/경도가 없는 경우 스킵
+    if (!cctv.lat || !cctv.lng) {
+      console.warn(`CCTV ${cctv.name}: 위치 정보 없음`);
+      return;
+    }
+
     const marker = new google.maps.Marker({
       position: { lat: cctv.lat, lng: cctv.lng },
       map,
@@ -995,33 +1208,126 @@ function addCctvMarkers() {
     });
 
     marker.addListener("click", () => {
-      const html = `
-        <div style="min-width: 160px;">
-          <div style="font-weight:600; margin-bottom:4px;">${cctv.name}</div>
-          <button 
-            style="
-              padding:4px 8px;
-              font-size:11px;
-              border-radius:999px;
-              border:1px solid #3b82f6;
-              background:#eff6ff;
-              cursor:pointer;
-            "
-            onclick="openCctv('${cctv.id}')"
-          >
-            CCTV 보기
-          </button>
-        </div>
-      `;
-      infoWindow.setContent(html);
-      infoWindow.open(map, marker);
+      openCctv(cctv.id);
     });
   });
 }
 
 window.openCctv = function (cctvId) {
   console.log("CCTV 클릭:", cctvId);
+
+  const cctv = cctvLocations.find(c => c.id === cctvId);
+  if (!cctv) {
+    console.error("CCTV를 찾을 수 없습니다:", cctvId);
+    return;
+  }
+
+  const modal = document.getElementById('cctvModal');
+  const titleEl = document.getElementById('cctvModalTitle');
+  const videoContainer = document.getElementById('cctvVideoContainer');
+
+  if (!modal || !titleEl || !videoContainer) return;
+
+  titleEl.textContent = cctv.name;
+  videoContainer.innerHTML = ''; // 초기화
+
+  if (cctv.stream_url) {
+    // 1. YouTube 링크인 경우
+    if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
+      const videoId = extractYouTubeId(cctv.stream_url);
+      videoContainer.innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+          style="width:100%; height:100%;"
+        ></iframe>
+      `;
+    } 
+    // 2. HLS(.m3u8) 스트림인 경우 (★수정된 부분★)
+    else if (cctv.stream_url.includes('.m3u8')) {
+      const video = document.createElement('video');
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.controls = true;
+      video.autoplay = true;
+      video.muted = true; // 자동재생을 위해 음소거 필수
+
+      videoContainer.appendChild(video);
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(cctv.stream_url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(e => console.log("자동재생 차단됨:", e));
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // 사파리(iOS/Mac)용 네이티브 지원
+        video.src = cctv.stream_url;
+        video.addEventListener('loadedmetadata', function() {
+          video.play();
+        });
+      }
+    } 
+    // 3. 일반 MP4 등
+    else {
+      videoContainer.innerHTML = `
+        <video controls autoplay muted style="width:100%; height:100%;">
+          <source src="${cctv.stream_url}">
+        </video>
+      `;
+    }
+  } else {
+    videoContainer.innerHTML = '<div class="cctv-error">CCTV URL 없음</div>';
+  }
+
+  modal.classList.add('is-open');
 };
+
+// YouTube URL에서 비디오 ID 추출
+function extractYouTubeId(url) {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
+}
+
+// CCTV 모달 닫기
+function closeCctvModal() {
+  const modal = document.getElementById('cctvModal');
+  const videoContainer = document.getElementById('cctvVideoContainer');
+
+  if (modal) {
+    modal.classList.remove('is-open');
+  }
+
+  // 비디오 중지 (메모리 절약)
+  if (videoContainer) {
+    videoContainer.innerHTML = '<div class="cctv-loading">CCTV 스트림을 로딩 중...</div>';
+  }
+}
+
+// 모달 닫기 이벤트 리스너 (DOM 로드 후 실행)
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('cctvModalClose');
+  const overlay = document.getElementById('cctvModalOverlay');
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeCctvModal);
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeCctvModal);
+  }
+
+  // ESC 키로 모달 닫기
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCctvModal();
+    }
+  });
+});
 
 // ---------------- 패널 토글 시스템 ----------------
 
@@ -1065,5 +1371,421 @@ function initPanelToggle() {
       }
     });
   });
+}
+
+// ==============================================
+// 1. 구글맵 2D ↔ 3D 변환 기능
+// ==============================================
+
+let is3DMode = false; // 현재 3D 모드 여부를 추적
+
+/**
+ * 구글맵 2D/3D 모드 전환 함수
+ * - 2D → 3D: 45도 틸트 + 회전 가능 활성화
+ * - 3D → 2D: 틸트 0도 + 기본 뷰로 복귀
+ * - 현재 중심 좌표와 줌 레벨 유지
+ */
+function toggle3DMode() {
+  const button = document.getElementById('toggle3DButton');
+  const btnText = button.querySelector('.btn-text');
+  const btnIcon = button.querySelector('.btn-icon');
+
+  if (!map) {
+    console.error('지도 객체가 초기화되지 않았습니다.');
+    return;
+  }
+
+  // 현재 지도 중심과 줌 레벨 저장
+  const currentCenter = map.getCenter();
+  const currentZoom = map.getZoom();
+
+  if (!is3DMode) {
+    // 2D → 3D 전환
+    map.setMapTypeId(google.maps.MapTypeId.SATELLITE); // 위성 뷰로 변경
+    map.setTilt(45); // 45도 기울임
+
+    // 줌 레벨을 18 이상으로 설정해야 3D 건물이 보임
+    if (currentZoom < 18) {
+      map.setZoom(18);
+    }
+
+    // 버튼 상태 변경
+    button.classList.add('is-3d');
+    btnText.textContent = '2D 변환';
+    btnIcon.textContent = '🌐';
+    is3DMode = true;
+
+  } else {
+    // 3D → 2D 전환
+    map.setMapTypeId(google.maps.MapTypeId.ROADMAP); // 일반 지도로 변경
+    map.setTilt(0); // 틸트 제거
+
+    // 버튼 상태 변경
+    button.classList.remove('is-3d');
+    btnText.textContent = '3D 변환';
+    btnIcon.textContent = '🗺️';
+    is3DMode = false;
+
+    // 원래 줌 레벨로 복원
+    map.setZoom(currentZoom);
+  }
+
+  // 중심 좌표 복원
+  map.setCenter(currentCenter);
+}
+
+/**
+ * 2D/3D 토글 버튼 초기화
+ */
+function init3DToggleButton() {
+  const button = document.getElementById('toggle3DButton');
+  if (button) {
+    button.addEventListener('click', toggle3DMode);
+  }
+}
+
+// ==============================================
+// 3. 대중교통 승하차 상세보기 그래프 기능
+// ==============================================
+
+let transportChart = null; // Chart.js 인스턴스 저장
+
+/**
+ * 대중교통 상세 데이터 가져오기
+ * API에서 시간대별 승하차 데이터를 받아옴
+ */
+async function fetchTransportDetail() {
+  const chartContainer = document.querySelector('.chart-container');
+
+  // 로딩 표시
+  chartContainer.innerHTML = '<div class="chart-loading">데이터 로딩 중...</div><canvas id="transportChart"></canvas>';
+
+  try {
+    // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
+    // 실제 API가 없으면 더미 데이터로 그래프 생성
+    const response = await fetch(`${API_BASE_URL}/city/transit/hourly?area_name=${TARGET_AREA_NAME}`);
+
+    let data;
+
+    if (!response.ok) {
+      console.warn('시간대별 API 응답 없음, 더미 데이터로 대체');
+      // 더미 데이터 생성 (0시부터 23시까지)
+      data = Array.from({ length: 24 }, (_, i) => ({
+        time_slot: String(i).padStart(2, '0'),
+        subway: {
+          get_on_min: Math.floor(Math.random() * 5000) + 1000,
+          get_on_max: Math.floor(Math.random() * 5000) + 6000,
+          get_off_min: Math.floor(Math.random() * 5000) + 1000,
+          get_off_max: Math.floor(Math.random() * 5000) + 6000
+        },
+        bus: {
+          get_on_min: Math.floor(Math.random() * 3000) + 500,
+          get_on_max: Math.floor(Math.random() * 3000) + 3500,
+          get_off_min: Math.floor(Math.random() * 3000) + 500,
+          get_off_max: Math.floor(Math.random() * 3000) + 3500
+        }
+      }));
+    } else {
+      data = await response.json();
+
+      // 데이터 검증
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('빈 데이터 응답, 더미 데이터로 대체');
+        data = Array.from({ length: 24 }, (_, i) => ({
+          time_slot: String(i).padStart(2, '0'),
+          subway: {
+            get_on_min: Math.floor(Math.random() * 5000) + 1000,
+            get_on_max: Math.floor(Math.random() * 5000) + 6000,
+            get_off_min: Math.floor(Math.random() * 5000) + 1000,
+            get_off_max: Math.floor(Math.random() * 5000) + 6000
+          },
+          bus: {
+            get_on_min: Math.floor(Math.random() * 3000) + 500,
+            get_on_max: Math.floor(Math.random() * 3000) + 3500,
+            get_off_min: Math.floor(Math.random() * 3000) + 500,
+            get_off_max: Math.floor(Math.random() * 3000) + 3500
+          }
+        }));
+      }
+    }
+
+    // 시간대별 데이터 추출
+    const timeLabels = data.map(item => {
+      const hour = item.time_slot || item.hour || '00';
+      return `${hour}시`;
+    });
+
+    const subwayBoardings = data.map(item => {
+      const subway = item.subway || {};
+      return Math.round((subway.get_on_min + subway.get_on_max) / 2) || 0;
+    });
+
+    const subwayAlightings = data.map(item => {
+      const subway = item.subway || {};
+      return Math.round((subway.get_off_min + subway.get_off_max) / 2) || 0;
+    });
+
+    const busBoardings = data.map(item => {
+      const bus = item.bus || {};
+      return Math.round((bus.get_on_min + bus.get_on_max) / 2) || 0;
+    });
+
+    const busAlightings = data.map(item => {
+      const bus = item.bus || {};
+      return Math.round((bus.get_off_min + bus.get_off_max) / 2) || 0;
+    });
+
+    console.log('그래프 데이터:', {
+      timeLabels,
+      subwayBoardings,
+      subwayAlightings,
+      busBoardings,
+      busAlightings
+    });
+
+    // 그래프 그리기
+    drawTransportChart({
+      time_labels: timeLabels,
+      subway_boardings: subwayBoardings,
+      subway_alightings: subwayAlightings,
+      bus_boardings: busBoardings,
+      bus_alightings: busAlightings
+    });
+
+  } catch (error) {
+    console.error('대중교통 상세 데이터 오류:', error);
+    chartContainer.innerHTML = `<div class="chart-loading" style="color: #ef4444;">데이터를 불러올 수 없습니다<br/><small>${error.message}</small></div>`;
+  }
+}
+
+/**
+ * Chart.js를 사용하여 승하차 그래프 그리기
+ * @param {Object} data - API에서 받아온 데이터
+ */
+function drawTransportChart(data) {
+  const canvas = document.getElementById('transportChart');
+  if (!canvas) return;
+
+  // 기존 차트가 있다면 제거
+  if (transportChart) {
+    transportChart.destroy();
+  }
+
+  const ctx = canvas.getContext('2d');
+
+  // Chart.js 설정
+  transportChart = new Chart(ctx, {
+    type: 'line', // 점선 그래프
+    data: {
+      labels: data.time_labels, // X축: 시간대
+      datasets: [
+        {
+          label: '지하철 승차',
+          data: data.subway_boardings,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.3,
+        },
+        {
+          label: '지하철 하차',
+          data: data.subway_alightings,
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96, 165, 250, 0.15)',
+          pointBackgroundColor: '#60a5fa',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.3,
+        },
+        {
+          label: '버스 승차',
+          data: data.bus_boardings,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          pointBackgroundColor: '#10b981',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.3,
+        },
+        {
+          label: '버스 하차',
+          data: data.bus_alightings,
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52, 211, 153, 0.15)',
+          pointBackgroundColor: '#34d399',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false, // 범례는 별도로 표시
+        },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleColor: '#f9fafb',
+          bodyColor: '#f9fafb',
+          borderColor: '#111827',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+          displayColors: true,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}명`;
+            }
+          }
+        },
+      },
+      layout: {
+        padding: { left: 0, right: 4, top: 4, bottom: 4 }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: '#e5e7eb',
+            drawBorder: false,
+          },
+          ticks: {
+            color: '#6b7280',
+            font: {
+              size: 11,
+              weight: '500',
+            },
+            maxRotation: 45,
+            minRotation: 0,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: '#e5e7eb',
+            drawBorder: false,
+          },
+          border: {
+            color: '#d1d5db'
+          },
+          ticks: {
+            color: '#6b7280',
+            font: {
+              size: 11,
+              weight: '500',
+            },
+            callback: function(value) {
+              return value.toLocaleString() + '명';
+            },
+          },
+          title: {
+            display: true,
+            text: '승하차 인원',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: '600',
+            },
+          },
+        },
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
+  });
+}
+
+/**
+ * 상세보기 패널 열기
+ */
+function openTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+  const button = document.getElementById('transportDetailButton');
+  const card = document.getElementById('card-transport');
+
+  if (detailSection) {
+    detailSection.style.display = 'block';
+    button.textContent = '닫기 ›';
+
+    // 카드 너비 확장
+    if (card) {
+      card.classList.add('detail-expanded');
+    }
+
+    // 데이터 가져오기
+    fetchTransportDetail();
+  }
+}
+
+/**
+ * 상세보기 패널 닫기
+ */
+function closeTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+  const button = document.getElementById('transportDetailButton');
+  const card = document.getElementById('card-transport');
+
+  if (detailSection) {
+    detailSection.style.display = 'none';
+    button.textContent = '상세보기 ›';
+
+    // 카드 너비 원래대로
+    if (card) {
+      card.classList.remove('detail-expanded');
+    }
+
+    // 차트 인스턴스 제거
+    if (transportChart) {
+      transportChart.destroy();
+      transportChart = null;
+    }
+  }
+}
+
+/**
+ * 상세보기 버튼 토글
+ */
+function toggleTransportDetail() {
+  const detailSection = document.getElementById('transportDetailSection');
+
+  if (detailSection.style.display === 'none' || !detailSection.style.display) {
+    openTransportDetail();
+  } else {
+    closeTransportDetail();
+  }
+}
+
+/**
+ * 대중교통 상세보기 버튼 초기화
+ */
+function initTransportDetailButton() {
+  const detailButton = document.getElementById('transportDetailButton');
+  const closeButton = document.getElementById('closeDetailButton');
+
+  if (detailButton) {
+    detailButton.addEventListener('click', toggleTransportDetail);
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener('click', closeTransportDetail);
+  }
 }
 
