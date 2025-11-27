@@ -6,6 +6,8 @@ import logging
 from ..cruds import crud_cctv
 from .. import database
 
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
