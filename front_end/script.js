@@ -225,6 +225,11 @@ function renderHealthUI(rate, delayedServices) {
   // 값 업데이트
   valueEl.textContent = `${rate}%`;
 
+  // 🔥 반짝 애니메이션 실행
+  box.classList.remove('shine');
+  void box.offsetWidth; // 리플로우 → 애니메이션 재실행을 보장
+  box.classList.add('shine');
+
   // 상태 색상 변경
   box.classList.remove('status-safe', 'status-warn', 'status-danger');
 
