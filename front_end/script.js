@@ -1025,10 +1025,11 @@ async function fetchCultureData() {
       return;
     }
 
-    // 각 문화행사 항목 표시 (최대 5개)
-    data.slice(0, 5).forEach(event => {
-      const eventHtml = `
-        <div class="culture-item">
+  // 각 문화행사 항목 표시 (최대 5개)
+  data.slice(0, 5).forEach(event => {
+    const url = event.url || null;
+    const eventHtml = `
+        <div class="culture-item"${url ? ` role="link" tabindex="0" onclick="window.open('${url}', '_blank')"` : ''}>
           <div class="culture-title">${event.event_nm || '행사명 없음'}</div>
           <div class="culture-meta">
             ${event.event_period ? `<span>${event.event_period}</span>` : ''}
@@ -1181,6 +1182,9 @@ function initMap() {
   // CCTV 데이터 로드 후 마커 추가
   if (cctvLocations.length > 0) {
     addCctvMarkers();
+  } else {
+    // 아직 데이터가 없으면 다시 로드 시도
+    fetchCctvLocations();
   }
 }
 
