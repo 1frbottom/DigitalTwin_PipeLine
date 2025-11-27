@@ -108,7 +108,6 @@ def write_citydata_to_postgres(df, epoch_id):
     if df.rdd.isEmpty():
         return
     
-    # [수정] 중복 제거
     df_dedup = df.dropDuplicates(['area_nm', 'timestamp'])
     
     df_dedup.write \
@@ -200,6 +199,7 @@ forecast_df = parsed_ppltn_df \
         "area_nm",
         "base_ppltn_time",
         to_timestamp(col("fcst_item.FCST_TIME"), "yyyy-MM-dd HH:mm").alias("fcst_time"),
+        # ...
         col("fcst_item.FCST_CONGEST_LVL").alias("fcst_congest_lvl"),
         col("fcst_item.FCST_PPLTN_MIN").cast(IntegerType()).alias("fcst_min"),
         col("fcst_item.FCST_PPLTN_MAX").cast(IntegerType()).alias("fcst_max")
@@ -212,7 +212,7 @@ forecast_df = parsed_ppltn_df \
 
 
     # 두 테이블에 대한 DB Write 함수 정의
-def write_proc_to_postgres(df, epoch_id):
+def write_proc_to_postgres(df):
     df.write \
       .format("jdbc") \
       .options(**db_properties) \
@@ -220,7 +220,7 @@ def write_proc_to_postgres(df, epoch_id):
       .mode("append") \
       .save()
 
-def write_forecast_to_postgres(df, epoch_id):
+def write_forecast_to_postgres(df):
     
     if df.rdd.isEmpty():
         return
