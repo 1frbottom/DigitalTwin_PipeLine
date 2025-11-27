@@ -22,42 +22,50 @@
     <div class="app">
       <!-- HEADER: 상단 고정 -->
       <header class="header">
-
         <div class="header-inner">
-
           <div class="header-left">
             <div class="header-pill"></div>
             <div class="header-title">
               <small>Digital Twin Dashboard</small>
 
-           <div class="title-row">
-              <select id="location-select" class="location-select">
-                <option value="강남역" selected>강남역</option>
-                <option value="신논현역·논현역">신논현역·논현역</option>
-                <option value="역삼역">역삼역</option>
-                <option value="교대역">교대역</option>
-                <option value="양재역">양재역</option>
-              </select>
-              <h1>실시간 모니터링</h1>
-            </div>
+              <div class="title-row">
+                <div class="location-dropdown">
+                  <button class="location-trigger" id="location-trigger">
+                    <span id="current-location">강남역</span>
+                    <span class="chevron">▾</span>
+                  </button>
 
+                  <div class="location-menu" id="location-menu">
+                    <button class="location-item active" data-value="강남역">강남역</button>
+                    <button class="location-item" data-value="신논현역·논현역">신논현역·논현역</button>
+                    <button class="location-item" data-value="역삼역">역삼역</button>
+                    <button class="location-item" data-value="교대역">교대역</button>
+                    <button class="location-item" data-value="양재역">양재역</button>
+                  </div>
+                </div>
+
+                <h1>실시간 모니터링</h1>
+              </div>
+            </div>
           </div>
 
-          <div class="weather-bar">
-            <span class="weather-icon" id="weather-icon">--</span>
+          <div class="header-right">
+            <div class="weather-bar">
+              <span class="weather-icon" id="weather-icon">--</span>
 
-            <div class="weather-text">
-              <div class="weather-main">
-                <span class="weather-temp" id="weather-temp">--℃</span>
-                <span class="weather-air-summary">
-                    미세 <span class="air-good" id="pm10-status">--</span> ·
-                    초미세 <span class="air-good" id="pm25-status">--</span>
-                </span>
-              </div>
+              <div class="weather-text">
+                <div class="weather-main">
+                  <span class="weather-temp" id="weather-temp">--℃</span>
+                  <span class="weather-air-summary">
+                      미세 <span class="air-good" id="pm10-status">--</span> ·
+                      초미세 <span class="air-good" id="pm25-status">--</span>
+                  </span>
+                </div>
 
-              <div class="weather-meta-row">
-                최근 갱신: <span id="weather-last">--:--:--</span> ·
-                다음 갱신: <span id="weather-next">--초 후</span>
+                <div class="weather-meta-row">
+                  최근 갱신: <span id="weather-last">--:--:--</span> ·
+                  다음 갱신: <span id="weather-next">--초 후</span>
+                </div>
               </div>
             </div>
           </div>
@@ -140,7 +148,7 @@
             <div class="people-footer">
               <div style="display:flex; align-items:center; gap:6px;">
                 <span class="dot"></span>
-                <span>예측값 <span id="pop-change" style="color:#9ca3af">-</span></span>
+                <span>예측값 <span id="pop-change" style="color:#9ca3af"></span></span>
               </div>
             </div>
 
@@ -398,6 +406,15 @@
             <!-- 실제 리스트 (JS에서 내용 채움) -->
             <ul class="incident-list" id="incident-list"></ul>
             </div>
+
+            <div class="card-timestamp-row">
+              <div class="last-refresh">
+                최근 갱신: <span id="incidents-last">--:--:--</span>
+              </div>
+              <div class="next-refresh">
+                다음 갱신: <span id="incidents-next">--초 후</span>
+              </div>
+            </div>
           </article>
         </section>
 
@@ -468,6 +485,10 @@
     </div>
 
     <script src="script.js?v=999"></script>
-
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
+    ></script>
   </body>
 </html>
