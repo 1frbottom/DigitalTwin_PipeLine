@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="ko">
   <head>
+
     <meta charset="UTF-8" />
     <title>디지털트윈 대시보드 - 강남역</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
     <link rel="stylesheet" href="style.css?v=2" />
     <!-- Chart.js 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="env_config.js"></script>
+
   </head>
   <body>
     <div class="app">
@@ -435,11 +438,7 @@
       </main>
     </div>
 
-    <script src="script.js?v=6"></script>
-    <script
-      async
-      defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8o_d9DuaK0B2Y2JBztHDrII3i08X4phY&callback=initMap"
-    ></script>
+    <script type="module" src="./script.js?v=6"></script>
+
   </body>
 </html>
