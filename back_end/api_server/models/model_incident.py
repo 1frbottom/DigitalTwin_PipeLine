@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
+
 class TrafficIncidentBase(BaseModel):
     acc_id: str
     occr_date: Optional[str] = None

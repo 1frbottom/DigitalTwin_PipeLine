@@ -65,6 +65,16 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_proc (
     PRIMARY KEY (area_nm, ppltn_time)
 );
 
+CREATE OR REPLACE RULE ignore_duplicate_city_ppltn AS
+ON INSERT TO city_live_ppltn_proc
+WHERE EXISTS (
+    SELECT 1
+    FROM city_live_ppltn_proc
+    WHERE area_nm = NEW.area_nm
+      AND ppltn_time = NEW.ppltn_time
+)
+DO INSTEAD NOTHING;
+
 -- 실시간 도시데이터 : 인구현황(예측)
 CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
@@ -76,6 +86,17 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
 );
 
+CREATE OR REPLACE RULE ignore_duplicate_ppltn_forecast AS
+ON INSERT TO city_live_ppltn_forecast
+WHERE EXISTS (
+    SELECT 1
+    FROM city_live_ppltn_forecast
+    WHERE area_nm = NEW.area_nm
+      AND base_ppltn_time = NEW.base_ppltn_time
+      AND fcst_time = NEW.fcst_time
+)
+DO INSTEAD NOTHING;
+
 -- 실시간 도시데이터 : 도로소통(평균)
 CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     area_nm VARCHAR(50) NOT NULL,
@@ -86,6 +107,16 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     ingest_timestamp DOUBLE PRECISION,
     PRIMARY KEY (area_nm, road_traffic_time)
 );
+
+CREATE OR REPLACE RULE ignore_duplicate_road_traffic AS
+ON INSERT TO city_road_traffic_stts_avg
+WHERE EXISTS (
+    SELECT 1
+    FROM city_road_traffic_stts_avg
+    WHERE area_nm = NEW.area_nm
+      AND road_traffic_time = NEW.road_traffic_time
+)
+DO INSTEAD NOTHING;
 
 -- 실시간 도시데이터 : 기상 현황
 CREATE TABLE IF NOT EXISTS city_weather_stts_proc (
