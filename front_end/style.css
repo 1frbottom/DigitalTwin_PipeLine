@@ -338,7 +338,7 @@ body {
   /* 모든 패널 공통 위치 */
   top: 122px; /* 헤더 + floating 칩바 아래 */
   left: 20px;
-  width: 370px;
+  width: 600px;
   min-width: 320px;
   min-height: 200px;
 
@@ -940,10 +940,11 @@ body {
 
 /* 돌발정보 카드 스크롤 컨테이너 */
 .card-incidents .card-body {
-  max-height: 350px;
+  max-height: 440px;
   overflow-y: auto;
-  margin: 0 -20px;
-  padding: 0 20px;
+  margin: 0;
+  padding: 0 8px;
+  max-width: 600px
 }
 
 .card-incidents .card-body::-webkit-scrollbar {
@@ -966,7 +967,7 @@ body {
 .incident-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
 }
 
 .incident-item {
@@ -981,35 +982,15 @@ body {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.incident-item:hover {
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-  transform: translateY(-1px);
-}
-
-/* 왼쪽 아이콘 + 링크아이디 */
-.incident-icon-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
 .incident-icon-circle {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
-  background: #fef3c7;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-}
-
-.incident-link {
-  font-size: 11px;
-  color: #2563eb;
-  font-weight: 600;
+  font-size: 14px;
 }
 
 /* 가운데 내용 */
@@ -1020,28 +1001,60 @@ body {
   gap: 4px;
 }
 
-.incident-type {
-  font-size: 13px;
-  font-weight: 700;
-  color: #111827;
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
+
+.incident-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;       /* 살짝 줄여서 더 단정하게 */
+  font-weight: 700;
+  color: #333333;        /* 항상 동일한 텍스트 색 */
+}
+
+/* 카테고리 도트는 그대로(작게) */
+.incident-type-dot {
+  width: 8px;          /* 7 → 6 (살짝만 더 작게) */
+  height: 8px;
+  border-radius: 999px;
+}
+
+/* 카테고리별 색상 */
+.incident-type-dot.accident { background: #D9534F; }
+.incident-type-dot.construction { background: #E8A43A; }
+.incident-type-dot.event { background: #0078D4; }
+.incident-type-dot.breakdown { background: #F9B233; }
 
 .incident-detail {
   font-size: 11px;
   color: #6b7280;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
-/* 오른쪽 시간 */
+/* 리스트 왼쪽 기본 padding 제거 */
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  list-style: none;        /* ● 리스트 점 제거 */
+  padding-left: 0 !important; /* ← 왼쪽 여백 문제의 핵심 */
+  margin-left: 0 !important;
+}
+
+/* 오른쪽 상단 시간 */
 .incident-time {
   font-size: 11px;
   color: #9ca3af;
-  font-weight: 500;
+  font-weight: 400;
   white-space: nowrap;
-  margin-left: 8px;
-}
+  margin-top: -2px;
 
-/* ---------- 예측 그래프 ---------- */
+}
 
 /* ---------- 지하철 도착 카드 ---------- */
 
@@ -1172,41 +1185,72 @@ body {
 }
 
 .forecast-wrap {
-  margin-top: 16px;
-  margin-bottom: 12px;
+  position: relative;
+  margin-top: 24px;
+  margin-bottom: 30px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: flex-end;
-  height: 70px;
-  gap: 6px;
+  height: 100px;
+  gap: 4px;
+  z-index: 1;
+  padding-left: 25px;
+  padding-right: 5px;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-top: 1px dashed #e5e7eb;
+  z-index: -1;
+  font-size: 0;
+}
+
+.grid-line span {
+  position: absolute;
+  left: 0;
+  top: -8px;
+  font-size: 9px;
+  color: #9ca3af;
+  background-color: transparent;
+  width: 20px;
+  text-align: right;
 }
 
 .forecast-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 0;
   flex: 1;
   height: 100%;
+  z-index: 5;
 }
 
 .bar-graph {
-  width: 100%;
-  max-width: 35px;
-  border-radius: 6px 6px 0 0;
+  width: 24px;
+  border-radius: 4px 4px 0 0;
   background-color: #e5e7eb;
-  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
-  min-height: 10px; /* 최소 높이를 더 크게 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 그림자 추가로 더 눈에 띄게 */
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+  opacity: 0.9;
 }
 
 .time-label {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
   font-size: 11px;
   color: #6b7280;
   font-weight: 500;
   white-space: nowrap;
 }
+
 /* 대중교통 누적 값 스타일 */
 .transport-values {
   display: flex;
@@ -1278,7 +1322,7 @@ body {
 
 .traffic-bar {
   position: relative;
-  width: 100%; /* 카드 전체 폭의 100% */
+  width: 100%;
   height: 24px;
   border-radius: 999px;
   overflow: hidden;
@@ -1289,19 +1333,19 @@ body {
 /* 3등분 구간 - 비율: 각 33.33% */
 .traffic-segment {
   height: 100%;
-  flex: 1; /* 균등하게 3등분 */
+  flex: 1;
 }
 
 .traffic-segment-green {
-  background: linear-gradient(90deg, #10b981, #22c55e);
+  background: linear-gradient(90deg, #3CB371, #48C47F);
 }
 
 .traffic-segment-yellow {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, #E8A43A, #F0B54D);
 }
 
 .traffic-segment-red {
-  background: linear-gradient(90deg, #ef4444, #f87171);
+  background: linear-gradient(90deg, #D9534F, #E36762);
 }
 
 /* 포인터 */
@@ -1328,7 +1372,6 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 13px;
-  color: #6b7280;
   font-weight: 500;
   padding: 0 4px;
 }
@@ -1336,16 +1379,28 @@ body {
 .traffic-labels span:nth-child(1) {
   flex: 1;
   text-align: left;
+  background: linear-gradient(90deg, #3CB371, #48C47F);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .traffic-labels span:nth-child(2) {
   flex: 1;
   text-align: center;
+  background: linear-gradient(90deg, #E8A43A, #F0B54D);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .traffic-labels span:nth-child(3) {
   flex: 1;
   text-align: right;
+  background: linear-gradient(90deg, #D9534F, #E36762);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 /* ---------- 2D/3D 변환 버튼 ---------- */
