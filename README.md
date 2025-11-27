@@ -15,8 +15,17 @@
 			api_server (api called) -><br><br>
 			front_end (api caller)<br><br>
 
-- api 지역 바꿀 경우 producer_city_data의 21번 AREA_NM과 
-js파일의 TARGET_AREA_NAME을 바꿀 지역으로 바꾸면 됩니다.
+- api 지역 바꿀 경우
+	1. producer_city_data의 TARGET_AREAS에 원하는 지역 추가
+	
+	2. js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경
+
+	3. producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기
+
+	4. 대시보드 새로고침
+
+	5. 필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
+		DB 체크(SELECT COUNT(*) FROM 테이블명 WHERE area_nm='지역명';)
 
 - 사용법<br>
 	- 프로젝트 클론 후 본인 브랜치로 체크아웃<br><br>
