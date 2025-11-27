@@ -380,10 +380,10 @@ async function fetchForecastData() {
     for (let i = yMin; i <= yMax; i += STEP) {
 
       const posPercent = ((i - yMin) / range) * 100;
-      
+
       const lineHtml = `
         <div class="grid-line" style="bottom: ${posPercent}%;">
-          <span>${(i / 10000)}만</span>
+          <span>${(i / 10000).toFixed(0)}만명</span>
         </div>
       `;
       container.insertAdjacentHTML("beforeend", lineHtml);
@@ -1218,7 +1218,119 @@ function addCctvMarkers() {
 
 window.openCctv = function (cctvId) {
   console.log("CCTV 클릭:", cctvId);
+
+  // CCTV 정보 찾기
+  const cctv = cctvLocations.find(c => c.id === cctvId);
+  if (!cctv) {
+    console.error("CCTV를 찾을 수 없습니다:", cctvId);
+    return;
+  }
+
+  // 모달 열기
+  const modal = document.getElementById('cctvModal');
+  const titleEl = document.getElementById('cctvModalTitle');
+  const videoContainer = document.getElementById('cctvVideoContainer');
+
+  if (!modal || !titleEl || !videoContainer) {
+    console.error("모달 요소를 찾을 수 없습니다");
+    return;
+  }
+
+  // 제목 설정
+  titleEl.textContent = cctv.name;
+
+  // 비디오 컨테이너 초기화
+  videoContainer.innerHTML = '<div class="cctv-loading">CCTV 스트림을 로딩 중...</div>';
+
+  // stream_url이 있으면 비디오 표시
+  if (cctv.stream_url) {
+    // HLS 스트림인 경우 (m3u8)
+    if (cctv.stream_url.includes('.m3u8')) {
+      videoContainer.innerHTML = `
+        <video controls autoplay muted>
+          <source src="${cctv.stream_url}" type="application/x-mpegURL">
+          Your browser does not support HLS video.
+        </video>
+      `;
+    }
+    // YouTube 링크인 경우
+    else if (cctv.stream_url.includes('youtube.com') || cctv.stream_url.includes('youtu.be')) {
+      const videoId = extractYouTubeId(cctv.stream_url);
+      if (videoId) {
+        videoContainer.innerHTML = `
+          <iframe
+            src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        `;
+      }
+    }
+    // 일반 비디오 URL
+    else {
+      videoContainer.innerHTML = `
+        <video controls autoplay muted>
+          <source src="${cctv.stream_url}">
+          Your browser does not support the video tag.
+        </video>
+      `;
+    }
+  } else {
+    videoContainer.innerHTML = `
+      <div class="cctv-error">
+        CCTV 스트림 URL이 없습니다.<br>
+        <small>백엔드 API 서버가 실행 중인지 확인하세요.</small>
+      </div>
+    `;
+  }
+
+  // 모달 열기
+  modal.classList.add('is-open');
 };
+
+// YouTube URL에서 비디오 ID 추출
+function extractYouTubeId(url) {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
+}
+
+// CCTV 모달 닫기
+function closeCctvModal() {
+  const modal = document.getElementById('cctvModal');
+  const videoContainer = document.getElementById('cctvVideoContainer');
+
+  if (modal) {
+    modal.classList.remove('is-open');
+  }
+
+  // 비디오 중지 (메모리 절약)
+  if (videoContainer) {
+    videoContainer.innerHTML = '<div class="cctv-loading">CCTV 스트림을 로딩 중...</div>';
+  }
+}
+
+// 모달 닫기 이벤트 리스너 (DOM 로드 후 실행)
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('cctvModalClose');
+  const overlay = document.getElementById('cctvModalOverlay');
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeCctvModal);
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeCctvModal);
+  }
+
+  // ESC 키로 모달 닫기
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCctvModal();
+    }
+  });
+});
 
 // ---------------- 패널 토글 시스템 ----------------
 
@@ -1474,52 +1586,52 @@ function drawTransportChart(data) {
           label: '지하철 승차',
           data: data.subway_boardings,
           borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
           pointBackgroundColor: '#3b82f6',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2,
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
           tension: 0.3,
         },
         {
           label: '지하철 하차',
           data: data.subway_alightings,
           borderColor: '#60a5fa',
-          backgroundColor: 'rgba(96, 165, 250, 0.1)',
+          backgroundColor: 'rgba(96, 165, 250, 0.15)',
           pointBackgroundColor: '#60a5fa',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2,
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
           tension: 0.3,
         },
         {
           label: '버스 승차',
           data: data.bus_boardings,
           borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
           pointBackgroundColor: '#10b981',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2,
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
           tension: 0.3,
         },
         {
           label: '버스 하차',
           data: data.bus_alightings,
           borderColor: '#34d399',
-          backgroundColor: 'rgba(52, 211, 153, 0.1)',
+          backgroundColor: 'rgba(52, 211, 153, 0.15)',
           pointBackgroundColor: '#34d399',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2,
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2.5,
           tension: 0.3,
         },
       ],
@@ -1532,12 +1644,13 @@ function drawTransportChart(data) {
           display: false, // 범례는 별도로 표시
         },
         tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-          titleColor: '#ffffff',
-          bodyColor: '#e2e8f0',
-          borderColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: '#111827',
+          titleColor: '#f9fafb',
+          bodyColor: '#f9fafb',
+          borderColor: '#111827',
           borderWidth: 1,
           padding: 12,
+          cornerRadius: 8,
           displayColors: true,
           callbacks: {
             label: function(context) {
@@ -1546,14 +1659,17 @@ function drawTransportChart(data) {
           }
         },
       },
+      layout: {
+        padding: { left: 0, right: 4, top: 4, bottom: 4 }
+      },
       scales: {
         x: {
           grid: {
-            color: 'rgba(255, 255, 255, 0.05)',
+            color: '#e5e7eb',
             drawBorder: false,
           },
           ticks: {
-            color: '#94a3b8',
+            color: '#6b7280',
             font: {
               size: 11,
               weight: '500',
@@ -1565,11 +1681,14 @@ function drawTransportChart(data) {
         y: {
           beginAtZero: true,
           grid: {
-            color: 'rgba(255, 255, 255, 0.05)',
+            color: '#e5e7eb',
             drawBorder: false,
           },
+          border: {
+            color: '#d1d5db'
+          },
           ticks: {
-            color: '#94a3b8',
+            color: '#6b7280',
             font: {
               size: 11,
               weight: '500',
@@ -1581,7 +1700,7 @@ function drawTransportChart(data) {
           title: {
             display: true,
             text: '승하차 인원',
-            color: '#e2e8f0',
+            color: '#374151',
             font: {
               size: 12,
               weight: '600',
@@ -1603,10 +1722,16 @@ function drawTransportChart(data) {
 function openTransportDetail() {
   const detailSection = document.getElementById('transportDetailSection');
   const button = document.getElementById('transportDetailButton');
+  const card = document.getElementById('card-transport');
 
   if (detailSection) {
     detailSection.style.display = 'block';
     button.textContent = '닫기 ›';
+
+    // 카드 너비 확장
+    if (card) {
+      card.classList.add('detail-expanded');
+    }
 
     // 데이터 가져오기
     fetchTransportDetail();
@@ -1619,10 +1744,16 @@ function openTransportDetail() {
 function closeTransportDetail() {
   const detailSection = document.getElementById('transportDetailSection');
   const button = document.getElementById('transportDetailButton');
+  const card = document.getElementById('card-transport');
 
   if (detailSection) {
     detailSection.style.display = 'none';
     button.textContent = '상세보기 ›';
+
+    // 카드 너비 원래대로
+    if (card) {
+      card.classList.remove('detail-expanded');
+    }
 
     // 차트 인스턴스 제거
     if (transportChart) {
