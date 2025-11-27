@@ -617,10 +617,6 @@ function updateTrafficData() {
   fetchTrafficData();
 }
 
-function updateTrafficData() {
-  fetchTrafficData();
-}
-
 // ---------------- 대중교통 ----------------
 
 async function fetchTransportData() {
@@ -1806,27 +1802,87 @@ function initTransportDetailButton() {
 }
 
 // multi area_nm test ==========================
+/* 지역 변경 공통 처리 함수*/
+function applyLocationChange(newArea) {
+  console.log(`지역 변경: ${TARGET_AREA_NAME} -> ${newArea}`);
+
+  // 1. 타겟 지역 변수 업데이트
+  TARGET_AREA_NAME = newArea;
+
+  // 2. 지도 이동
+  moveMapToLocation(newArea);
+
+  // 3. UI 초기화
+  resetDashboardUI(newArea);
+
+  // 4. 대시보드 전체 리로드
+  initDashboard();
+}
+
+
+/* 기존 select + 커스텀 드롭다운 초기화 */
 function initLocationSelector() {
+
+  /* (1) 기존 <select id="location-select"> */
   const selector = document.getElementById('location-select');
-  if (!selector) return;
+  if (selector) {
+    selector.addEventListener('change', (e) => {
+      const newArea = e.target.value;
+      applyLocationChange(newArea);
+    });
+  }
 
-  selector.addEventListener('change', (e) => {
-    const newArea = e.target.value;
-    console.log(`지역 변경: ${TARGET_AREA_NAME} -> ${newArea}`);
-    
-    // 1. 타겟 지역 변수 업데이트
-    TARGET_AREA_NAME = newArea;
+  /* (2) 커스텀 드롭다운 요소 찾기 */
+  const trigger = document.getElementById('location-trigger');
+  const menu = document.getElementById('location-menu');
+  const currentLocation = document.getElementById('current-location');
 
-    // 2. 지도 이동
-    moveMapToLocation(newArea);
+  // 커스텀 드롭다운 요소 없으면 종료
+  if (!trigger || !menu || !currentLocation) {
+    return;
+  }
 
-    // 3. [중요] UI 초기화 (이전 데이터 지우기)
-    resetDashboardUI(newArea);
+  /* (2-1) 드롭다운 열기/닫기 */
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
 
-    // 4. 대시보드 데이터 전체 새로고침
-    initDashboard();
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+  });
+
+  /* (2-2) 메뉴 아이템 클릭 처리 */
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('.location-item');
+    if (!item) return;
+
+    const value = item.dataset.value;
+
+    // ① 헤더 텍스트 업데이트
+    currentLocation.textContent = value;
+
+    // ② active 클래스 갱신
+    menu.querySelectorAll('.location-item').forEach((btn) =>
+      btn.classList.toggle('active', btn === item)
+    );
+
+    // ③ 드롭다운 닫기
+    menu.style.display = 'none';
+
+    // ④ 공통 지역 변경 처리 실행
+    applyLocationChange(value);
+
+    // ⑤ 기존 select와 동기화(원하면)
+    if (selector) {
+      selector.value = value;
+    }
+  });
+
+  /* (2-3) 드롭다운 외부 클릭 시 닫기 */
+  document.addEventListener('click', () => {
+    menu.style.display = 'none';
   });
 }
+
 
 function resetDashboardUI(areaName) {
   // (1) 카드 헤더의 정적 텍스트 업데이트 (지하철 노선 정보 등)
