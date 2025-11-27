@@ -1,7 +1,20 @@
 // -------------------------- config --------------------------
+const ENV = window.ENV || {};
 
-const API_BASE_URL = "http://localhost:58000";
+const API_BASE_URL = ENV.API_BASE_URL
 const TARGET_AREA_NAME = "강남역"
+
+  // .html
+const MAP_API_KEY = ENV.GOOGLE_MAPS_API_KEY;
+if (!MAP_API_KEY) {
+  console.error("API Key가 설정되지 않았습니다. .env 파일을 확인하세요.");
+} else {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAP_API_KEY}&callback=initMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
 
   // 돌발정보 코드 매핑
 const ACC_TYPE_MAP = {
@@ -272,17 +285,16 @@ async function fetchPopulationData() {
 
       if (changePercent > 0) {
         popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626"; // 빨간색
+        popChangeEl.style.color = "#dc2626";
       } else if (changePercent < 0) {
         popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb"; // 파란색
+        popChangeEl.style.color = "#2563eb";
       } else {
-        popChangeEl.textContent = "0%";
-        popChangeEl.style.color = "#6b7280"; // 회색
+        popChangeEl.textContent = ""; // 0%일 때 빈칸
       }
+
     } else if (popChangeEl) {
-      popChangeEl.textContent = "-";
-      popChangeEl.style.color = "#9ca3af";
+      popChangeEl.textContent = ""; 
     }
 
     // 현재 데이터를 이전 데이터로 저장
@@ -299,7 +311,7 @@ async function fetchPopulationData() {
   }
 }
 
-// ---------------- 예측 데이터 ----------------
+// ---------------------- 인구현황 예측 ----------------------
 
 async function fetchForecastData() {
   try {
@@ -308,56 +320,77 @@ async function fetchForecastData() {
     );
 
     const container = document.getElementById("forecast-chart");
-    if (!container) {
-      console.warn("HTML에 'forecast-chart' ID를 가진 요소가 없습니다.");
-      return;
-    }
+    if (!container) return;
 
     container.innerHTML = "";
 
     if (!response.ok) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 없음</span>";
       return;
     }
 
     const list = await response.json();
-    console.log("예측 데이터 수신:", list);
-
     if (!list || list.length === 0) {
-      container.innerHTML =
-        "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
+      container.innerHTML = "<span style='font-size:10px; color:#9ca3af; width:100%; text-align:center;'>예측 데이터 준비중</span>";
       return;
     }
 
     const next6 = list.slice(0, 6);
-    console.log("향후 6시간 데이터:", next6);
-
-    const values = next6.map((d) => d.fcst_max);
-    const minVal = Math.min(...values);
+    
+    // 1. 데이터 최댓값 구하기
+    const values = next6.map(d => d.fcst_max);
     const maxVal = Math.max(...values);
-    const range = maxVal - minVal;
-    console.log(`그래프 범위: ${minVal} ~ ${maxVal}, range: ${range}`);
 
-    next6.forEach((item, index) => {
+    // [핵심 로직 변경]
+    // 10,000 단위 스텝 사용
+    const STEP = 10000; 
+
+    // yMax: 데이터 최댓값을 포함하는 10,000 단위 올림값 (예: 92,000 -> 100,000)
+    let yMax = Math.ceil(maxVal / STEP) * STEP;
+    if (yMax === 0) yMax = STEP;
+
+    // yMin: yMax 기준으로 무조건 4칸(40,000) 아래로 설정
+    // 예: yMax가 10만이면 yMin은 6만 (눈금: 6, 7, 8, 9, 10만 -> 5개)
+    // 예: yMax가 5만이면 yMin은 1만 (눈금: 1, 2, 3, 4, 5만)
+    let yMin = yMax - (4 * STEP);
+
+    // 음수가 나오면 0으로 고정
+    if (yMin < 0) yMin = 0;
+
+    const range = yMax - yMin;
+
+    // 2. 배경 눈금선 그리기 (yMin ~ yMax)
+    for (let i = yMin; i <= yMax; i += STEP) {
+
+      const posPercent = ((i - yMin) / range) * 100;
+      
+      const lineHtml = `
+        <div class="grid-line" style="bottom: ${posPercent}%;">
+          <span>${(i / 10000)}만</span>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", lineHtml);
+    }
+
+    // 3. 그래프 바 그리기
+    next6.forEach((item) => {
       const fTime = new Date(item.fcst_time);
       const hourLabel = fTime.getHours() + "시";
       const styleInfo = getColorByLevel(item.fcst_congest_lvl);
 
-      let heightPercent = 100;
-      if (range > 0) {
-        const ratio = (item.fcst_max - minVal) / range;
-        heightPercent = 20 + ratio * 80;
-      }
-
-      console.log(`${hourLabel} | ${item.fcst_congest_lvl} | 높이: ${heightPercent.toFixed(1)}% | 색상: ${styleInfo.color}`);
+      // 높이 계산
+      let heightPercent = ((item.fcst_max - yMin) / range) * 100;
+      
+      // 최소 높이 1% 안전장치
+      if (heightPercent < 1) heightPercent = 1;
+      if (heightPercent > 100) heightPercent = 100;
 
       const barHtml = `
         <div class="forecast-item">
           <div
             class="bar-graph"
-            title="${item.fcst_congest_lvl} (${item.fcst_min.toLocaleString()}~${item.fcst_max.toLocaleString()}명)"
-            style="height: ${heightPercent}%; background-color: ${styleInfo.color};"
+            title="${item.fcst_congest_lvl} (최대 ${item.fcst_max.toLocaleString()}명)"
+            style="height: ${heightPercent.toFixed(1)}%; background-color: ${styleInfo.color};"
           ></div>
           <div class="time-label">${hourLabel}</div>
         </div>
@@ -365,7 +398,6 @@ async function fetchForecastData() {
       container.insertAdjacentHTML("beforeend", barHtml);
     });
 
-    console.log("예측 그래프 렌더링 완료!");
   } catch (error) {
     console.error("예측 데이터 수신 실패:", error);
   }
@@ -1052,6 +1084,9 @@ function initMap() {
   addCctvMarkers();
 }
 
+  // 전역 객체 연결
+window.initMap = initMap;
+
 function addCctvMarkers() {
   const infoWindow = new google.maps.InfoWindow();
 
@@ -1237,7 +1272,7 @@ async function fetchTransportDetail() {
   try {
     // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
     // 실제 API가 없으면 더미 데이터로 그래프 생성
-    const response = await fetch('http://localhost:58000/city/transit/hourly?area_name=강남역');
+    const response = await fetch(`${API_BASE_URL}/city/transit/hourly?area_name=${TARGET_AREA_NAME}`);
 
     let data;
 
