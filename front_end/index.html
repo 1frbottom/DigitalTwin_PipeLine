@@ -6,10 +6,10 @@
     <title>디지털트윈 대시보드 - 강남역</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-    <link rel="stylesheet" href="style.css?v=2" />
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css?v=1001" />
     <!-- Chart.js 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="env_config.js"></script>
@@ -321,12 +321,12 @@
                   <div style="font-size: 11px; color: var(--text-sub)">
                     현재 단계
                   </div>
-                  <div id="traffic-status-text" style="font-size: 18px; font-weight: 600; margin-top: 4px">
+                  <div id="traffic-status-text" style="font-size: 20px; font-weight: 750; margin-top: 4px">
                     서행
                   </div>
-                  <div style="font-size: 11px; margin-top: 2px">
+                  <div style="font-size: 13px; margin-top: 3px; font-weight: 500;">
                     전체 평균 속도
-                    <span class="text-strong" id="traffic-speed">--km/h</span>
+                    <span style="font-size: 13px; font-weight: 500;" id="traffic-speed">--km/h</span>
                   </div>
                 </div>
                 <div class="icon-badge" style="background: #eff6ff">🚗</div>
@@ -369,21 +369,18 @@
           <article class="card card-incidents" id="card-incidents">
             <div class="card-header">
               <div class="card-title">실시간 돌발정보</div>
-              <div class="tag-amber tag">0건</div>
+              <div class="tag-amber tag" id="incident-count">0건</div>
             </div>
-            <div class="card-body" style="display: flex; flex-direction: column; gap: 6px">
-              <div style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
-                데이터를 불러오는 중...
-              </div>
+            
+            <div class="card-body">
+            <!-- 1) 로딩 상태 -->
+            <div id="incident-loading" 
+                style="text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px;">
+              데이터를 불러오는 중...
             </div>
 
-            <div class="card-timestamp-row">
-              <div class="last-refresh">
-                최근 갱신: <span id="incidents-last">--:--:--</span>
-              </div>
-              <div class="next-refresh">
-                다음 갱신: <span id="incidents-next">--:--:--</span>
-              </div>
+            <!-- 실제 리스트 (JS에서 내용 채움) -->
+            <ul class="incident-list" id="incident-list"></ul>
             </div>
           </article>
         </section>
@@ -438,7 +435,6 @@
       </main>
     </div>
 
-    <script type="module" src="./script.js?v=6"></script>
-
+    <script type="module" src="./script.js?v=1001"></script>
   </body>
 </html>
