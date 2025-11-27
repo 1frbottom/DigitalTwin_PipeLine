@@ -15,6 +15,9 @@
 			api_server (api called) -><br><br>
 			front_end (api caller)<br><br>
 
+- api 지역 바꿀 경우 producer_city_data의 21번 AREA_NM과 
+js파일의 TARGET_AREA_NAME을 바꿀 지역으로 바꾸면 됩니다.
+
 - 사용법<br>
 	- 프로젝트 클론 후 본인 브랜치로 체크아웃<br><br>
 
