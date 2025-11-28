@@ -29,10 +29,10 @@ const AREA_PATHS = {
     { lat: 37.492476, lng: 127.028263 }   // 좌하단
   ],
   "신논현역·논현역": [
-    { lat: 37.510624, lng: 127.019734 }, // 좌상단
-    { lat: 37.511467, lng: 127.022783 }, // 우상단
-    { lat: 37.505456, lng: 127.027709 }, // 우하단
-    { lat: 37.503953, lng: 127.022783 }  // 좌하단
+    { lat: 37.510624, lng: 127.019734 },
+    { lat: 37.511467, lng: 127.022783 },
+    { lat: 37.505456, lng: 127.027709 },
+    { lat: 37.503953, lng: 127.022783 }
   ],
   "역삼역": [
     { lat: 37.501695, lng: 127.031722 },
@@ -343,7 +343,7 @@ async function fetchPopulationData() {
     document.getElementById("pop-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
     document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
-    // (3) 변동률 계산 및 업데이트
+    // (3) 예측값 계산 및 업데이트 (현재 안씀)
     const popChangeEl = document.getElementById("pop-change");
     if (popChangeEl && previousPopulationData) {
       const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
