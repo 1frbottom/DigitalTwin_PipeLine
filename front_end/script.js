@@ -1541,8 +1541,8 @@ let transportChart = null; // Chart.js 인스턴스 저장
 async function fetchTransportDetail() {
   const chartContainer = document.querySelector('.chart-container');
 
-  // 로딩 표시
-  chartContainer.innerHTML = '<div class="chart-loading">데이터 로딩 중...</div><canvas id="transportChart"></canvas>';
+  // 캔버스 준비
+  chartContainer.innerHTML = '<canvas id="transportChart"></canvas>';
 
   try {
     // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
