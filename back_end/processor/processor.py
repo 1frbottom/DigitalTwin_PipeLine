@@ -319,30 +319,37 @@ schema_sub_detail_parent = StructType([
     StructField("SUB_DETAIL", ArrayType(schema_sub_detail_item), True)
 ])
 
-    # 역 정보 스키마 (SUB_STTS 배열의 각 항목)
+    # 역 정보 스키마 (SUB_STTS 배열의 각 항목 또는 단일 객체)
 schema_sub_station = StructType([
     StructField("SUB_STN_NM", StringType(), True),
     StructField("SUB_STN_LINE", StringType(), True),
     StructField("SUB_DETAIL", schema_sub_detail_parent, True)
 ])
 
-    # 최상위 SUB_STTS 스키마
-schema_sub_stts_outer = StructType([
+    # 최상위 SUB_STTS 스키마 (배열 버전)
+schema_sub_stts_array = StructType([
     StructField("SUB_STTS", ArrayType(schema_sub_station), True)
 ])
 
+    # 최상위 SUB_STTS 스키마 (단일 객체 버전 - 역삼역용)
+schema_sub_stts_single = StructType([
+    StructField("SUB_STTS", schema_sub_station, True)
+])
+
     # city_data_raw 스트림에서 sub_stts 필드를 가져와 파싱
-parsed_subway_df = parsed_stream_df_city_data \
+    # 1) 배열 형태 처리 (강남역, 신논현역, 교대역, 양재역 등)
+parsed_subway_array_df = parsed_stream_df_city_data \
     .filter(col("sub_stts").isNotNull()) \
     .select(
         col("area_nm"),
         col("timestamp").alias("ingest_timestamp"),
-        from_json(col("sub_stts"), schema_sub_stts_outer).alias("subway_data_outer")
+        from_json(col("sub_stts"), schema_sub_stts_array).alias("subway_data_array")
     ) \
+    .filter(col("subway_data_array.SUB_STTS").isNotNull()) \
     .select(
         "area_nm",
         "ingest_timestamp",
-        explode(col("subway_data_outer.SUB_STTS")).alias("station")
+        explode(col("subway_data_array.SUB_STTS")).alias("station")
     ) \
     .select(
         "area_nm",
@@ -361,6 +368,41 @@ parsed_subway_df = parsed_stream_df_city_data \
         # UTC+9 (KST) 변환 후 초 단위로 truncate - 갱신 시각 통일
         date_trunc("second", to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("ingest_timestamp")
     )
+
+    # 2) 단일 객체 형태 처리 (역삼역)
+parsed_subway_single_df = parsed_stream_df_city_data \
+    .filter(col("sub_stts").isNotNull()) \
+    .select(
+        col("area_nm"),
+        col("timestamp").alias("ingest_timestamp"),
+        from_json(col("sub_stts"), schema_sub_stts_single).alias("subway_data_single")
+    ) \
+    .filter(col("subway_data_single.SUB_STTS.SUB_STN_NM").isNotNull()) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("subway_data_single.SUB_STTS").alias("station")
+    ) \
+    .select(
+        "area_nm",
+        "ingest_timestamp",
+        col("station.SUB_STN_NM").alias("station_nm"),
+        col("station.SUB_STN_LINE").alias("line_num"),
+        explode(col("station.SUB_DETAIL.SUB_DETAIL")).alias("detail")
+    ) \
+    .select(
+        "area_nm",
+        "station_nm",
+        "line_num",
+        col("detail.SUB_ROUTE_NM").alias("train_line_nm"),
+        col("detail.SUB_ARMG1").alias("arrival_msg_1"),
+        col("detail.SUB_ARMG2").alias("arrival_msg_2"),
+        # UTC+9 (KST) 변환 후 초 단위로 truncate - 갱신 시각 통일
+        date_trunc("second", to_timestamp(col("ingest_timestamp")) + expr("INTERVAL 9 HOURS")).alias("ingest_timestamp")
+    )
+
+    # 3) 두 데이터프레임 합치기
+parsed_subway_df = parsed_subway_array_df.union(parsed_subway_single_df)
 
     # 도착 데이터 필터링
 subway_arrival_df = parsed_subway_df \

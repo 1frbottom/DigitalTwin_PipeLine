@@ -698,18 +698,18 @@ async function fetchTransportData() {
           <div class="public-icon-wrap subway">🚇</div>
           <div class="public-info">
             <div class="public-title">지하철</div>
-            <div class="public-desc">오늘 누적 승하차</div>
+            <div class="public-desc">최근 5분 누적 승하차</div>
           </div>
           <div class="transport-values">
             <div class="transport-row">
               <span class="transport-label-up">승차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="subway-on-total">
                 ${subwayAvg.toLocaleString('ko-KR')}
               </span>
             </div>
             <div class="transport-row">
               <span class="transport-label-down">하차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="subway-off-total">
                 ${subwayOffAvg.toLocaleString('ko-KR')}
               </span>
             </div>
@@ -729,18 +729,18 @@ async function fetchTransportData() {
           <div class="public-icon-wrap bus">🚌</div>
           <div class="public-info">
             <div class="public-title">버스</div>
-            <div class="public-desc">오늘 누적 승하차</div>
+            <div class="public-desc">최근 5분 누적 승하차</div>
           </div>
           <div class="transport-values">
             <div class="transport-row">
               <span class="transport-label-up">승차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="bus-on-total">
                 ${busAvg.toLocaleString('ko-KR')}
               </span>
             </div>
             <div class="transport-row">
               <span class="transport-label-down">하차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="bus-off-total">
                 ${busOffAvg.toLocaleString('ko-KR')}
               </span>
             </div>
@@ -769,6 +769,11 @@ async function fetchTransportData() {
 
 function updateTransportData() {
   fetchTransportData();
+}
+
+// 대중교통 패널 열 때 아무 작업도 하지 않음 (기존 데이터 유지)
+async function updateTransportTotalsFromChart() {
+  console.log('대중교통 패널 열림 - 기존 데이터 유지');
 }
 
 // ---------------- 실시간 돌발정보 ----------------
@@ -1420,7 +1425,7 @@ function initPanelToggle() {
   const panels = document.querySelectorAll('.overlay-panel');
 
   chips.forEach(chip => {
-    chip.addEventListener('click', () => {
+    chip.addEventListener('click', async () => {
       const targetPanelId = chip.getAttribute('data-panel');
       const targetPanel = document.getElementById(targetPanelId);
       const isCurrentlyActive = chip.classList.contains('is-active');
@@ -1444,6 +1449,11 @@ function initPanelToggle() {
         panels.forEach(panel => {
           panel.classList.remove('is-active');
         });
+
+        // 대중교통 패널인 경우 차트 데이터 미리 불러와서 누적값 업데이트
+        if (targetPanelId === 'panel-transport') {
+          await updateTransportTotalsFromChart();
+        }
 
         // 선택된 패널만 표시
         if (targetPanel) {
@@ -1541,8 +1551,8 @@ let transportChart = null; // Chart.js 인스턴스 저장
 async function fetchTransportDetail() {
   const chartContainer = document.querySelector('.chart-container');
 
-  // 로딩 표시
-  chartContainer.innerHTML = '<div class="chart-loading">데이터 로딩 중...</div><canvas id="transportChart"></canvas>';
+  // 캔버스 준비
+  chartContainer.innerHTML = '<canvas id="transportChart"></canvas>';
 
   try {
     // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
@@ -1593,28 +1603,69 @@ async function fetchTransportDetail() {
       }
     }
 
-    // 시간대별 데이터 추출
-    const timeLabels = data.map(item => {
-      const hour = item.time_slot || item.hour || '00';
-      return `${hour}시`;
+    // 현재 KST 시각 기준 24시간 전부터 현재까지의 시간 레이블 생성
+    const now = new Date();
+    const currentHour = now.getHours();
+    const timeLabels = [];
+
+    // 24시간 전부터 현재까지 (왼쪽이 24시간 전, 오른쪽이 현재)
+    for (let i = 23; i >= 0; i--) {
+      const hour = (currentHour - i + 24) % 24;
+      timeLabels.push(`${String(hour).padStart(2, '0')}시`);
+    }
+
+    // 데이터를 시간순으로 재정렬 (API에서 받은 데이터를 시간 레이블에 맞춰 매핑)
+    const dataMap = {};
+    data.forEach(item => {
+      const hour = String(item.time_slot || item.hour || '00').padStart(2, '0');
+      dataMap[hour] = item;
     });
 
-    const subwayBoardings = data.map(item => {
+    // 시간 레이블에 맞춰 데이터 재정렬 (01~05시는 0으로 고정)
+    const subwayBoardings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const subway = item.subway || {};
       return Math.round((subway.get_on_min + subway.get_on_max) / 2) || 0;
     });
 
-    const subwayAlightings = data.map(item => {
+    const subwayAlightings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const subway = item.subway || {};
       return Math.round((subway.get_off_min + subway.get_off_max) / 2) || 0;
     });
 
-    const busBoardings = data.map(item => {
+    const busBoardings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const bus = item.bus || {};
       return Math.round((bus.get_on_min + bus.get_on_max) / 2) || 0;
     });
 
-    const busAlightings = data.map(item => {
+    const busAlightings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const bus = item.bus || {};
       return Math.round((bus.get_off_min + bus.get_off_max) / 2) || 0;
     });
