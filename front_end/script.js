@@ -29,10 +29,10 @@ const AREA_PATHS = {
     { lat: 37.492476, lng: 127.028263 }   // 좌하단
   ],
   "신논현역·논현역": [
-    { lat: 37.510624, lng: 127.019734 }, // 좌상단
-    { lat: 37.511467, lng: 127.022783 }, // 우상단
-    { lat: 37.505456, lng: 127.027709 }, // 우하단
-    { lat: 37.503953, lng: 127.022783 }  // 좌하단
+    { lat: 37.510624, lng: 127.019734 },
+    { lat: 37.511467, lng: 127.022783 },
+    { lat: 37.505456, lng: 127.027709 },
+    { lat: 37.503953, lng: 127.022783 }
   ],
   "역삼역": [
     { lat: 37.501695, lng: 127.031722 },
@@ -343,32 +343,32 @@ async function fetchPopulationData() {
     document.getElementById("pop-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
     document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
-    // (3) 변동률 계산 및 업데이트
-    const popChangeEl = document.getElementById("pop-change");
-    if (popChangeEl && previousPopulationData) {
-      const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
-      const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
-      const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
+    // (3) 예측값 계산 및 업데이트 (현재 안씀)
+    // const popChangeEl = document.getElementById("pop-change");
+    // if (popChangeEl && previousPopulationData) {
+    //   const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
+    //   const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
+    //   const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
 
-      if (changePercent > 0) {
-        popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626";
-      } else if (changePercent < 0) {
-        popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb";
-      } else {
-        popChangeEl.textContent = ""; // 0%일 때 빈칸
-      }
+    //   if (changePercent > 0) {
+    //     popChangeEl.textContent = `▲ ${changePercent}%`;
+    //     popChangeEl.style.color = "#dc2626";
+    //   } else if (changePercent < 0) {
+    //     popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
+    //     popChangeEl.style.color = "#2563eb";
+    //   } else {
+    //     popChangeEl.textContent = ""; // 0%일 때 빈칸
+    //   }
 
-    } else if (popChangeEl) {
-      popChangeEl.textContent = ""; 
-    }
+    // } else if (popChangeEl) {
+    //   popChangeEl.textContent = ""; 
+    // }
 
-    // 현재 데이터를 이전 데이터로 저장
-    previousPopulationData = {
-      ppltn_min: data.ppltn_min,
-      ppltn_max: data.ppltn_max
-    };
+    // // 현재 데이터를 이전 데이터로 저장
+    // previousPopulationData = {
+    //   ppltn_min: data.ppltn_min,
+    //   ppltn_max: data.ppltn_max
+    // };
 
     // (4) 갱신 시간 업데이트
     updateTimestamps('population');
@@ -1978,7 +1978,7 @@ function resetDashboardUI(areaName) {
   document.getElementById("pop-congest").style = "";
   document.getElementById("pop-min").textContent = "-";
   document.getElementById("pop-max").textContent = "-";
-  document.getElementById("pop-change").textContent = "";
+  // document.getElementById("pop-change").textContent = "";
   document.getElementById("forecast-chart").innerHTML = "";
 
   // 도로 소통
