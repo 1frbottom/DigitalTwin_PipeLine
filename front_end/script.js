@@ -344,31 +344,31 @@ async function fetchPopulationData() {
     document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
     // (3) 예측값 계산 및 업데이트 (현재 안씀)
-    const popChangeEl = document.getElementById("pop-change");
-    if (popChangeEl && previousPopulationData) {
-      const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
-      const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
-      const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
+    // const popChangeEl = document.getElementById("pop-change");
+    // if (popChangeEl && previousPopulationData) {
+    //   const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
+    //   const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
+    //   const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
 
-      if (changePercent > 0) {
-        popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626";
-      } else if (changePercent < 0) {
-        popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb";
-      } else {
-        popChangeEl.textContent = ""; // 0%일 때 빈칸
-      }
+    //   if (changePercent > 0) {
+    //     popChangeEl.textContent = `▲ ${changePercent}%`;
+    //     popChangeEl.style.color = "#dc2626";
+    //   } else if (changePercent < 0) {
+    //     popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
+    //     popChangeEl.style.color = "#2563eb";
+    //   } else {
+    //     popChangeEl.textContent = ""; // 0%일 때 빈칸
+    //   }
 
-    } else if (popChangeEl) {
-      popChangeEl.textContent = ""; 
-    }
+    // } else if (popChangeEl) {
+    //   popChangeEl.textContent = ""; 
+    // }
 
-    // 현재 데이터를 이전 데이터로 저장
-    previousPopulationData = {
-      ppltn_min: data.ppltn_min,
-      ppltn_max: data.ppltn_max
-    };
+    // // 현재 데이터를 이전 데이터로 저장
+    // previousPopulationData = {
+    //   ppltn_min: data.ppltn_min,
+    //   ppltn_max: data.ppltn_max
+    // };
 
     // (4) 갱신 시간 업데이트
     updateTimestamps('population');
@@ -1978,7 +1978,7 @@ function resetDashboardUI(areaName) {
   document.getElementById("pop-congest").style = "";
   document.getElementById("pop-min").textContent = "-";
   document.getElementById("pop-max").textContent = "-";
-  document.getElementById("pop-change").textContent = "";
+  // document.getElementById("pop-change").textContent = "";
   document.getElementById("forecast-chart").innerHTML = "";
 
   // 도로 소통
