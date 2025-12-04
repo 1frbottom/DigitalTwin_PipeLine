@@ -1420,50 +1420,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------------- 패널 토글 시스템 ----------------
 
+
 function initPanelToggle() {
   const chips = document.querySelectorAll('.chip');
   const panels = document.querySelectorAll('.overlay-panel');
 
   chips.forEach(chip => {
-    chip.addEventListener('click', async () => {
+    chip.addEventListener('click', async (e) => {
       const targetPanelId = chip.getAttribute('data-panel');
       const targetPanel = document.getElementById(targetPanelId);
       const isCurrentlyActive = chip.classList.contains('is-active');
 
-      // 이미 활성화된 칩을 다시 클릭한 경우
+      // 1. 모든 칩/패널 비활성화 (초기화)
+      chips.forEach(c => c.classList.remove('is-active'));
+      panels.forEach(panel => {
+        panel.classList.remove('is-active');
+        // 패널 닫을 때 인라인 스타일(위치값) 청소 -> 모바일 등에서 꼬임 방지
+        panel.style.top = ''; 
+        panel.style.left = '';
+      });
+
+      // 2. 이미 활성화된 걸 눌렀다면 닫고 끝냄
       if (isCurrentlyActive) {
-        // 칩과 패널 모두 비활성화
-        chip.classList.remove('is-active');
-        if (targetPanel) {
-          targetPanel.classList.remove('is-active');
+        return; 
+      }
+
+      // 3. 클릭된 칩 활성화
+      chip.classList.add('is-active');
+
+      // 4. 대중교통 차트 데이터 미리 로딩 (옵션)
+      if (targetPanelId === 'panel-transport') {
+        await updateTransportTotalsFromChart();
+      }
+
+      // 5. 패널 위치 계산 및 표시
+      if (targetPanel) {
+        // [핵심] PC 화면(768px 초과)일 때만 버튼 위치 따라가기
+        if (window.innerWidth > 768) {
+          const rect = chip.getBoundingClientRect(); // 버튼의 화면상 좌표 Get
+          
+          // (1) 버튼 바로 아래 + 20px 간격 (더 내리고 싶으면 숫자를 키우세요)
+          const topPos = rect.bottom + 20; 
+          
+          // (2) 버튼의 왼쪽 라인에 맞춤
+          const leftPos = rect.left;
+
+          targetPanel.style.top = `${topPos}px`;
+          targetPanel.style.left = `${leftPos}px`;
         }
-      } else {
-        // 다른 칩을 클릭한 경우
-        // 모든 칩에서 is-active 제거
-        chips.forEach(c => c.classList.remove('is-active'));
 
-        // 클릭된 칩에 is-active 추가
-        chip.classList.add('is-active');
-
-        // 모든 패널 숨기기
-        panels.forEach(panel => {
-          panel.classList.remove('is-active');
-        });
-
-        // 대중교통 패널인 경우 차트 데이터 미리 불러와서 누적값 업데이트
-        if (targetPanelId === 'panel-transport') {
-          await updateTransportTotalsFromChart();
-        }
-
-        // 선택된 패널만 표시
-        if (targetPanel) {
-          // 약간의 딜레이 후 애니메이션 적용
-          setTimeout(() => {
-            targetPanel.classList.add('is-active');
-          }, 50);
-        }
+        // 애니메이션 딜레이 후 활성화
+        setTimeout(() => {
+          targetPanel.classList.add('is-active');
+        }, 50);
       }
     });
+  });
+  
+  // 윈도우 리사이즈 시 패널 위치 재조정이 필요할 수 있으므로 닫아버림 (UX 깔끔하게)
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      chips.forEach(c => c.classList.remove('is-active'));
+      panels.forEach(p => {
+        p.classList.remove('is-active');
+        p.style.top = '';
+        p.style.left = '';
+      });
+    }
   });
 }
 
