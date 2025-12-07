@@ -20,7 +20,7 @@ INSERT INTO cctv_streams (id, name, stream_url, latitude, longitude) VALUES
     37.500696, 127.036562),
     ('6', '양재역', 'https://strm2.spatic.go.kr/live/208.stream/playlist.m3u8',
     37.484350, 127.033936),
-    ('7', '서초대로', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8',
+    ('7', '서초대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9990_low.stream/playlist.m3u8',
     37.497135, 127.024347),
     ('8', '교대역', 'https://strm3.spatic.go.kr/live/318.stream/playlist.m3u8',
     37.493891, 127.013694)
