@@ -1228,7 +1228,7 @@ function initMap() {
     disableDefaultUI: true,
   });
 
-  // [수정] 지도가 생성되자마자 현재 타겟 구역의 폴리곤 그리기 실행
+  // 지도가 생성되자마자 현재 타겟 구역의 폴리곤 그리기 실행
   drawAreaPolygon(TARGET_AREA_NAME);
 
   // CCTV 데이터 로드 후 마커 추가
@@ -1242,31 +1242,79 @@ function initMap() {
   // 전역 객체 연결
 window.initMap = initMap;
 
-  // 지도 영역 매핑 start ---------
-let currentPolygon = null; // 현재 그려진 폴리곤을 저장할 변수
+// 지도 영역 매핑 -----------------------------------------
+
+  // [헬퍼 함수] 방향 계산 (시계방향인지 판별)
+function getSignedArea(path) {
+  let sum = 0;
+  for (let i = 0; i < path.length; i++) {
+    const cur = path[i];
+    const next = path[(i + 1) % path.length];
+    sum += (next.lng - cur.lng) * (next.lat + cur.lat);
+  }
+  return sum;
+}
+
+  // 로컬 마스크 방식 (화면 깨짐 해결 + 완벽한 구멍)
+let currentPolygon = null;
+let currentMask = null;
+let maskPolygons = []; 
 
 function drawAreaPolygon(areaName) {
-  if (currentPolygon) {
-    currentPolygon.setMap(null);
+  // 1. 기존 오버레이 제거
+  if (currentPolygon) { currentPolygon.setMap(null); currentPolygon = null; }
+  if (currentMask) { currentMask.setMap(null); currentMask = null; }
+  if (maskPolygons.length > 0) { maskPolygons.forEach(p => p.setMap(null)); maskPolygons = []; }
+  map.data.forEach(f => map.data.remove(f));
+
+  // 2. 데이터 가져오기
+  const rawPath = AREA_PATHS[areaName];
+  if (!rawPath) return;
+
+  // 원본 데이터 복사
+  let innerPath = JSON.parse(JSON.stringify(rawPath));
+
+  // 3. 바깥 배경 설정 (타겟 주변 0.5도 범위)
+  const boundsBuffer = 0.5; 
+  const center = rawPath[0]; 
+  
+  const outerPath = [
+    { lat: center.lat + boundsBuffer, lng: center.lng - boundsBuffer }, // 좌상
+    { lat: center.lat + boundsBuffer, lng: center.lng + boundsBuffer }, // 우상
+    { lat: center.lat - boundsBuffer, lng: center.lng + boundsBuffer }, // 우하
+    { lat: center.lat - boundsBuffer, lng: center.lng - boundsBuffer }, // 좌하
+  ]; 
+
+  // 4. 안쪽 구멍 방향 보정
+  if (getSignedArea(innerPath) > 0) {
+    innerPath.reverse(); 
   }
 
-  const path = AREA_PATHS[areaName];
-  if (!path) return;
-
-  currentPolygon = new google.maps.Polygon({
-    paths: path,
-    strokeColor: "#FF0000",   // 테두리 색상 (빨강)
-    strokeOpacity: 0.8,       // 테두리 투명도
-    strokeWeight: 2,          // 테두리 두께
-    fillColor: "#FF0000",     // 채우기 색상 (빨강)
-    fillOpacity: 0.15,        // 채우기 투명도 (이미지처럼 반투명하게)
+  // 5. 배경 마스킹
+  currentMask = new google.maps.Polygon({
+    paths: [outerPath, innerPath],
+    strokeWeight: 0,
+    fillColor: "#000000",
+    fillOpacity: 0.6,
+    map: map,
+    zIndex: 1,
+    clickable: false
   });
 
-  if (map) {
-    currentPolygon.setMap(map);
-  }
+  // 6. 안쪽 타겟 영역 스타일 변경
+  currentPolygon = new google.maps.Polygon({
+    paths: rawPath,
+    strokeColor: "#000000", // 테두리: 검정색 (Black)
+    strokeOpacity: 1.0,     // 테두리 투명도: 1.0 (선명하게)
+    strokeWeight: 3,        // 테두리 두께: 3 (조금 더 잘 보이게)
+    fillOpacity: 0,         // ★ 핵심: 내부 투명도를 0으로 설정하여 색상 제거
+    map: map,
+    zIndex: 2,
+    clickable: false
+  });
 }
-  // 지도 영역 매핑 end ---------
+
+// 지도 영역 매핑 끝 ------------------------------------
 
 function addCctvMarkers() {
   if (!map || cctvLocations.length === 0) return;
