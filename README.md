@@ -1,14 +1,12 @@
 # DigitalTwin_PipeLine<br><br>
 
-- 디지털트윈을 위한 데이터 동기화 파이프라인(교통)<br><br>
+- 프론트 제외 전부 도커 컨테이너 위에서 동작합니다.<br><br>
 
-	- 프론트 제외 전부 도커 컨테이너 위에서 동작합니다.<br><br>
-
-	- producer_asdf.py (데이터 생성, api별로 존재) -><br><br>
-			spark (데이터 가공 / processor.py) -><br><br>
-			spark (데이터 저장 및 조회 / postgres DB) -><br><br>
-			api_server (api called) -><br><br>
-			front_end (api caller)<br><br>
+- producer_asdf.py (데이터 생성, api별로 존재) -><br><br>
+		spark (데이터 가공 / processor.py) -><br><br>
+		spark (데이터 저장 및 조회 / postgres DB) -><br><br>
+		api_server (api called) -><br><br>
+		front_end (api caller)<br><br>
 
 - 사용법<br>
 	- 프로젝트 클론 후 본인 브랜치로 체크아웃<br><br>
@@ -63,17 +61,17 @@
 
 	- 아예 초기화는 docker system prune --all --volumes<br><br>
 
-	- api 지역 바꿀 경우
-		1. producer_city_data의 TARGET_AREAS에 원하는 지역 추가
+	- api 지역 바꿀 경우<br>
+		producer_city_data의 TARGET_AREAS에 원하는 지역 추가<br><br>
 		
-		2. js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경
+		js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경<br><br>
 
-		3. producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기
+		producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기<br><br>
 
-		4. 대시보드 새로고침
+		대시보드 새로고침<br><br>
 
-		5. 필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
-			DB 체크(SELECT COUNT(*) FROM 테이블명 WHERE area_nm='지역명';)
+		필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
+			DB 체크(SELECT COUNT(*) FROM 테이블명 WHERE area_nm='지역명';)<br><br>
 
 
 - 발생할만한 에러 및 트러블슈팅<br>
