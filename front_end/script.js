@@ -23,16 +23,16 @@ const AREA_META_INFO = {
 // 각 구역의 영역 좌표 (시계 방향 또는 반시계 방향 순서대로 입력)
 const AREA_PATHS = {
   "강남역": [
-    { lat: 37.510624, lng: 127.019734 }, // 좌상단
-    { lat: 37.511467, lng: 127.022783 }, // 우상단
-    { lat: 37.505456, lng: 127.027709 }, // 우하단
-    { lat: 37.503953, lng: 127.022783 }  // 좌하단
+    { lat: 37.503912, lng: 127.022861 },  // 좌상단
+    { lat: 37.505453, lng: 127.028111 },  // 우상단
+    { lat: 37.494186, lng: 127.033755 },  // 우하단
+    { lat: 37.492476, lng: 127.028263 }   // 좌하단
   ],
   "신논현역·논현역": [
-      { lat: 37.503912, lng: 127.022861 },
-      { lat: 37.505453, lng: 127.028111 },
-      { lat: 37.494186, lng: 127.033755 },
-      { lat: 37.492476, lng: 127.028263 }
+    { lat: 37.510624, lng: 127.019734 },
+    { lat: 37.511467, lng: 127.022783 },
+    { lat: 37.505456, lng: 127.027709 },
+    { lat: 37.503953, lng: 127.022783 }
   ],
   "역삼역": [
     { lat: 37.501695, lng: 127.031722 },
@@ -343,32 +343,32 @@ async function fetchPopulationData() {
     document.getElementById("pop-min").textContent = data.ppltn_min.toLocaleString("ko-KR");
     document.getElementById("pop-max").textContent = data.ppltn_max.toLocaleString("ko-KR");
 
-    // (3) 변동률 계산 및 업데이트
-    const popChangeEl = document.getElementById("pop-change");
-    if (popChangeEl && previousPopulationData) {
-      const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
-      const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
-      const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
+    // (3) 예측값 계산 및 업데이트 (현재 안씀)
+    // const popChangeEl = document.getElementById("pop-change");
+    // if (popChangeEl && previousPopulationData) {
+    //   const currentAvg = (data.ppltn_min + data.ppltn_max) / 2;
+    //   const previousAvg = (previousPopulationData.ppltn_min + previousPopulationData.ppltn_max) / 2;
+    //   const changePercent = ((currentAvg - previousAvg) / previousAvg * 100).toFixed(1);
 
-      if (changePercent > 0) {
-        popChangeEl.textContent = `▲ ${changePercent}%`;
-        popChangeEl.style.color = "#dc2626";
-      } else if (changePercent < 0) {
-        popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
-        popChangeEl.style.color = "#2563eb";
-      } else {
-        popChangeEl.textContent = ""; // 0%일 때 빈칸
-      }
+    //   if (changePercent > 0) {
+    //     popChangeEl.textContent = `▲ ${changePercent}%`;
+    //     popChangeEl.style.color = "#dc2626";
+    //   } else if (changePercent < 0) {
+    //     popChangeEl.textContent = `▼ ${Math.abs(changePercent)}%`;
+    //     popChangeEl.style.color = "#2563eb";
+    //   } else {
+    //     popChangeEl.textContent = ""; // 0%일 때 빈칸
+    //   }
 
-    } else if (popChangeEl) {
-      popChangeEl.textContent = ""; 
-    }
+    // } else if (popChangeEl) {
+    //   popChangeEl.textContent = ""; 
+    // }
 
-    // 현재 데이터를 이전 데이터로 저장
-    previousPopulationData = {
-      ppltn_min: data.ppltn_min,
-      ppltn_max: data.ppltn_max
-    };
+    // // 현재 데이터를 이전 데이터로 저장
+    // previousPopulationData = {
+    //   ppltn_min: data.ppltn_min,
+    //   ppltn_max: data.ppltn_max
+    // };
 
     // (4) 갱신 시간 업데이트
     updateTimestamps('population');
@@ -698,18 +698,18 @@ async function fetchTransportData() {
           <div class="public-icon-wrap subway">🚇</div>
           <div class="public-info">
             <div class="public-title">지하철</div>
-            <div class="public-desc">오늘 누적 승하차</div>
+            <div class="public-desc">최근 5분 누적 승하차</div>
           </div>
           <div class="transport-values">
             <div class="transport-row">
               <span class="transport-label-up">승차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="subway-on-total">
                 ${subwayAvg.toLocaleString('ko-KR')}
               </span>
             </div>
             <div class="transport-row">
               <span class="transport-label-down">하차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="subway-off-total">
                 ${subwayOffAvg.toLocaleString('ko-KR')}
               </span>
             </div>
@@ -729,18 +729,18 @@ async function fetchTransportData() {
           <div class="public-icon-wrap bus">🚌</div>
           <div class="public-info">
             <div class="public-title">버스</div>
-            <div class="public-desc">오늘 누적 승하차</div>
+            <div class="public-desc">최근 5분 누적 승하차</div>
           </div>
           <div class="transport-values">
             <div class="transport-row">
               <span class="transport-label-up">승차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="bus-on-total">
                 ${busAvg.toLocaleString('ko-KR')}
               </span>
             </div>
             <div class="transport-row">
               <span class="transport-label-down">하차</span>
-              <span class="transport-number">
+              <span class="transport-number" id="bus-off-total">
                 ${busOffAvg.toLocaleString('ko-KR')}
               </span>
             </div>
@@ -769,6 +769,11 @@ async function fetchTransportData() {
 
 function updateTransportData() {
   fetchTransportData();
+}
+
+// 대중교통 패널 열 때 아무 작업도 하지 않음 (기존 데이터 유지)
+async function updateTransportTotalsFromChart() {
+  console.log('대중교통 패널 열림 - 기존 데이터 유지');
 }
 
 // ---------------- 실시간 돌발정보 ----------------
@@ -1415,45 +1420,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------------- 패널 토글 시스템 ----------------
 
+
 function initPanelToggle() {
   const chips = document.querySelectorAll('.chip');
   const panels = document.querySelectorAll('.overlay-panel');
 
   chips.forEach(chip => {
-    chip.addEventListener('click', () => {
+    chip.addEventListener('click', async (e) => {
       const targetPanelId = chip.getAttribute('data-panel');
       const targetPanel = document.getElementById(targetPanelId);
       const isCurrentlyActive = chip.classList.contains('is-active');
 
-      // 이미 활성화된 칩을 다시 클릭한 경우
+      // 1. 모든 칩/패널 비활성화 (초기화)
+      chips.forEach(c => c.classList.remove('is-active'));
+      panels.forEach(panel => {
+        panel.classList.remove('is-active');
+        // 패널 닫을 때 인라인 스타일(위치값) 청소 -> 모바일 등에서 꼬임 방지
+        panel.style.top = ''; 
+        panel.style.left = '';
+      });
+
+      // 2. 이미 활성화된 걸 눌렀다면 닫고 끝냄
       if (isCurrentlyActive) {
-        // 칩과 패널 모두 비활성화
-        chip.classList.remove('is-active');
-        if (targetPanel) {
-          targetPanel.classList.remove('is-active');
+        return; 
+      }
+
+      // 3. 클릭된 칩 활성화
+      chip.classList.add('is-active');
+
+      // 4. 대중교통 차트 데이터 미리 로딩 (옵션)
+      if (targetPanelId === 'panel-transport') {
+        await updateTransportTotalsFromChart();
+      }
+
+      // 5. 패널 위치 계산 및 표시
+      if (targetPanel) {
+        // [핵심] PC 화면(768px 초과)일 때만 버튼 위치 따라가기
+        if (window.innerWidth > 768) {
+          const rect = chip.getBoundingClientRect(); // 버튼의 화면상 좌표 Get
+          
+          // (1) 버튼 바로 아래 + 20px 간격 (더 내리고 싶으면 숫자를 키우세요)
+          const topPos = rect.bottom + 20; 
+          
+          // (2) 버튼의 왼쪽 라인에 맞춤
+          const leftPos = rect.left;
+
+          targetPanel.style.top = `${topPos}px`;
+          targetPanel.style.left = `${leftPos}px`;
         }
-      } else {
-        // 다른 칩을 클릭한 경우
-        // 모든 칩에서 is-active 제거
-        chips.forEach(c => c.classList.remove('is-active'));
 
-        // 클릭된 칩에 is-active 추가
-        chip.classList.add('is-active');
-
-        // 모든 패널 숨기기
-        panels.forEach(panel => {
-          panel.classList.remove('is-active');
-        });
-
-        // 선택된 패널만 표시
-        if (targetPanel) {
-          // 약간의 딜레이 후 애니메이션 적용
-          setTimeout(() => {
-            targetPanel.classList.add('is-active');
-          }, 50);
-        }
+        // 애니메이션 딜레이 후 활성화
+        setTimeout(() => {
+          targetPanel.classList.add('is-active');
+        }, 50);
       }
     });
+  });
+  
+  // 윈도우 리사이즈 시 패널 위치 재조정이 필요할 수 있으므로 닫아버림 (UX 깔끔하게)
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      chips.forEach(c => c.classList.remove('is-active'));
+      panels.forEach(p => {
+        p.classList.remove('is-active');
+        p.style.top = '';
+        p.style.left = '';
+      });
+    }
   });
 }
 
@@ -1541,8 +1574,8 @@ let transportChart = null; // Chart.js 인스턴스 저장
 async function fetchTransportDetail() {
   const chartContainer = document.querySelector('.chart-container');
 
-  // 로딩 표시
-  chartContainer.innerHTML = '<div class="chart-loading">데이터 로딩 중...</div><canvas id="transportChart"></canvas>';
+  // 캔버스 준비
+  chartContainer.innerHTML = '<canvas id="transportChart"></canvas>';
 
   try {
     // 먼저 현재 승하차 데이터를 사용해서 샘플 그래프 생성
@@ -1593,28 +1626,69 @@ async function fetchTransportDetail() {
       }
     }
 
-    // 시간대별 데이터 추출
-    const timeLabels = data.map(item => {
-      const hour = item.time_slot || item.hour || '00';
-      return `${hour}시`;
+    // 현재 KST 시각 기준 24시간 전부터 현재까지의 시간 레이블 생성
+    const now = new Date();
+    const currentHour = now.getHours();
+    const timeLabels = [];
+
+    // 24시간 전부터 현재까지 (왼쪽이 24시간 전, 오른쪽이 현재)
+    for (let i = 23; i >= 0; i--) {
+      const hour = (currentHour - i + 24) % 24;
+      timeLabels.push(`${String(hour).padStart(2, '0')}시`);
+    }
+
+    // 데이터를 시간순으로 재정렬 (API에서 받은 데이터를 시간 레이블에 맞춰 매핑)
+    const dataMap = {};
+    data.forEach(item => {
+      const hour = String(item.time_slot || item.hour || '00').padStart(2, '0');
+      dataMap[hour] = item;
     });
 
-    const subwayBoardings = data.map(item => {
+    // 시간 레이블에 맞춰 데이터 재정렬 (01~05시는 0으로 고정)
+    const subwayBoardings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const subway = item.subway || {};
       return Math.round((subway.get_on_min + subway.get_on_max) / 2) || 0;
     });
 
-    const subwayAlightings = data.map(item => {
+    const subwayAlightings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const subway = item.subway || {};
       return Math.round((subway.get_off_min + subway.get_off_max) / 2) || 0;
     });
 
-    const busBoardings = data.map(item => {
+    const busBoardings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const bus = item.bus || {};
       return Math.round((bus.get_on_min + bus.get_on_max) / 2) || 0;
     });
 
-    const busAlightings = data.map(item => {
+    const busAlightings = timeLabels.map(label => {
+      const hour = parseInt(label.replace('시', ''));
+      if (hour >= 1 && hour <= 5) return 0; // 01~05시는 0
+
+      const hourStr = String(hour).padStart(2, '0');
+      const item = dataMap[hourStr];
+      if (!item) return 0;
+
       const bus = item.bus || {};
       return Math.round((bus.get_off_min + bus.get_off_max) / 2) || 0;
     });
@@ -1978,7 +2052,7 @@ function resetDashboardUI(areaName) {
   document.getElementById("pop-congest").style = "";
   document.getElementById("pop-min").textContent = "-";
   document.getElementById("pop-max").textContent = "-";
-  document.getElementById("pop-change").textContent = "";
+  // document.getElementById("pop-change").textContent = "";
   document.getElementById("forecast-chart").innerHTML = "";
 
   // 도로 소통
