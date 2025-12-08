@@ -31,19 +31,17 @@
 
 	- [docker app] (프론트는 바로 html 열어서 봐도 됩니다. 필요한 경우에) db 컨테이너의 exec으로 가서 아래의 명령어 입력<br><br>
 		- psql -U user -d traffic_db<br><br>
-		- \dt
+		- \dt<br><br>
 		- SELECT * FROM 테이블명 LIMIT 10;<br><br>
 		- \q<br><br>
 
 	- [terminal] docker compose down<br><br>
 
-	- .yml이나 .sql 등 코어 소스가 아닌 이상 compose 올려놓고 작업해도 바로바로 반영 됩니다
+	- .yml이나 .sql 등 코어 소스가 아닌 이상 compose 올려놓고 작업해도 바로바로 반영 됩니다.<br><br>
 
-	- 다만 볼륨( db의 테이블 및 그 튜플들 등등 )같은경우는 자주 지웠다 썼다 하는경우가 많으니,
+	- 다만 볼륨( db의 테이블 및 그 튜플들 등등 )같은경우는 자주 지웠다 썼다 하는경우가 많으니 이경우는 docker compose down -v 와 docker compose up --build -d 를 자주 사용합니다.<br><br>
 
-	- 이런경우는 docker compose down -v 와 docker compose up --build -d 를 자주 사용합니다.
-
-	- 아예 초기화는 docker system prune --all --volumes
+	- 아예 초기화는 docker system prune --all --volumes<br><br>
 
 - 발생할만한 에러 및 트러블슈팅<br>
 	- 각 컨테이너의 로그에 port 관련 문제가 찍혀있는 경우, 프로젝트 루트의 .yml 파일에서 문제되는 컨테이너의 포트를 바꾸면 해결될 가능성이 높습니다.<br><br>

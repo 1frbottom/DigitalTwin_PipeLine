@@ -28,7 +28,7 @@ def connect_kafka_producer():
             value_serializer=lambda v: json.dumps(v).encode('utf-8'),
             request_timeout_ms=KAFKA_REQUEST_TIMEOUT
         )
-        print("Incident : Kafka Producer에 연결되었습니다.")
+        print("incident : Kafka Producer에 연결되었습니다.")
         return producer
     except Exception as e:
         print(f"Kafka 연결 중 심각한 오류 발생: {e}")
