@@ -1304,10 +1304,10 @@ function drawAreaPolygon(areaName) {
   // 6. 안쪽 타겟 영역 스타일 변경
   currentPolygon = new google.maps.Polygon({
     paths: rawPath,
-    strokeColor: "#000000", // 테두리: 검정색 (Black)
-    strokeOpacity: 1.0,     // 테두리 투명도: 1.0 (선명하게)
-    strokeWeight: 3,        // 테두리 두께: 3 (조금 더 잘 보이게)
-    fillOpacity: 0,         // ★ 핵심: 내부 투명도를 0으로 설정하여 색상 제거
+    strokeColor: "#000000",
+    strokeOpacity: 1.0,
+    strokeWeight: 2,
+    fillOpacity: 0,
     map: map,
     zIndex: 2,
     clickable: false
