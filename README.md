@@ -73,7 +73,8 @@
 
 		5. 필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
 			DB 체크(SELECT COUNT(*) FROM 테이블명 WHERE area_nm='지역명';)
-		```<br>
+		```
+		<br>
 
 
 - 발생할만한 에러 및 트러블슈팅<br>
