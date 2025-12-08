@@ -118,7 +118,7 @@ def main():
                 print(f"city_data : '{area}' 전송 완료.")
             
             # API 호출 속도 조절 (너무 빠르면 차단될 수 있음)
-            time.sleep(2) 
+            time.sleep(1) 
 
         producer.flush() # 한 바퀴 돌고 일괄 전송
         print("city_data : 모든 지역 수집 완료. 60초 대기...")
