@@ -35,182 +35,479 @@ body {
 /* ---------- HEADER ---------- */
 
 .header {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border-soft);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: none;
 }
 
 .header-inner {
-  max-width: 1600px;
+  max-width: 1600;
   margin: 0 auto;
-  padding: 24px 40px 20px 40px;
+  padding: 6px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
+  height: 68px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-.header-content {
+.header-right {
+  margin-left: auto;   /* 오른쪽 끝으로 밀기 */
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
-  justify-content: center;
-  margin-left: -120px; /* 날씨 블록 너비만큼 왼쪽으로 이동하여 중앙 정렬 */
 }
 
 .header-pill {
-  width: 6px;
-  height: 50px;
+  width: 3px;
+  height: 36px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), #4f46e5);
+  background: linear-gradient(180deg, #2f80ed, #4f46e5);
+  flex-shrink: 0;
 }
 
 .header-title {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+  justify-content: center;
 }
 
 .header-title small {
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 9px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-sub);
-  font-weight: 600;
+  color: #9ca3af;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .header-title h1 {
-  font-size: 25px;
+  font-size: 19px;
   margin: 0;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: #111827;
+  line-height: 1.3;
 }
 
-.weather-block {
+/* 날씨 카드 - 모던하고 얇은 디자인 */
+.weather-bar {
+  padding: 10px 16px 12px;
+  border-top: 1px solid #e0e4ea;
+  border-bottom: 1px solid #e0e4ea;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0;
-  background: transparent;
-  border: none;
 }
 
 .weather-icon {
-  font-size: 40px;
+  font-size: 36px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
-.weather-info {
+.weather-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+}
+
+/* 온도 + 미세/초미세 */
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weather-main-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
 }
 
 .weather-temp {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #374151;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.weather-air {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  line-height: 1;
+.weather-air-summary {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.weather-air-summary .air-good {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* 날씨 카드 – 갱신 정보 텍스트 스타일 */
+.weather-meta-row {
+  font-size: 10px;
+  color: #7b8694;
+  line-height: 1.3;
+}
+
+.weather-meta-row span {
+  font-weight: 400;
+  color: #6b7280;
 }
 
 .air-label {
-  color: var(--text-sub);
-  font-weight: 500;
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .air-value {
-  color: var(--accent);
+  color: #2563eb;
   font-weight: 600;
 }
 
 .air-divider {
-  color: var(--border-soft);
+  color: #d1d5db;
   margin: 0 2px;
 }
 
-.header-bar {
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), #4f46e5);
+/* ---------- FLOATING TOP ROW ---------- */
+
+/* 실시간율 + 칩 바를 감싸는 컨테이너 */
+.floating-top-row {
+  position: fixed;
+  top: 75px;
+  left: 20px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 40px);
+}
+
+/* ---------- FLOATING CHIP BAR ---------- */
+
+/* Floating Chip Bar 컨테이너 - 지도 위에 떠 있는 반투명 네비게이션 바 */
+.floating-chip-bar {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: auto;
+
+  /* Frosted Glass 효과 */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* Pill-shaped 디자인 */
+  border-radius: 999px;
+  padding: 6px 8px;
+
+  /* 그림자 효과 - 자연스럽게 지도와 어울리도록 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* 칩 레이아웃 */
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  /* 가로 스크롤 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+
+  /* 최대 너비 제한 */
+  max-width: calc(100vw - 500px);
+  flex: 1;
+
+  /* 부드러운 애니메이션 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 스크롤바 스타일링 */
+.floating-chip-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* hover 시 약간 더 진한 배경 */
+.floating-chip-bar:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 개별 칩 스타일 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.chip:hover {
+  background: rgba(243, 244, 246, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.chip.is-active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+
+.chip-icon {
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.chip-text {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .floating-top-row {
+    top: 60px;
+    left: 12px;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .floating-chip-bar {
+    padding: 5px 6px;
+    gap: 6px;
+    max-width: calc(100vw - 200px);
+  }
+
+  .chip {
+    padding: 7px 14px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .chip-icon {
+    font-size: 14px;
+  }
+
+  .chip-text {
+    font-size: 12px;
+  }
+}
+
+/* ---------- MAP BACKGROUND ---------- */
+
+.map-background {
+  position: fixed;
+  top: 56px; /* 헤더 높이만 고려 (칩바는 floating이므로) */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+#google-map {
+  width: 100%;
+  height: 100%;
 }
 
 /* ---------- LAYOUT ---------- */
 
 .layout {
-  flex: 1 0 auto;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 20px 40px 28px 40px;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
+  position: relative;
+  z-index: 10;
+  padding: 20px;
+  pointer-events: none; /* 패널 외 영역 클릭 방지 해제용 */
 }
 
-.col-left {
-  grid-column: span 12;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* ---------- OVERLAY PANELS (공통 위치/크기) ---------- */
+
+.overlay-panel {
+  position: fixed;
+  z-index: 40;
+  pointer-events: auto;
+
+  /* 모든 패널 공통 위치 */
+  width: 450px;
+  min-width: 320px;
+  min-height: 200px;
+
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  display: none;
 }
 
-.col-center {
-  grid-column: span 12;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.overlay-panel.is-active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.col-right {
-  grid-column: span 12;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* 카드 공통 스타일 강화 */
+.overlay-panel .card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
-@media (min-width: 960px) {
-  .col-left {
-    grid-column: span 2;
+/* 모바일: 바텀 시트 스타일 */
+@media (max-width: 767px) {
+  .header-inner {
+    padding: 8px 16px;
+    height: 52px;
   }
 
-  .col-center {
-    grid-column: span 8;
+  .header-pill {
+    height: 32px;
   }
 
-  .col-right {
-    grid-column: span 2;
+  .header-title h1 {
+    font-size: 17px;
+  }
+
+  .header-title small {
+    font-size: 8px;
+  }
+
+  .weather-card {
+    padding: 6px 12px;
+    margin-right: 0;
+  }
+
+  .weather-icon {
+    font-size: 22px;
+  }
+
+  .weather-temp {
+    font-size: 17px;
+  }
+
+  .weather-air {
+    font-size: 9px;
+  }
+
+  .overlay-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .overlay-panel.is-active {
+    transform: translateY(0);
+  }
+
+  .overlay-panel .card {
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+  }
+
+  .card {
+    padding: 16px;
+    max-width: 100%;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .card-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .people-main .range-value {
+    font-size: 24px;
+  }
+
+  .people-main .range-value #pop-min,
+  .people-main .range-value #pop-max {
+    font-size: 24px;
+  }
+
+  .card-subway .card-body,
+  .card-incidents .card-body {
+    max-height: 250px;
+    margin: 0 -16px;
+    padding: 0 16px;
   }
 }
 
 /* ---------- CARD BASE ---------- */
 
 .card {
-  background: var(--card);
+  background: #FFFFFF;
   border-radius: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.04);
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
-  padding: 10px 14px 12px 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03);
+  padding: 16px;
+  max-width: 400px;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 대중교통 카드: 상세보기 열릴 때 너비 확장 */
+#card-transport.detail-expanded {
+  max-width: 600px;
+}
+
+.card:hover {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
 }
 
 .card-muted {
   background: var(--card-muted);
   border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .card-header {
@@ -218,24 +515,27 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F0F0F0;
 }
 
 .card-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-sub);
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  text-transform: none;
 }
 
 .tag {
-  font-size: 10px;
-  padding: 2px 8px;
+  font-size: 11px;
+  padding: 4px 12px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: #1d4ed8;
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .tag-amber {
@@ -245,7 +545,12 @@ body {
 
 .tag-danger {
   background: #fee2e2;
-  color: #b91c1c;
+  color: #dc2626;
+}
+
+.tag-green {
+  background: #dcfce7;
+  color: #16a34a;
 }
 
 .card-body {
@@ -263,20 +568,32 @@ body {
 /* ---------- 카드 갱신 애니메이션 ---------- */
 
 .card-update {
-  animation: cardFlash 0.6s ease-out;
+  animation: cardFlash 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes cardFlash {
   0% {
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
-    transform: translateY(0) scale(1);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+    transform: scale(1);
   }
-  30% {
-    box-shadow: 0 0 30px rgba(47, 128, 237, 0.5), 0 10px 35px rgba(15, 23, 42, 0.1);
-    transform: translateY(-2px) scale(1.005);
+  50% {
+    box-shadow: 0 0 30px rgba(47, 128, 237, 0.4), 0 20px 40px rgba(15, 23, 42, 0.12);
+    transform: scale(0.98);
   }
   100% {
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+    transform: scale(1);
+  }
+}
+
+/* 카드 진입 애니메이션 */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
@@ -284,14 +601,14 @@ body {
 /* ---------- 카드 갱신 시간 표시 ---------- */
 
 .card-timestamp-row {
-  border-top: 1px solid rgba(209, 213, 219, 0.5);
-  padding-top: 6px;
-  margin-top: 8px;
+  border-top: 1px solid #F0F0F0;
+  padding-top: 10px;
+  margin-top: 12px;
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  color: var(--text-sub);
-  font-weight: 500;
+  font-size: 9px;
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .card-timestamp-row .last-refresh,
@@ -303,36 +620,64 @@ body {
 
 .card-timestamp-row .last-refresh span,
 .card-timestamp-row .next-refresh span {
-  color: var(--text-main);
-  font-weight: 600;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* ---------- LEFT COLUMN CARDS ---------- */
+/* ---------- 실시간 인구수 카드 ---------- */
+
+.card-population .card-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.card-population .card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-transform: none;
+  letter-spacing: -0.02em;
+}
 
 .people-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 8px;
-  margin-top: 6px;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .people-main .range-label {
   font-size: 11px;
-  color: var(--text-sub);
+  color: #9ca3af;
+  font-weight: 500;
+  margin-bottom: 6px;
 }
 
 .people-main .range-value {
-  margin-top: 4px;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.people-main .range-value #pop-min,
+.people-main .range-value #pop-max {
+  font-size: 26px;
+  font-weight: 800;
   color: var(--text-main);
 }
 
-.people-main .range-value span {
-  font-size: 14px;
+.people-main .range-value .range-separator {
+  font-size: 28px;
   font-weight: 400;
   color: #9ca3af;
+  margin: 0 3px;
+}
+
+.people-main .range-value .range-unit {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-left: 3px;
 }
 
 .icon-badge {
@@ -347,14 +692,15 @@ body {
 }
 
 .people-footer {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(209, 213, 219, 0.7);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
   font-size: 11px;
   display: flex;
   align-items: center;
   gap: 6px;
   color: var(--text-sub);
+  font-weight: 500;
 }
 
 .dot {
@@ -365,58 +711,123 @@ body {
 }
 
 .traffic-bar-wrap {
-  margin-top: 10px;
+  margin-top: 16px;
 }
 
 .traffic-bar-bg {
   width: 100%;
-  height: 6px;
+  height: 10px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.3);
+  background: #f3f4f6;
   overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .traffic-bar-fg {
   height: 100%;
   width: 50%;
-  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+  transition: width 0.3s ease;
 }
 
-.public-row {
-  margin-top: 8px;
-  display: flex;
-  gap: 10px;
-  font-size: 13px;
-}
-
-.public-item {
+/* 공통 정렬 */
+.public-row-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f3f5;
+  transition: background-color 0.2s ease;
 }
 
-.public-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
+.public-row-line:first-child {
+  padding-top: 0;
+}
+
+.public-row-line:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* 아이콘 래퍼 */
+.public-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.public-icon.bus {
-  background: #e0f2fe;
+.public-icon-wrap.subway {
+  background: #e0e7ff;
+  color: #1e40af;
 }
 
-.public-icon.metro {
-  background: #dcfce7;
+.public-icon-wrap.bus {
+  background: #e9f5ff;
+  color: #2563eb;
 }
 
-.public-meta {
+/* 텍스트 구조 */
+.public-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.public-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.public-desc {
   font-size: 11px;
   color: var(--text-sub);
 }
+
+.public-strong {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* 상태 색 (혼잡도 등) */
+.public-status {
+  font-weight: 700;
+}
+
+.public-mid {
+  color: #f59e0b; /* 노랑/주황 */
+}
+
+.public-high {
+  color: #ef4444;
+}
+
+.public-low {
+  color: #10b981;
+}
+
+/* 오른쪽 값 */
+.public-right {
+  font-size: 12px;
+  color: var(--text-main);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.public-value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
 
 /* ---------- 생활인구 통계 ---------- */
 
@@ -461,143 +872,30 @@ body {
   text-decoration: underline;
 }
 
-/* ---------- CENTER: 디지털트윈 풀사이즈 지도 ---------- */
-
-.dt-map-full {
-  position: relative;
-  width: 100%;
-  height: 600px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-#google-map {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
+/* ---------- 지도 오버레이 버튼 (선택사항) ---------- */
 
 .dt-btn-overlay {
-  position: absolute;
-  right: 16px;
-  top: 16px;
+  position: fixed;
+  z-index: 40;
+  right: 20px;
+  bottom: 20px;
   font-size: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.95);
   color: var(--text-main);
   border: 1px solid var(--border-soft);
-  padding: 8px 14px;
+  padding: 12px 18px;
   cursor: pointer;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   transition: all 0.2s ease;
+  pointer-events: auto;
 }
 
 .dt-btn-overlay:hover {
   background: white;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
-}
-
-/* ---------- CENTER BOTTOM: 안전지수 & 예측 ---------- */
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@media (min-width: 640px) {
-  .grid-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.safety-graph-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 64px;
-  margin-top: 10px;
-}
-
-.safety-bar {
-  flex: 1;
-  border-radius: 999px;
-  background: #fed7aa;
-}
-
-.safety-caption {
-  margin-top: 4px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--text-sub);
-}
-
-.predict-bar-bg {
-  margin-top: 12px;
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-}
-
-.predict-bar-fg {
-  height: 100%;
-  width: 75%;
-  background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
-}
-
-/* ---------- 소매업 매출 현황 ---------- */
-
-.retail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.retail-item {
-  background: var(--bg-soft);
-  border-radius: 12px;
-  padding: 10px;
-  text-align: center;
-}
-
-.retail-category {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.retail-amount {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 4px;
-}
-
-.retail-change {
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.retail-change.positive {
-  color: #10b981;
-}
-
-.retail-change.negative {
-  color: #ef4444;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
 }
 
 /* ---------- RIGHT COLUMN ---------- */
@@ -635,155 +933,320 @@ body {
 .culture-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .culture-item {
-  border-radius: 14px;
-  padding: 8px 10px;
-  background: var(--bg-soft);
-  font-size: 11px;
-}
-
-.culture-title {
-  font-weight: 600;
-  color: #111827;
-}
-
-.culture-meta {
-  margin-top: 2px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  font-size: 10px;
-  color: var(--text-sub);
-}
-
-/* ---------- 공중화장실 위치 ---------- */
-
-.toilet-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.toilet-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-soft);
   border-radius: 12px;
-  padding: 8px 10px;
-}
-
-.toilet-icon {
-  font-size: 20px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #e0f2fe;
-  border-radius: 999px;
-}
-
-.toilet-info {
-  flex: 1;
-}
-
-.toilet-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 2px;
-}
-
-.toilet-meta {
-  font-size: 10px;
-  color: var(--text-sub);
-}
-
-.view-map-btn {
-  width: 100%;
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px solid var(--border-soft);
-  background: var(--card);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #ECECEC;
   transition: all 0.2s ease;
 }
 
-.view-map-btn:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+.culture-item:hover {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.culture-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.culture-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 11px;
+  color: #7E8794;
 }
 
 /* ---------- 실시간 돌발정보 ---------- */
 
+/* 돌발정보 카드 스크롤 컨테이너 */
+.card-incidents .card-body {
+  max-height: 440px;
+  max-width: 800px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 8px;
+}
+
+.card-incidents .card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.card-incidents .card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.card-incidents .card-body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.card-incidents .card-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 .incident-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 18px;
 }
 
 .incident-item {
-  background: var(--bg-soft);
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 14px;
   padding: 10px 12px;
-  border-left: 3px solid var(--warn);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.incident-icon-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* 가운데 내용 */
+.incident-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .incident-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
+  align-items: flex-start;
 }
 
 .incident-type {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;       /* 살짝 줄여서 더 단정하게 */
+  font-weight: 700;
+  color: #333333;        /* 항상 동일한 텍스트 색 */
 }
 
-.incident-time {
-  font-size: 10px;
-  color: var(--text-sub);
+/* 카테고리 도트는 그대로(작게) */
+.incident-type-dot {
+  width: 8px;          /* 7 → 6 (살짝만 더 작게) */
+  height: 8px;
+  border-radius: 999px;
 }
 
-.incident-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.incident-location {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-}
+/* 카테고리별 색상 */
+.incident-type-dot.accident { background: #D9534F; }
+.incident-type-dot.construction { background: #E8A43A; }
+.incident-type-dot.event { background: #0078D4; }
+.incident-type-dot.breakdown { background: #F9B233; }
 
 .incident-detail {
   font-size: 11px;
-  color: var(--text-sub);
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+/* 리스트 왼쪽 기본 padding 제거 */
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  list-style: none;        /* ● 리스트 점 제거 */
+  padding-left: 0 !important; /* ← 왼쪽 여백 문제의 핵심 */
+  margin-left: 0 !important;
+}
+
+/* 오른쪽 상단 시간 */
+.incident-time {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+  white-space: nowrap;
+  margin-top: -2px;
+
+}
+
+/* ---------- 지하철 도착 카드 ---------- */
+
+.subway-line-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+/* 신분당선 배지 전용 폰트 사이즈 조정 */
+.subway-line-badge.subway-line-sinbundang {
+  font-size: 10px;        /* 글자 조금만 줄이기 */
+  letter-spacing: -0.03em;/* 자간 살짝 좁게 해서 더 예쁘게 */
+}
+
+/* 서울 지하철 호선별 공식 색상 */
+.subway-line-1 { background-color: #0052A4; }
+.subway-line-2 { background-color: #2DB400; } /* 공식 2호선 초록색 */
+.subway-line-3 { background-color: #FF8C00; } /* 공식 3호선 주황색 */
+.subway-line-4 { background-color: #00A5DE; }
+.subway-line-5 { background-color: #996CAC; }
+.subway-line-6 { background-color: #CD7C2F; }
+.subway-line-7 { background-color: #747F00; }
+.subway-line-8 { background-color: #E6186C; }
+.subway-line-9 { background-color: #BDB56C; } /* 공식 9호선 베이지골드 */
+
+/* 기타 노선 */
+.subway-line-bundang { background-color: #F5A200; }
+.subway-line-sinbundang { background-color: #D4003B; } /* 공식 신분당선 빨간색 */
+.subway-line-gyeongui { background-color: #77C4A3; }
+.subway-line-airport { background-color: #0090D2; }
+
+/* 지하철 카드 스크롤 컨테이너 */
+.card-subway .card-body {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0 -20px;
+  padding: 0 20px;
+}
+
+.card-subway .card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.card-subway .card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.card-subway .card-body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.card-subway .card-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.subway-arrival-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ECECEC;
+}
+
+.subway-arrival-row:last-child {
+  border-bottom: none;
+}
+
+.subway-arrival-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subway-direction {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
   line-height: 1.4;
 }
 
-/* ---------- 예측 그래프 ---------- */
+.subway-detail {
+  font-size: 11px;
+  color: #7E8794;
+  line-height: 1.4;
+}
+
+.subway-arrival-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.subway-arrival-time.urgent {
+  color: #dc2626;
+}
+
+.subway-arrival-time.soon {
+  color: #ea580c;
+}
+
+.subway-arrival-time.normal {
+  color: #16a34a;
+}
+
+.subway-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #ECECEC;
+}
+
+.subway-section-title:first-child {
+  margin-top: 0;
+}
 
 .forecast-wrap {
-  margin-top: 14px;
-  margin-bottom: 8px;
+  /* 기존 속성 유지 */
+  margin-top: 16px;
+  margin-bottom: 24px; /* 글자가 내려갈 공간 확보 */
+  margin-left: 52px;
+  height: 70px;
+  display: flex;       /* 기존 유지 */
+  gap: 6px;            /* 기존 유지 */
+  position: relative;  /* 기존 유지 */
+  align-items: flex-end; 
+  overflow: visible;   /* [필수] 글자가 박스 밖으로 나가도 보이게 */
+}
+
+/* Y축 눈금선 */
+.grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(229, 231, 235, 0.6);
+  pointer-events: none;
   display: flex;
-  justify-content: space-between;
-  height: 50px;
-  padding: 0 4px;
+  align-items: center;
+}
+
+.grid-line span {
+  position: absolute;
+  left: -48px;
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+  transform: translateY(-50%);
 }
 
 .forecast-item {
@@ -791,24 +1254,66 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  width: 100%;
+  gap: 0;             /* 막대와 글자 사이 간격 제거 */
+  flex: 1;
   height: 100%;
+  position: relative; /* [필수] 자식 요소(글자) 위치의 기준점 */
 }
 
 .bar-graph {
-  width: 8px;
-  border-radius: 4px;
+  width: 100%;
+  max-width: 35px;
+  border-radius: 6px 6px 0 0;
   background-color: #e5e7eb;
-  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 4px;
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+  min-height: 10px; /* 최소 높이를 더 크게 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 그림자 추가로 더 눈에 띄게 */
 }
 
 .time-label {
-  font-size: 10px;
-  color: var(--text-sub);
+  position: absolute; /* [핵심] 흐름에서 이탈시킴 (공간 차지 X) */
+  bottom: -20px;      /* 바닥(0px)보다 20px 더 아래로 내림 */
+  width: 100%;        /* 너비 확보 */
+  text-align: center; /* 가운데 정렬 */
+  
+  /* 폰트 스타일 유지 */
+  font-size: 11px;
+  color: #6b7280;
   font-weight: 500;
-  height: 12px;
+  white-space: nowrap;
+}
+
+/* 대중교통 누적 값 스타일 */
+.transport-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* 각 줄(승차 / 하차) */
+.transport-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* "승차", "하차" 라벨 */
+.transport-label-up {
+  font-size: 11px;
+  color: #ef4444;      /* 연한 회색 */
+}
+
+.transport-label-down {
+  font-size: 11px;
+  color: #2563eb;      /* 연한 회색 */
+}
+
+/* 숫자 부분 */
+.transport-number {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;      /* 짙은 회색(거의 검정) */
 }
 
 /* ---------- HELPERS ---------- */
@@ -820,4 +1325,726 @@ body {
 
 .mt-4 {
   margin-top: 16px;
+}
+
+/* ---------- 도로 소통 단계 게이지 ---------- */
+
+.traffic-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.traffic-text-info {
+  flex: 1;
+}
+
+.traffic-gauge {
+  width: 100%;
+}
+
+.traffic-bar-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.traffic-bar {
+  position: relative;
+  width: 100%; /* 카드 전체 폭의 100% */
+  height: 24px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+/* 3등분 구간 - 비율: 각 33.33% */
+.traffic-segment {
+  height: 100%;
+  flex: 1; /* 균등하게 3등분 */
+}
+
+.traffic-segment-green {
+  background: linear-gradient(90deg, #3CB371, #48C47F);
+}
+
+.traffic-segment-yellow {
+  background: linear-gradient(90deg, #E8A43A, #F0B54D);
+}
+
+.traffic-segment-red {
+  background: linear-gradient(90deg, #D9534F, #E36762);
+}
+
+/* 포인터 */
+.traffic-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%; /* 기본값: 서행 구간 */
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 3px solid #ffffff;
+  background: #111827;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transform: translate(-50%, -50%);
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+/* 레이블 */
+.traffic-labels {
+  margin-top: 10px;
+  width: 100%; /* 막대와 동일한 너비 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 4px;
+}
+
+.traffic-labels span:nth-child(1) {
+  flex: 1;
+  text-align: left;
+  background: linear-gradient(90deg, #3CB371, #48C47F);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.traffic-labels span:nth-child(2) {
+  flex: 1;
+  text-align: center;
+  background: linear-gradient(90deg, #E8A43A, #F0B54D);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.traffic-labels span:nth-child(3) {
+  flex: 1;
+  text-align: right;
+  background: linear-gradient(90deg, #D9534F, #E36762);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* ---------- 2D/3D 변환 버튼 ---------- */
+
+.map-toggle-3d-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 45;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-toggle-3d-btn:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.map-toggle-3d-btn:active {
+  transform: translateY(0);
+}
+
+.map-toggle-3d-btn .btn-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.map-toggle-3d-btn .btn-text {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* 3D 모드일 때 버튼 스타일 */
+.map-toggle-3d-btn.is-3d {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.map-toggle-3d-btn.is-3d:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .map-toggle-3d-btn {
+    bottom: 70px;
+    right: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .map-toggle-3d-btn .btn-icon {
+    font-size: 16px;
+  }
+
+  .map-toggle-3d-btn .btn-text {
+    font-size: 12px;
+  }
+}
+
+/* ---------- 토글 버튼 갱신 애니메이션 ---------- */
+
+/* 토글 버튼 발광 효과 */
+@keyframes chipPulse {
+  0% {
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(37, 99, 235, 0.6),
+                0 0 60px rgba(37, 99, 235, 0.4),
+                0 8px 24px rgba(37, 99, 235, 0.3);
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+    transform: scale(1);
+  }
+}
+
+/* 테두리 발광 효과 */
+@keyframes chipBorderGlow {
+  0%, 100% {
+    background: rgba(255, 255, 255, 0.75);
+  }
+  50% {
+    background: rgba(37, 99, 235, 0.2);
+  }
+}
+
+/* 애니메이션 적용 클래스 */
+.chip-update {
+  animation:
+    chipPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    chipBorderGlow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- 대중교통 상세 그래프 ---------- */
+
+.transport-detail-section {
+  margin-top: 12px;
+  padding: 14px 16px 16px;
+  background: #f9fafb;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 600px;
+  }
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.detail-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: none;
+  color: #ef4444;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.detail-close-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 260px;
+  margin: 8px 0 10px;
+  background: transparent;
+  border-radius: 12px;
+  padding: 8px 4px;
+}
+
+#transportChart {
+  width: 100% !important;
+  height: 260px !important;
+}
+
+.chart-legend {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 로딩 상태 */
+.chart-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 240px;
+  }
+
+  .chart-legend {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* -------------------- 실시간율 배지 -------------------- */
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #ffffff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 3px solid rgba(37,99,235,0.4);
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 점멸하는 상태 표시등 */
+.status-indicator {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--safe);
+  z-index: 2;
+  transition: background-color 0.3s ease;
+}
+
+/* 퍼지는 애니메이션 (pulse) */
+.status-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--safe);
+  opacity: 0.5;
+  z-index: 1;
+  animation: pulse 2s infinite;
+  transition: background-color 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  70% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* 실시간율 박스 반짝이는 효과 */
+.system-status.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.system-status.shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 120%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.5) 25%,
+    rgba(255,255,255,1) 50%,
+    rgba(255,255,255,0.5) 75%,
+    rgba(255,255,255,0) 100%
+  );
+  animation: shineFrame 0.7s ease-out forwards;
+  filter: blur(1px);
+}
+
+@keyframes shineFrame {
+  0% { left: -150%; }
+  100% { left: 180%; }
+}
+
+.status-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1;
+}
+
+.status-label {
+  color: var(--text-sub);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.status-value {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 16px;
+  min-width: 42px;
+  text-align: right;
+}
+
+/* 상태별 색상 클래스 (JS 연동) */
+.status-safe .status-dot,
+.status-safe .status-pulse {
+  background: var(--safe);
+}
+
+.status-safe {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15), 0 0 0 0 rgba(16, 185, 129, 0.4);
+  animation: borderPulseSafe 2s ease-in-out infinite;
+}
+
+.status-warn .status-dot,
+.status-warn .status-pulse {
+  background: var(--warn);
+}
+
+.status-warn {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15), 0 0 0 0 rgba(245, 158, 11, 0.4);
+  animation: borderPulseWarn 2s ease-in-out infinite;
+}
+
+.status-danger .status-dot,
+.status-danger .status-pulse {
+  background: var(--danger);
+}
+
+.status-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15), 0 0 0 0 rgba(239, 68, 68, 0.4);
+  animation: borderPulseDanger 2s ease-in-out infinite;
+}
+
+/* 테두리 펄스 애니메이션 */
+@keyframes borderPulseSafe {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15), 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25), 0 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes borderPulseWarn {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15), 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25), 0 0 0 4px rgba(245, 158, 11, 0.2);
+  }
+}
+
+@keyframes borderPulseDanger {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15), 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25), 0 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* -------------------- CCTV 모달 -------------------- */
+.cctv-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.cctv-modal.is-open {
+  display: flex;
+}
+
+.cctv-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.cctv-modal-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  overflow: hidden;
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cctv-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cctv-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.cctv-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: none;
+  color: #ef4444;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cctv-modal-close:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.cctv-modal-body {
+  padding: 20px;
+}
+
+.cctv-video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cctv-video-container video,
+.cctv-video-container iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cctv-loading {
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+}
+
+.cctv-error {
+  color: #ef4444;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* multi area_nm test ------------------------ */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 강남역 드롭다운 래퍼 */
+.location-dropdown {
+  position: relative;
+  z-index: 250; 
+}
+
+/* 강남역 버튼 (기존 헤더 타이틀 스타일과 맞추기) */
+.location-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: 24px;      /* h1 크기랑 비슷하게 조정 */
+  font-weight: 700;
+  color: #3366ff;       /* 또는 var(--accent) */
+}
+
+/* 작은 화살표 아이콘 */
+.location-trigger .chevron {
+  font-size: 16px;
+  transform: translateY(1px);
+  color: #9ca3af;       /* 살짝 연한 회색 */
+}
+
+/* 드롭다운 메뉴 카드 */
+.location-menu {
+  position: absolute;
+  top: 120%;            /* 버튼 바로 아래쪽 */
+  left: 0;
+
+  min-width: 160px;
+  padding: 6px 0;
+
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+
+  display: none;        /* 기본은 숨김 */
+  z-index: 300;
+}
+
+/* 각 메뉴 아이템 */
+.location-item {
+  width: 100%;
+  padding: 8px 14px;
+
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: 15px;
+  color: #111827;
+}
+
+/* 호버 시 배경 */
+.location-item:hover {
+  background: #f3f4ff;
+}
+
+/* 선택된 위치 강조 */
+.location-item.active {
+  font-weight: 600;
+  color: #3366ff;         /* var(--accent) */
+}
+
+.location-select {
+  display: none;
 }

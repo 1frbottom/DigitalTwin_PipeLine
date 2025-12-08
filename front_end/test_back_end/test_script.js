@@ -1,13 +1,12 @@
-// ========================================
-// 설정
-// ========================================
+// Config
+const API_BASE_URL = "http://localhost:58000";
+
 const CONFIG = {
     AUTO_LOAD_CCTV: true,  // CCTV 자동 로드 (false로 변경하면 비활성화)
     AUTO_PLAY_CCTV: true   // CCTV 자동 재생 (false로 변경하면 비활성화)
 };
 
-// const API_BASE_URL = `http://${window.location.hostname}:8000`;
-const API_BASE_URL = `http://localhost:8000`;
+// ------------------------------------------------------------------------
 
 async function fetchAPI(endpoint, params = {}) {
     try {
@@ -21,7 +20,7 @@ async function fetchAPI(endpoint, params = {}) {
     } catch (error) {
         return { status: 'error', error: error.message };
     }
-}
+}   
 
 // 1. 헬스 체크
 async function getHealth() {
@@ -577,8 +576,222 @@ async function getSubwayPassengerCumulative() {
     }
 }
 
+// 8. 실시간 기상 현황 조회 (GET /city/weather/current)
+async function getCityWeatherCurrent() {
+    const resultDiv = document.getElementById('weather-current-response');
+    const uiDiv = document.getElementById('weather-current-ui');
+    const statusDiv = document.getElementById('weather-current-status');
+    const areaName = document.getElementById('weatherAreaName').value;
 
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
 
+    // 초기화
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    uiDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    const result = await fetchAPI('/city/weather/current', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        resultDiv.innerHTML = `<span class="success">데이터 수신 완료</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        const item = result.data;
+        const timeStr = new Date(item.weather_time).toLocaleString('ko-KR', { hour12: false });
+
+        // 간단한 요약 테이블 생성
+        let html = `
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <tr>
+                    <th style="width: 20%;">항목</th>
+                    <th>내용</th>
+                </tr>
+                <tr>
+                    <td>기준 시간</td>
+                    <td>${timeStr}</td>
+                </tr>
+                <tr>
+                    <td>온도</td>
+                    <td><strong>${item.temp} ℃</strong> (최저 ${item.min_temp} / 최고 ${item.max_temp})</td>
+                </tr>
+                <tr>
+                    <td>습도</td>
+                    <td>${item.humidity} %</td>
+                </tr>
+                <tr>
+                    <td>강수 정보</td>
+                    <td>${item.precpt_type} (강수량: ${item.precipitation === '-' ? '0' : item.precipitation})</td>
+                </tr>
+                <tr>
+                    <td>미세먼지</td>
+                    <td>${item.air_idx} (${item.air_idx_main})</td>
+                </tr>
+                <tr>
+                    <td>메시지</td>
+                    <td>${item.pcp_msg || '-'}</td>
+                </tr>
+            </table>
+        `;
+        uiDiv.innerHTML = html;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+    }
+}
+
+// 8-1. 기상 예측 조회 (GET /city/weather/forecast)
+async function getCityWeatherForecast() {
+    const resultDiv = document.getElementById('weather-forecast-response');
+    const tableDiv = document.getElementById('weather-forecast-table');
+    const statusDiv = document.getElementById('weather-forecast-status');
+    const areaName = document.getElementById('weatherAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    tableDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    const result = await fetchAPI('/city/weather/forecast', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        if (result.data.length === 0) {
+            resultDiv.innerHTML = `<span class="success">데이터가 없습니다.</span>`;
+            return;
+        }
+
+        resultDiv.innerHTML = `<span class="success">데이터 개수: ${result.data.length}</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        // 예측 테이블 생성
+        let tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>예측 시간</th>
+                        <th>기온</th>
+                        <th>강수 확률</th>
+                        <th>강수 형태</th>
+                        <th>강수량</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        result.data.forEach(item => {
+            const fcstTime = new Date(item.fcst_dt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            tableHTML += `
+                <tr>
+                    <td>${fcstTime}</td>
+                    <td>${item.temp} ℃</td>
+                    <td>${item.rain_chance} %</td>
+                    <td>${item.precpt_type}</td>
+                    <td>${item.precipitation === '-' ? '-' : item.precipitation}</td>
+                </tr>`;
+        });
+
+        tableHTML += `</tbody></table>`;
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        resultDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
+
+// 8. 문화행사 현황 조회
+async function getCulturalEvents() {
+    const resultDiv = document.getElementById('cultural-response');
+    const tableDiv = document.getElementById('cultural-table');
+    const statusDiv = document.getElementById('cultural-status');
+    const countDiv = document.getElementById('cultural-count');
+    const areaName = document.getElementById('culturalAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    resultDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    resultDiv.style.display = 'block';
+    tableDiv.innerHTML = '';
+    countDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/city/events/cultural', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        // 데이터가 없는 경우
+        if (!result.data || result.data.length === 0) {
+            countDiv.innerHTML = '<strong>0건</strong>';
+            resultDiv.innerHTML = `<span class="success">현재 진행중인 문화행사가 없습니다.</span>`;
+            return;
+        }
+
+        // 건수 표시
+        countDiv.innerHTML = `<strong>${result.data.length}건</strong>`;
+        resultDiv.innerHTML = `<span class="success">데이터 수신 완료</span>\n\n${JSON.stringify(result.data, null, 2)}`;
+
+        // 테이블 생성
+        let tableHTML = `
+            <table>
+                <tr>
+                    <th style="width: 35%;">행사명</th>
+                    <th style="width: 20%;">기간</th>
+                    <th style="width: 25%;">장소</th>
+                    <th style="width: 20%;">상세정보</th>
+                </tr>`;
+
+        result.data.forEach(item => {
+            const urlLink = item.url ? `<a href="${item.url}" target="_blank" style="color: var(--color-primary);">바로가기</a>` : '-';
+
+            tableHTML += `
+                <tr>
+                    <td>${item.event_nm || '-'}</td>
+                    <td>${item.event_period || '-'}</td>
+                    <td>${item.event_place || '-'}</td>
+                    <td>${urlLink}</td>
+                </tr>`;
+        });
+        tableHTML += '</table>';
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        // 에러 또는 404인 경우 -> 문화행사 없음으로 처리
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+        countDiv.innerHTML = '<strong>0건</strong>';
+        resultDiv.innerHTML = `<span class="success">현재 진행중인 문화행사가 없습니다.</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
 
 // 8. 대중교통 승하차 누적 현황 차트 (버스/지하철 분리)
 let transitChartInstance = null;

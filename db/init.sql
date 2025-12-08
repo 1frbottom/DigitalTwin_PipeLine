@@ -1,15 +1,30 @@
-CREATE TABLE IF NOT EXISTS cctv_streams (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+CREATE TABLE cctv_streams (
+    id VARCHAR PRIMARY KEY,
+    name VARCHAR NOT NULL,
     stream_url TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    latitude FLOAT,
+    longitude FLOAT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO cctv_streams (id, name, stream_url) VALUES
-    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8'),
-    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8'),
-    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8'),
-    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8')
+INSERT INTO cctv_streams (id, name, stream_url, latitude, longitude) VALUES
+    ('1', '강남역', 'https://strm2.spatic.go.kr/live/207.stream/chunklist_w1500799502.m3u8',
+    37.498222, 127.027833),
+    ('2', '강남대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9999_low.stream/playlist.m3u8',
+    37.501361, 127.026194),
+    ('3', '신논현역', 'https://strm3.spatic.go.kr/live/289.stream/playlist.m3u8',
+    37.504058, 127.024304),
+    ('4', '논현역', 'https://strm2.spatic.go.kr/live/206.stream/playlist.m3u8',
+    37.510832, 127.021142),
+    ('5', '역삼역', 'https://strm4.spatic.go.kr/live/338.stream/playlist.m3u8',
+    37.500696, 127.036562),
+    ('6', '양재역', 'https://strm2.spatic.go.kr/live/208.stream/playlist.m3u8',
+    37.484350, 127.033936),
+    ('7', '서초대로', 'https://kakaocctv-cache.loomex.net/lowStream/_definst_/9990_low.stream/playlist.m3u8',
+    37.497135, 127.024347),
+    ('8', '교대역', 'https://strm3.spatic.go.kr/live/318.stream/playlist.m3u8',
+    37.493891, 127.013694)
+
 ON CONFLICT (id) DO NOTHING;
 
 -- 실시간 돌발정보
@@ -65,6 +80,16 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_proc (
     PRIMARY KEY (area_nm, ppltn_time)
 );
 
+CREATE OR REPLACE RULE ignore_duplicate_city_ppltn AS
+ON INSERT TO city_live_ppltn_proc
+WHERE EXISTS (
+    SELECT 1
+    FROM city_live_ppltn_proc
+    WHERE area_nm = NEW.area_nm
+      AND ppltn_time = NEW.ppltn_time
+)
+DO INSTEAD NOTHING;
+
 -- 실시간 도시데이터 : 인구현황(예측)
 CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     area_nm VARCHAR(50) NOT NULL,
@@ -76,6 +101,17 @@ CREATE TABLE IF NOT EXISTS city_live_ppltn_forecast (
     PRIMARY KEY (area_nm, base_ppltn_time, fcst_time)
 );
 
+CREATE OR REPLACE RULE ignore_duplicate_ppltn_forecast AS
+ON INSERT TO city_live_ppltn_forecast
+WHERE EXISTS (
+    SELECT 1
+    FROM city_live_ppltn_forecast
+    WHERE area_nm = NEW.area_nm
+      AND base_ppltn_time = NEW.base_ppltn_time
+      AND fcst_time = NEW.fcst_time
+)
+DO INSTEAD NOTHING;
+
 -- 실시간 도시데이터 : 도로소통(평균)
 CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     area_nm VARCHAR(50) NOT NULL,
@@ -83,9 +119,52 @@ CREATE TABLE IF NOT EXISTS city_road_traffic_stts_avg (
     road_traffic_idx VARCHAR(50),
     road_traffic_spd INTEGER,
     road_traffic_time TIMESTAMP,
-    ingest_timestamp DOUBLE PRECISION
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, road_traffic_time)
 );
 
+CREATE OR REPLACE RULE ignore_duplicate_road_traffic AS
+ON INSERT TO city_road_traffic_stts_avg
+WHERE EXISTS (
+    SELECT 1
+    FROM city_road_traffic_stts_avg
+    WHERE area_nm = NEW.area_nm
+      AND road_traffic_time = NEW.road_traffic_time
+)
+DO INSTEAD NOTHING;
+
+-- 실시간 도시데이터 : 기상 현황
+CREATE TABLE IF NOT EXISTS city_weather_stts_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    weather_time TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    max_temp DOUBLE PRECISION,
+    min_temp DOUBLE PRECISION,
+    humidity DOUBLE PRECISION,
+    wind_dirct VARCHAR(10),
+    wind_spd DOUBLE PRECISION,
+    precipitation VARCHAR(10),      -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),
+    pcp_msg TEXT,
+    air_idx VARCHAR(50),
+    air_idx_main VARCHAR(50),
+    ingest_timestamp DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (area_nm, weather_time, ingest_timestamp)
+);
+
+-- 실시간 도시데이터 : 기상 현황(예측)
+CREATE TABLE IF NOT EXISTS city_weather_stts_forecast (
+    area_nm VARCHAR(50) NOT NULL,
+    fcst_dt TIMESTAMP NOT NULL,
+    temp DOUBLE PRECISION,
+    precipitation VARCHAR(10),     -- '-'로 들어오는거 문제생길수있음
+    precpt_type VARCHAR(50),    
+    rain_chance INTEGER,
+    ingest_timestamp DOUBLE PRECISION,
+    PRIMARY KEY (area_nm, fcst_dt, ingest_timestamp)
+);
+
+-- 실시간 도시데이터 : 지하철 실시간 도착 현황(sub_stts)
 CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     area_nm VARCHAR(50) NOT NULL,
     station_nm VARCHAR(100) NOT NULL,
@@ -97,12 +176,13 @@ CREATE TABLE IF NOT EXISTS subway_arrival_proc (
     PRIMARY KEY (area_nm, station_nm, line_num, train_line_nm, ingest_timestamp)
 );
 
+-- 실시간 도시데이터 : 대중교통(지하철+버스) 승하차 인구 및 집계 ----------------------------------
 CREATE INDEX idx_subway_station ON subway_arrival_proc(station_nm);
 CREATE INDEX idx_subway_area ON subway_arrival_proc(area_nm);
 CREATE INDEX idx_subway_line ON subway_arrival_proc(line_num);
 CREATE INDEX idx_subway_timestamp ON subway_arrival_proc(ingest_timestamp);
 
--- 5분 단위 Raw 데이터 테이블 (대중교통 통합: 지하철 + 버스)
+    -- 5분 단위 Raw 데이터 테이블
 CREATE TABLE IF NOT EXISTS transit_ppltn_raw (
     area_nm VARCHAR(50) NOT NULL,
     transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
@@ -117,7 +197,7 @@ CREATE INDEX idx_transit_ppltn_raw_area ON transit_ppltn_raw(area_nm);
 CREATE INDEX idx_transit_ppltn_raw_type ON transit_ppltn_raw(transport_type);
 CREATE INDEX idx_transit_ppltn_raw_time ON transit_ppltn_raw(data_time);
 
--- 시간별 집계 테이블 (대중교통 통합)
+    -- 시간별 집계 테이블
 CREATE TABLE IF NOT EXISTS transit_ppltn_proc (
     area_nm VARCHAR(50) NOT NULL,
     transport_type VARCHAR(10) NOT NULL,  -- 'subway' or 'bus'
@@ -140,7 +220,7 @@ CREATE INDEX idx_transit_ppltn_type ON transit_ppltn_proc(transport_type);
 CREATE INDEX idx_transit_ppltn_date ON transit_ppltn_proc(data_date);
 CREATE INDEX idx_transit_ppltn_hour ON transit_ppltn_proc(hour_slot);
 
--- Raw 데이터 INSERT 시 자동 집계 트리거 함수
+    -- Raw 데이터 INSERT 시 자동 집계 트리거 함수
 CREATE OR REPLACE FUNCTION aggregate_transit_ppltn()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -148,8 +228,8 @@ DECLARE
     v_hour_slot INTEGER;
     v_adjusted_time TIMESTAMP;
 BEGIN
-    -- 10분 오프셋 적용하여 날짜와 시간 슬롯 계산
-    v_adjusted_time := NEW.data_time - INTERVAL '10 minutes';
+    -- 5분 오프셋 적용하여 날짜와 시간 슬롯 계산
+    v_adjusted_time := NEW.data_time - INTERVAL '5 minutes';
     v_data_date := v_adjusted_time::DATE;
     v_hour_slot := EXTRACT(HOUR FROM v_adjusted_time);
 
@@ -182,13 +262,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Raw 데이터 INSERT 시 자동 집계 트리거
+    -- Raw 데이터 INSERT 시 자동 집계 트리거
 CREATE TRIGGER trigger_aggregate_transit_ppltn
 AFTER INSERT ON transit_ppltn_raw
 FOR EACH ROW
 EXECUTE FUNCTION aggregate_transit_ppltn();
 
--- 24시간 이전 데이터 자동 삭제 함수
+    -- 24시간 이전 데이터 자동 삭제 함수
 CREATE OR REPLACE FUNCTION delete_old_transit_ppltn()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -198,8 +278,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- INSERT 시마다 24시간 이전 데이터 삭제 트리거
+    -- INSERT 시마다 24시간 이전 데이터 삭제 트리거
 CREATE TRIGGER trigger_delete_old_transit_ppltn
 AFTER INSERT ON transit_ppltn_proc
 FOR EACH STATEMENT
 EXECUTE FUNCTION delete_old_transit_ppltn();
+
+-- 실시간 도시데이터 : 문화행사 현황
+CREATE TABLE IF NOT EXISTS city_cultural_event_proc (
+    area_nm VARCHAR(50) NOT NULL,
+    event_nm TEXT NOT NULL,
+    event_period VARCHAR(100),
+    event_place TEXT,
+    event_x DOUBLE PRECISION,
+    event_y DOUBLE PRECISION,
+    thumbnail TEXT,
+    url TEXT,
+    pay_yn VARCHAR(5),
+    event_etc_detail TEXT,
+    ingest_timestamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (area_nm, event_nm, ingest_timestamp)
+);
+
+CREATE INDEX idx_cultural_event_area ON city_cultural_event_proc(area_nm);
+CREATE INDEX idx_cultural_event_timestamp ON city_cultural_event_proc(ingest_timestamp);
+--------------------------------------------------------------------------------

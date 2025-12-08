@@ -6,6 +6,8 @@ import logging
 from ..cruds import crud_cctv
 from .. import database
 
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -17,6 +19,8 @@ class CCTVStream(BaseModel):
     id: str
     name: str
     stream_url: str
+    latitude: float = None
+    longitude: float = None
 
     class Config:
         from_attributes = True
