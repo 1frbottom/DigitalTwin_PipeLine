@@ -362,8 +362,6 @@ body {
   pointer-events: auto;
 
   /* 모든 패널 공통 위치 */
-  top: 122px; /* 헤더 + floating 칩바 아래 */
-  left: 20px;
   width: 450px;
   min-width: 320px;
   min-height: 200px;
@@ -1217,15 +1215,16 @@ body {
 }
 
 .forecast-wrap {
+  /* 기존 속성 유지 */
   margin-top: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 24px; /* 글자가 내려갈 공간 확보 */
   margin-left: 52px;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
   height: 70px;
-  gap: 6px;
-  position: relative;
+  display: flex;       /* 기존 유지 */
+  gap: 6px;            /* 기존 유지 */
+  position: relative;  /* 기존 유지 */
+  align-items: flex-end; 
+  overflow: visible;   /* [필수] 글자가 박스 밖으로 나가도 보이게 */
 }
 
 /* Y축 눈금선 */
@@ -1255,9 +1254,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 0;             /* 막대와 글자 사이 간격 제거 */
   flex: 1;
   height: 100%;
+  position: relative; /* [필수] 자식 요소(글자) 위치의 기준점 */
 }
 
 .bar-graph {
@@ -1271,11 +1271,18 @@ body {
 }
 
 .time-label {
+  position: absolute; /* [핵심] 흐름에서 이탈시킴 (공간 차지 X) */
+  bottom: -20px;      /* 바닥(0px)보다 20px 더 아래로 내림 */
+  width: 100%;        /* 너비 확보 */
+  text-align: center; /* 가운데 정렬 */
+  
+  /* 폰트 스타일 유지 */
   font-size: 11px;
   color: #6b7280;
   font-weight: 500;
   white-space: nowrap;
 }
+
 /* 대중교통 누적 값 스타일 */
 .transport-values {
   display: flex;
