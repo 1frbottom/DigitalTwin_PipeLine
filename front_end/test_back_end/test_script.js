@@ -326,7 +326,7 @@ async function getCityRoadTraffic() {
         // 테이블 생성
         const item = result.data;
         const timeStr = new Date(item.road_traffic_time).toLocaleString('ko-KR', { hour12: false });
-        
+
         // 소통 상태에 따른 색상 클래스 (간단하게 구현)
         let statusClass = 'status';
         if (item.road_traffic_idx === '정체') statusClass += ' error';
@@ -360,7 +360,7 @@ async function getCityRoadTraffic() {
                     <td>${timeStr}</td>
                 </tr>
             </table>`;
-            
+
         tableDiv.innerHTML = tableHTML;
 
     } else {
@@ -371,8 +371,384 @@ async function getCityRoadTraffic() {
     }
 }
 
+// 6. 지하철 실시간 도착 정보 현황판
+async function getSubwayArrivalBoard() {
+    const boardDiv = document.getElementById('subway-arrival-board');
+    const statusDiv = document.getElementById('subway-arrival-status');
+    const updatedDiv = document.getElementById('subway-arrival-updated');
+    const areaName = document.getElementById('subwayAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    boardDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    updatedDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/subway/arrival/board', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        const data = result.data.data;
+        const updatedAt = result.data.updated_at;
+
+        // 데이터가 없는 경우
+        if (!data || data.length === 0) {
+            boardDiv.innerHTML = `<p style="color: var(--color-text-secondary);">현재 도착 예정인 열차가 없습니다.</p>`;
+            return;
+        }
+
+        // 갱신 시점 표시 (YYYY. MM. DD. HH:mm:ss 형식)
+        const date1 = new Date(updatedAt);
+        const year1 = date1.getFullYear();
+        const month1 = String(date1.getMonth() + 1).padStart(2, '0');
+        const day1 = String(date1.getDate()).padStart(2, '0');
+        const hours1 = String(date1.getHours()).padStart(2, '0');
+        const minutes1 = String(date1.getMinutes()).padStart(2, '0');
+        const seconds1 = String(date1.getSeconds()).padStart(2, '0');
+        const updateTime = `${year1}. ${month1}. ${day1}. ${hours1}:${minutes1}:${seconds1}`;
+        updatedDiv.innerHTML = `<strong>갱신 시점:</strong> ${updateTime}`;
+
+        // 현황판 테이블 생성
+        let boardHTML = `
+            <div class="subway-board">
+                <table class="subway-board-table">
+                    <thead>
+                        <tr>
+                            <th>역명</th>
+                            <th>호선</th>
+                            <th>라인</th>
+                            <th>도착예정</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        data.forEach(item => {
+            const lineNum = item.line_num;
+
+            // 호선 표시 약자 매핑
+            const lineDisplayMap = {
+                '신분당선': '신분',
+                '신분당': '신분',
+                '경의중앙선': '경의',
+                '경의중앙': '경의',
+                '공항철도': '공항',
+                '경춘선': '경춘',
+                '수인분당선': '수분',
+                '수인분당': '수분',
+                '우이신설선': '우이',
+                '우이신설': '우이'
+            };
+            const lineDisplay = lineDisplayMap[lineNum] || lineNum;
+
+            boardHTML += `
+                <tr>
+                    <td><strong>${item.station_nm}</strong></td>
+                    <td><span class="subway-line-circle line-${lineNum}">${lineDisplay}</span></td>
+                    <td class="train-direction">${item.train_line_nm}</td>
+                    <td class="arrival-info"><strong>${item.arrival_msg_1 || '-'}</strong></td>
+                </tr>`;
+        });
+
+        boardHTML += `
+                    </tbody>
+                </table>
+            </div>`;
+
+        boardDiv.innerHTML = boardHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        boardDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        updatedDiv.innerHTML = '';
+    }
+}
+
+// 7. 지하철 시간별 승하차 누적 현황
+async function getSubwayPassengerCumulative() {
+    const tableDiv = document.getElementById('subway-passenger-table');
+    const statusDiv = document.getElementById('subway-passenger-status');
+    const updatedDiv = document.getElementById('subway-passenger-updated');
+    const areaName = document.getElementById('subwayPassengerAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    tableDiv.innerHTML = '<span class="loading">로딩 중...</span>';
+    updatedDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/subway/passenger/cumulative', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        const data = result.data.data;
+        const updatedAt = result.data.updated_at;
+
+        // 데이터가 없는 경우
+        if (!data || data.length === 0) {
+            tableDiv.innerHTML = `<p style="color: var(--color-text-secondary);">해당 지역의 승하차 데이터가 없습니다.</p>`;
+            return;
+        }
+
+        // 갱신 시점 표시 (YYYY. MM. DD. HH:mm:ss 형식)
+        const date2 = new Date(updatedAt);
+        const year2 = date2.getFullYear();
+        const month2 = String(date2.getMonth() + 1).padStart(2, '0');
+        const day2 = String(date2.getDate()).padStart(2, '0');
+        const hours2 = String(date2.getHours()).padStart(2, '0');
+        const minutes2 = String(date2.getMinutes()).padStart(2, '0');
+        const seconds2 = String(date2.getSeconds()).padStart(2, '0');
+        const updateTime = `${year2}. ${month2}. ${day2}. ${hours2}:${minutes2}:${seconds2}`;
+        updatedDiv.innerHTML = `<strong>갱신 시점:</strong> ${updateTime}`;
+
+        // 테이블 생성
+        let tableHTML = `
+            <table class="passenger-table">
+                <thead>
+                    <tr>
+                        <th>시간</th>
+                        <th>승차인원</th>
+                        <th>하차인원</th>
+                        <th>승하차 집중도</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        data.forEach(item => {
+            const getOn = item.get_on_personnel;
+            const getOff = item.get_off_personnel;
+
+            // 승하차 집중도 계산
+            let concentration = '';
+            let concentrationClass = '';
+            if (getOn > getOff) {
+                concentration = '승차집중';
+                concentrationClass = 'concentration-on';
+            } else if (getOn < getOff) {
+                concentration = '하차집중';
+                concentrationClass = 'concentration-off';
+            } else {
+                concentration = '동일';
+                concentrationClass = 'concentration-equal';
+            }
+
+            // 시간 포맷팅 (HH:00 형식)
+            const hour = item.hour.toString().padStart(2, '0');
+            const timeStr = `${hour}:00`;
+
+            tableHTML += `
+                <tr>
+                    <td><strong>${timeStr}</strong></td>
+                    <td class="passenger-count"><strong>${getOn.toLocaleString()}</strong> <span class="count-unit">명</span></td>
+                    <td class="passenger-count"><strong>${getOff.toLocaleString()}</strong> <span class="count-unit">명</span></td>
+                    <td><span class="concentration-badge ${concentrationClass}">${concentration}</span></td>
+                </tr>`;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>`;
+
+        tableDiv.innerHTML = tableHTML;
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        tableDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        updatedDiv.innerHTML = '';
+    }
+}
 
 
+
+
+// 8. 대중교통 승하차 누적 현황 차트 (버스/지하철 분리)
+let transitChartInstance = null;
+
+async function getTransitPassengerChart() {
+    const statusDiv = document.getElementById('transit-chart-status');
+    const updatedDiv = document.getElementById('transit-chart-updated');
+    const tableDiv = document.getElementById('transit-chart-table');
+    const areaName = document.getElementById('transitChartAreaName').value;
+
+    if (!areaName) {
+        alert('지역명을 입력하세요');
+        return;
+    }
+
+    // 초기화
+    updatedDiv.innerHTML = '';
+    tableDiv.innerHTML = '';
+    statusDiv.innerHTML = '로딩 중...';
+    statusDiv.className = 'status loading';
+    statusDiv.style.display = 'inline-block';
+
+    // API 호출
+    const result = await fetchAPI('/subway/passenger/cumulative/chart', { area_name: areaName });
+
+    if (result.status === 200) {
+        statusDiv.innerHTML = '성공';
+        statusDiv.className = 'status success';
+
+        const subwayData = result.data.subway;
+        const busData = result.data.bus;
+        const updatedAt = result.data.updated_at;
+
+        // 데이터가 없는 경우
+        if ((!subwayData || subwayData.length === 0) && (!busData || busData.length === 0)) {
+            updatedDiv.innerHTML = '<p style="color: var(--color-text-secondary);">해당 지역의 승하차 데이터가 없습니다.</p>';
+            return;
+        }
+
+        // 갱신 시점 표시
+        if (updatedAt) {
+            const date = new Date(updatedAt);
+            const updateTime = date.toLocaleString('ko-KR', { hour12: false });
+            updatedDiv.innerHTML = `<strong>갱신 시점:</strong> ${updateTime}`;
+        }
+
+        // 차트 데이터 준비
+        const labels = subwayData.map(item => `${item.hour}시`);
+
+        // 기존 차트 제거
+        if (transitChartInstance) {
+            transitChartInstance.destroy();
+        }
+
+        // 차트 생성
+        const ctx = document.getElementById('transitChart').getContext('2d');
+        transitChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '지하철 승차',
+                        data: subwayData.map(item => item.get_on_personnel),
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '지하철 하차',
+                        data: subwayData.map(item => item.get_off_personnel),
+                        borderColor: '#60A5FA',
+                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '버스 승차',
+                        data: busData.map(item => item.get_on_personnel),
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '버스 하차',
+                        data: busData.map(item => item.get_off_personnel),
+                        borderColor: '#34D399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${areaName} 대중교통 시간별 승하차 누적 현황`,
+                        font: { size: 16, weight: 'bold' },
+                        color: '#E5E7EB'
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#E5E7EB',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}명`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '시간',
+                            color: '#9CA3AF'
+                        },
+                        ticks: { color: '#9CA3AF' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '누적 인원 (명)',
+                            color: '#9CA3AF'
+                        },
+                        ticks: {
+                            color: '#9CA3AF',
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+
+    } else {
+        statusDiv.innerHTML = '실패';
+        statusDiv.className = 'status error';
+        updatedDiv.innerHTML = `<span class="error">Error: ${result.error || JSON.stringify(result.data)}</span>`;
+        tableDiv.innerHTML = '';
+    }
+}
 
 // 페이지 로드 시 자동 실행 (설정에 따라) ---------------------------
 window.addEventListener('DOMContentLoaded', function() {
