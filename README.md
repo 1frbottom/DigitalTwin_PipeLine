@@ -62,15 +62,15 @@
 	- 아예 초기화는 docker system prune --all --volumes<br><br>
 
 	- api 지역 바꿀 경우<br>
-		producer_city_data의 TARGET_AREAS에 원하는 지역 추가<br><br>
+		- producer_city_data의 TARGET_AREAS에 원하는 지역 추가<br><br>
 		
-		js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경<br><br>
+		- js파일의 TARGET_AREA_NAME을 원하는 지역으로 변경<br><br>
 
-		producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기<br><br>
+		- producer 컨테이너 재시작(docker compose restart producer) 후 1~2분 대기<br><br>
 
-		대시보드 새로고침<br><br>
+		- 대시보드 새로고침<br><br>
 
-		필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
+		- 필요시 api 응답 확인(curl "http://localhost:58000/city/events/cultural?area_name=지역명"),
 			DB 체크(SELECT COUNT(*) FROM 테이블명 WHERE area_nm='지역명';)<br><br>
 
 
