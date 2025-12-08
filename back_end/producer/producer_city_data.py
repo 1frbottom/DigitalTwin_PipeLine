@@ -6,6 +6,14 @@ import os
 from kafka import KafkaProducer
 
 
+# 구역 설정
+TARGET_AREAS = [
+    "강남역",
+    "신논현역·논현역",
+    "역삼역",
+    "교대역",
+    "양재역",
+    ]
 
 # Kafka
 KAFKA_SERVERS = ['kafka:29092']
@@ -15,11 +23,8 @@ KAFKA_REQUEST_TIMEOUT = 15000
 # API
 API_KEY = os.environ.get("SEOUL_API_KEY")
 if not API_KEY:
-    print("오류: SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
+    print("[ERROR] city_data : SEOUL_API_KEY 환경 변수가 설정되지 않았습니다.")
     exit()
-
-AREA_NM = "POI014"
-API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/1000/{AREA_NM}"
 
 def connect_kafka_producer():
     """Kafka Producer에 연결을 시도하고, 성공 시 producer 객체를 반환합니다."""
@@ -32,14 +37,17 @@ def connect_kafka_producer():
         print("city_data : Kafka Producer에 연결되었습니다.")
         return producer
     except Exception as e:
-        print(f"city_data : Kafka 연결 중 심각한 오류 발생: {e}")
+        print(f"[ERROR] city_data :  Kafka 연결 중 심각한 오류 발생: {e}")
         time.sleep(5)
         exit()
 
-def fetch_and_parse_city_data():
+def fetch_and_parse_city_data(area_nm):
     """
     도시 데이터를 API로부터 fetch하고 파싱하여 Kafka 메시지 형태로 반환합니다.
     """
+    
+    API_URL = f"http://openapi.seoul.go.kr:8088/{API_KEY}/xml/citydata/1/5/{area_nm}"
+
     try:
         response = requests.get(API_URL, timeout=10)
         response.raise_for_status()
@@ -50,7 +58,7 @@ def fetch_and_parse_city_data():
         # 데이터가 정상적으로 있는지 확인
         if 'SeoulRtd.citydata' not in data or 'CITYDATA' not in data['SeoulRtd.citydata']:
             error_msg = data.get('RESULT', {}).get('MESSAGE', '알 수 없는 응답')
-            print(f"  - API 응답 (데이터 없음 또는 오류): {error_msg}")
+            print(f"[ERROR] city_data : API 응답 (데이터 없음 또는 오류): {error_msg}")
             return None
 
         citydata = data['SeoulRtd.citydata']['CITYDATA']
@@ -58,7 +66,7 @@ def fetch_and_parse_city_data():
         area_cd = citydata.get('AREA_CD')
 
         if not area_nm or not area_cd:
-            print("  - 파싱 오류: AREA_NM 또는 AREA_CD를 찾을 수 없습니다.")
+            print("[ERROR] city_data : 파싱 오류, AREA_NM 또는 AREA_CD를 찾을 수 없습니다.")
             return None
 
         # 원본 테이블 스키마에 맞게 각 섹션을 JSON 문자열로 직렬화
@@ -78,7 +86,7 @@ def fetch_and_parse_city_data():
             'sbike_stts': json.dumps(citydata.get('SBIKE_STTS'), ensure_ascii=False) if citydata.get('SBIKE_STTS') else None,
             'weather_stts': json.dumps(citydata.get('WEATHER_STTS'), ensure_ascii=False) if citydata.get('WEATHER_STTS') else None,
             'charger_stts': json.dumps(citydata.get('CHARGER_STTS'), ensure_ascii=False) if citydata.get('CHARGER_STTS') else None,
-            'event_stts': json.dumps(citydata.get('CULTURALEVENTINFO'), ensure_ascii=False) if citydata.get('CULTURALEVENTINFO') else None,
+            'event_stts': json.dumps(citydata.get('EVENT_STTS'), ensure_ascii=False) if citydata.get('EVENT_STTS') else None,
             'live_cmrcl_stts': json.dumps(citydata.get('LIVE_CMRCL_STTS'), ensure_ascii=False) if citydata.get('LIVE_CMRCL_STTS') else None,
             'live_dst_message': json.dumps(citydata.get('LIVE_DST_MESSAGE'), ensure_ascii=False) if citydata.get('LIVE_DST_MESSAGE') else None,
             'live_yna_news': json.dumps(citydata.get('LIVE_YNA_NEWS'), ensure_ascii=False) if citydata.get('LIVE_YNA_NEWS') else None,
@@ -86,33 +94,39 @@ def fetch_and_parse_city_data():
         return message
 
     except requests.exceptions.RequestException as e:
-        print(f"  - 네트워크 오류 발생: {e}", flush=True)
+        print(f"[ERROR] city_data :네트워크 오류 발생: {e}", flush=True)
     except Exception as e:
-        print(f"  - 처리 중 알 수 없는 오류 발생: {e}", flush=True)
+        print(f"[ERROR] city_data : 처리 중 알 수 없는 오류 발생: {e}", flush=True)
     
     return None
 
 # --- 메인 실행 로직 (Main Execution) ---
 def main():
     producer = connect_kafka_producer()
-    
-    print("city_data : 수집을 시작합니다.")
+    print(f"city_data : 수집 대상 {len(TARGET_AREAS)}곳의 수집을 시작합니다.")
     
     while True:
-        print(f"city_data : {AREA_NM} 데이터 수집 주기 시작")
+        start_time = time.time()
         
-        message = fetch_and_parse_city_data()
-        
-        if message:
-            producer.send(KAFKA_TOPIC, value=message)
-            producer.flush()
-            print(f"city_data : {AREA_NM} 데이터 전송 완료.")
-        else:
-            print(f"city_data : {AREA_NM} 데이터 수신 실패.")
+        for area in TARGET_AREAS:
+            print(f"city_data : '{area}' 데이터 수집 시도...")
+            message = fetch_and_parse_city_data(area)
+            
+            if message:
+                producer.send(KAFKA_TOPIC, value=message)
+                # producer.flush() # 매번 flush하면 느려질 수 있으므로 루프 밖이나 배치 단위 추천 (선택사항)
+                print(f"city_data : '{area}' 전송 완료.")
+            
+            # API 호출 속도 조절 (너무 빠르면 차단될 수 있음)
+            time.sleep(1) 
 
-        # 도시 데이터는 5분(300초) 주기로 수집 (API 정책에 맞게 조절)
-        print("city_data : 300초 후 다시 시작합니다.")
-        time.sleep(300)
+        producer.flush() # 한 바퀴 돌고 일괄 전송
+        print("city_data : 모든 지역 수집 완료. 60초 대기...")
+        
+        # 60초 주기 유지를 위한 로직 (선택사항)
+        elapsed = time.time() - start_time
+        sleep_time = max(0, 60 - elapsed)
+        time.sleep(sleep_time)
 
 if __name__ == "__main__":
     main()

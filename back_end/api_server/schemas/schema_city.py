@@ -40,3 +40,55 @@ class LiveRoadTrafficAvg(Base):
     road_traffic_spd = Column(Integer)
     road_traffic_time = Column(DateTime, primary_key=True)
     ingest_timestamp = Column(Float)
+
+# (4) city_weather_stts_proc 테이블 매핑 (기상 현황)
+class CityWeatherProc(Base):
+    __tablename__ = "city_weather_stts_proc"
+
+    area_nm = Column(String, primary_key=True)
+    weather_time = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    max_temp = Column(Float)
+    min_temp = Column(Float)
+    humidity = Column(Float)
+    wind_dirct = Column(String)
+    wind_spd = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    pcp_msg = Column(Text)
+    air_idx = Column(String)
+    air_idx_main = Column(String)
+    ingest_timestamp = Column(Float, primary_key=True)
+
+# (5) city_weather_stts_forecast 테이블 매핑 (기상 예측)
+class CityWeatherForecast(Base):
+    __tablename__ = "city_weather_stts_forecast"
+
+    area_nm = Column(String, primary_key=True)
+    fcst_dt = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    rain_chance = Column(Integer)
+    ingest_timestamp = Column(Float, primary_key=True)
+
+# (6) city_cultural_event_proc 테이블 매핑
+class CulturalEventProc(Base):
+    __tablename__ = "city_cultural_event_proc"
+
+    area_nm = Column(String, primary_key=True)
+    event_nm = Column(Text, primary_key=True)
+    event_period = Column(String)
+    event_place = Column(Text)
+    url = Column(Text)
+    ingest_timestamp = Column(DateTime, primary_key=True)
+
+# (7) city_data_raw 테이블 매핑 (대중교통 승하차 데이터용)
+class CityDataRaw(Base):
+    __tablename__ = "city_data_raw"
+
+    area_nm = Column(String, primary_key=True)
+    area_cd = Column(String)
+    timestamp = Column(Float, primary_key=True)
+    live_sub_ppltn = Column(Text)
+    live_bus_ppltn = Column(Text)
