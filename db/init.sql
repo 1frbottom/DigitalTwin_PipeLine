@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS traffic_incidents (
     timestamp DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (acc_id, timestamp)
 );
+ALTER TABLE traffic_incidents ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
 
 -- 실시간 도시데이터
 CREATE TABLE IF NOT EXISTS city_data_raw (
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS city_data_raw (
     live_yna_news TEXT,
     PRIMARY KEY (area_nm, timestamp)
 );
+ALTER TABLE city_data_raw ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
 
 -- 실시간 도시데이터 : 인구현황
 CREATE TABLE IF NOT EXISTS city_live_ppltn_proc (
