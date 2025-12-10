@@ -2,6 +2,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
+    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -9,6 +10,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
+    restart: unless-stopped
     ports:
       - "${HOST_PORT_KAFKA}:9092"
     depends_on:
@@ -47,6 +49,7 @@ services:
   db:
     image: postgres:13
     container_name: db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -59,6 +62,7 @@ services:
   spark-master:
     image: apache/spark:3.5.1
     container_name: spark-master
+    restart: unless-stopped
     user: root
     ports:
       - "${HOST_PORT_SPARK_UI}:8080"
@@ -68,6 +72,7 @@ services:
   spark-worker:
     image: apache/spark:3.5.1
     container_name: spark-worker
+    restart: unless-stopped
     user: root
     depends_on:
       - spark-master
@@ -96,6 +101,7 @@ services:
   producer:
     image: python:3.9-slim
     container_name: producer
+    restart: unless-stopped
     depends_on:
       kafka:
         condition: service_healthy
@@ -116,6 +122,7 @@ services:
   api-server:
     image: python:3.9-slim
     container_name: api-server
+    restart: unless-stopped
     depends_on:
       - db
     volumes:
@@ -136,6 +143,7 @@ services:
   frontend:
     image: nginx:alpine
     container_name: frontend
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:

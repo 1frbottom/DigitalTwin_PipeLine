@@ -109,7 +109,7 @@ const REFRESH_INTERVALS = {
   incidents: 60000,       // 1분
 
   // 인구현황
-  population: 60000,      // 1분
+  population: 300000,     // 5분
 
   // 도로소통
   traffic: 300000,        // 5분
@@ -121,7 +121,7 @@ const REFRESH_INTERVALS = {
   transport: 300000,      // 5분
 
   // 기상현황
-  weather: 600000,        // 10분
+  weather: 300000,        // 5분
 
   //문화행사
   culture: 3600000,       // 1시간
