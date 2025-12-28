@@ -15,7 +15,7 @@
 - 데이터 발생부터 적재까지 평균 레이턴시 **1.2초~1.8초** 달성 및 확장성 보장<br><br>
 
 ### 기여
-- 디지털 트윈의 핵심인 '실시간성(Real-time)' 확보 및 동기화 상태를 판단하는 '실시간율(Freshness)' 로직 도입<br><br><br>
+- 디지털 트윈의 핵심인 '실시간성(Real-time)' 확보 및 동기화 상태를 판단하는 실시간율 로직 도입<br><br><br>
 
 ## **2. 시스템 아키텍처**
 <img width="1222" height="670" alt="image" src="https://github.com/user-attachments/assets/6be6be4b-c28c-4352-9451-7fdfe8dfaf2a" /><br><br>
@@ -35,7 +35,7 @@
 5.  Service (FastAPI & Frontend)
 	- 적재된 데이터를 시각화하고 모니터링하는 대시보드 제공<br><br>
 
-_전체 시스템은 Docker Container 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다._<br><br>
+_<small>전체 시스템은 Docker Container 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다.</small>_<br><br>
 
 ## 3. 기술 스택
 
