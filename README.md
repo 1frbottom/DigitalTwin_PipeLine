@@ -35,7 +35,7 @@
 5.  Service (FastAPI & Frontend)
 	- 적재된 데이터를 시각화하고 모니터링하는 대시보드 제공<br><br>
 
-_<small>전체 시스템은 Docker Container 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다.</small>_<br><br>
+<small><i>전체 시스템은 Docker Container 환경에서 MSA와 유사한 구조로 동작합니다.</i></small><br><br>
 
 ## 3. 기술 스택
 
