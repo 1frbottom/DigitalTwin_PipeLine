@@ -35,17 +35,28 @@
 5.  Service (FastAPI & Frontend)
 	- 적재된 데이터를 시각화하고 모니터링하는 대시보드 제공<br><br>
 
-_전체 시스템은 **Docker Container** 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다._<br><br>
+_전체 시스템은 Docker Container 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다._<br><br>
 
 ## 3. 기술 스택
 
-| **Infra & DevOps** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) | 컨테이너 기반 환경 격리 및 배포 |<br>
-| **Data Engineering** | ![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20?style=flat&logo=apachekafka&logoColor=white) ![Apache Spark](https://img.shields.io/badge/Apache%20Spark-E25A1C?style=flat&logo=apachespark&logoColor=white) | 실시간 스트리밍 데이터 파이프라인 구축 |<br>
-| **Backend** | ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white) | 비동기 API 서버 및 데이터 프로듀서 구현 |<br>
-| **Database** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white) | 관계형 데이터베이스 및 시공간 데이터 저장 |<br>
-| **Frontend** | HTML/JS/CSS | 실시간 데이터 모니터링 대시보드 |<br>
+**Infra & DevOps**
+	- Docker : 컨테이너 기반 환경 격리 및 배포<br>
+	
+**Data Engineering**
+	- Apache Kafka & Spark : 실시간 스트리밍 데이터 파이프라인 구축 <br>
+	
+**Backend**
+	- Python, FastAPI : 비동기 API 서버 및 데이터 프로듀서 구현 <br>
+	
+**DBMS**
+	- PostgreSQL : 관계형 데이터베이스 및 시공간 데이터 저장 <br>
+	
+**Frontend**
+	- HTML/JS/CSS : 실시간 데이터 모니터링 대시보드 <br><br>
 
 ## 4. 설치 및 실행 (개발자용)
+
+<br>
 
 - 프론트 제외 전부 도커 컨테이너 위에서 동작합니다.<br><br>
 
