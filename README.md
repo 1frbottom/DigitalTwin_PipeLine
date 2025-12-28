@@ -39,19 +39,19 @@
 
 ## 3. 기술 스택
 
-**Infra & DevOps**
+**Infra & DevOps**<br>
 	- Docker : 컨테이너 기반 환경 격리 및 배포<br>
 	
-**Data Engineering**
+**Data Engineering**<br>
 	- Apache Kafka & Spark : 실시간 스트리밍 데이터 파이프라인 구축 <br>
 	
-**Backend**
+**Backend**<br>
 	- Python, FastAPI : 비동기 API 서버 및 데이터 프로듀서 구현 <br>
 	
-**DBMS**
+**DBMS**<br>
 	- PostgreSQL : 관계형 데이터베이스 및 시공간 데이터 저장 <br>
 	
-**Frontend**
+**Frontend**<br>
 	- HTML/JS/CSS : 실시간 데이터 모니터링 대시보드 <br><br>
 
 ## 4. 설치 및 실행 (개발자용)
