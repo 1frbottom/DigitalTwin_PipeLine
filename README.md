@@ -1,4 +1,35 @@
-# DigitalTwin_PipeLine<br><br>
+# Digital Twin Data Synchronization Pipeline<br><br>
+
+> **공개 데이터 기반 현실 교통 정보 실시간 동기화 파이프라인 개발**
+
+## 1. 프로젝트 개요
+
+- 현재 디지털 트윈 기술은 시각적 가시화(Unity, Unreal)에 집중되어 있어, 현실 데이터와의 동기화가 미비하거나 실시간성이 부족한 문제가 있습니다. 본 프로젝트는 이 문제를 개선하고자 하는 목적에서 **공공 데이터를 실시간으로 수집, 가공하여 가상 공간(DB)으로 동기화하는 데이터 파이프라인**을 구축했습니다.
+
+* **개발 목표:** 다른 형식의 데이터(CCTV, 교통, 유동인구 등)의 실시간 수집 및 동기화 기술 개발
+* **핵심 성과:** 데이터 발생부터 적재까지 평균 레이턴시 **1.2초~1.8초** 달성 및 확장성 보장
+* **기여:** 디지털 트윈의 핵심인 '실시간성(Real-time)' 확보 및 동기화 상태를 판단하는 '실시간율(Freshness)' 로직 도입
+
+## 2. 시스템 아키텍처
+전체 시스템은 **Docker Container** 환경에서 MSA(Microservice Architecture)와 유사한 구조로 동작합니다.
+
+<img width="1222" height="670" alt="image" src="https://github.com/user-attachments/assets/6be6be4b-c28c-4352-9451-7fdfe8dfaf2a" />
+
+1.  **Data Ingestion (Producer):** 서울시 열린 데이터 광장 API, Google Maps API 등에서 데이터를 비동기적으로 수집
+2.  **Message Broker (Kafka):** 대용량 트래픽 처리를 위한 버퍼링 및 데이터 유실 방지
+3.  **Stream Processing (Spark):** Kafka 스트림을 구독하여 파싱, 필터링, 포맷팅 수행 (ETL)
+4.  **Storage (PostgreSQL):** 시계열 및 공간 데이터 적재
+5.  **Service (FastAPI & Frontend):** 적재된 데이터를 시각화하고 모니터링하는 대시보드 제공
+
+## 3. 기술 스택
+
+| **Infra & DevOps** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) | 컨테이너 기반 환경 격리 및 배포 |
+| **Data Engineering** | ![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20?style=flat&logo=apachekafka&logoColor=white) ![Apache Spark](https://img.shields.io/badge/Apache%20Spark-E25A1C?style=flat&logo=apachespark&logoColor=white) | 실시간 스트리밍 데이터 파이프라인 구축 |
+| **Backend** | ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white) | 비동기 API 서버 및 데이터 프로듀서 구현 |
+| **Database** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white) | 관계형 데이터베이스 및 시공간 데이터 저장 |
+| **Frontend** | HTML/JS/CSS | 실시간 데이터 모니터링 대시보드 |
+
+## 4. 설치 및 실행 (개발자용)
 
 - 프론트 제외 전부 도커 컨테이너 위에서 동작합니다.<br><br>
 
