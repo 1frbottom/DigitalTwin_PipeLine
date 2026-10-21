@@ -6,7 +6,7 @@ import time
 
 def get_active_incidents(db: Session):
     """
-    최근 30분 이내에 업데이트된 돌발 정보 중,
+    최근 24시간 이내에 업데이트된 돌발 정보 중,
     각 사고 ID(acc_id)별로 가장 최신(timestamp가 큰) 데이터만 조회합니다.
     """
     
@@ -18,7 +18,7 @@ def get_active_incidents(db: Session):
     limit_ts = current_ts - 86400
     
     # 3. Raw SQL 작성
-    # 서브쿼리(latest): 30분 이내 데이터 중 ID별 Max timestamp 구함
+    # 서브쿼리(latest): 24시간 이내 데이터 중 ID별 Max timestamp 구함
     # 메인쿼리(t): 원본 테이블과 조인하여 나머지 상세 정보 가져옴
     query = text("""
         SELECT t.*
@@ -36,5 +36,5 @@ def get_active_incidents(db: Session):
     result = db.execute(query, {"limit_ts": limit_ts}).fetchall()
     
     # SQLAlchemy Row 객체를 딕셔너리 리스트로 변환하여 반환
-    # (Pydantic 모델이 이를 받아 JSON으로 변환함)
+    # (Pydantic 스키마가 이를 받아 JSON으로 변환함)
     return [dict(row._mapping) for row in result]

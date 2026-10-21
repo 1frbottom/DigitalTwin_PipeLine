@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 from ..database import get_db
 from ..cruds import crud_subway
-from ..models import model_subway
+from ..schemas import schema_subway
 
 
 
@@ -15,7 +15,7 @@ router = APIRouter(
 
 # ========== 실시간 도착 정보 ==========
 
-@router.get("/arrival/area", response_model=List[model_subway.SubwayArrivalBase])
+@router.get("/arrival/area", response_model=List[schema_subway.SubwayArrivalBase])
 def read_subway_arrivals_by_area(
     area_name: str,
     limit: int = Query(default=50, le=200),
@@ -29,7 +29,7 @@ def read_subway_arrivals_by_area(
         raise HTTPException(status_code=404, detail=f"{area_name}의 지하철 도착 정보를 찾을 수 없습니다.")
     return arrivals
 
-@router.get("/arrival/station", response_model=List[model_subway.SubwayArrivalBase])
+@router.get("/arrival/station", response_model=List[schema_subway.SubwayArrivalBase])
 def read_subway_arrivals_by_station(
     station_name: str,
     limit: int = Query(default=50, le=200),
@@ -43,7 +43,7 @@ def read_subway_arrivals_by_station(
         raise HTTPException(status_code=404, detail=f"{station_name}의 지하철 도착 정보를 찾을 수 없습니다.")
     return arrivals
 
-@router.get("/arrival/latest", response_model=List[model_subway.SubwayArrivalBase])
+@router.get("/arrival/latest", response_model=List[schema_subway.SubwayArrivalBase])
 def read_latest_subway_arrivals(
     area_name: str,
     db: Session = Depends(get_db)
@@ -90,7 +90,7 @@ def read_subway_arrival_board(
 
 # ========== 대중교통 승하차 인원 (지하철 + 버스 통합) ==========
 
-@router.get("/ppltn/current", response_model=model_subway.TransitPpltnBase)
+@router.get("/ppltn/current", response_model=schema_subway.TransitPpltnBase)
 def read_current_transit_ppltn(
     area_name: str,
     transport_type: str = Query(default=None, description="'subway' 또는 'bus' (미지정시 전체)"),
@@ -104,7 +104,7 @@ def read_current_transit_ppltn(
         raise HTTPException(status_code=404, detail=f"{area_name}의 대중교통 승하차 데이터를 찾을 수 없습니다.")
     return ppltn
 
-@router.get("/ppltn/history", response_model=List[model_subway.TransitPpltnBase])
+@router.get("/ppltn/history", response_model=List[schema_subway.TransitPpltnBase])
 def read_transit_ppltn_history(
     area_name: str,
     transport_type: str = Query(default=None, description="'subway' 또는 'bus' (미지정시 전체)"),
@@ -119,7 +119,7 @@ def read_transit_ppltn_history(
         raise HTTPException(status_code=404, detail=f"{area_name}의 대중교통 승하차 데이터를 찾을 수 없습니다.")
     return ppltn_list
 
-@router.get("/ppltn/hour", response_model=model_subway.TransitPpltnBase)
+@router.get("/ppltn/hour", response_model=schema_subway.TransitPpltnBase)
 def read_transit_ppltn_by_hour(
     area_name: str,
     hour_slot: int = Query(ge=0, le=23),

@@ -4,7 +4,7 @@ from typing import List
 
 from ..database import get_db
 from ..cruds import crud_incident
-from ..models import model_incident
+from ..schemas import schema_incident
 
 
 
@@ -13,7 +13,7 @@ router = APIRouter(
     tags=["Traffic Incident - 돌발 정보"],
 )
 
-@router.get("/active", response_model=List[model_incident.TrafficIncidentBase])
+@router.get("/active", response_model=List[schema_incident.TrafficIncidentBase])
 def read_active_incidents(db: Session = Depends(get_db)):
     """
     현재 진행 중인(최근 24시간 내 갱신된) 돌발 정보를 조회합니다.

@@ -1,27 +1,42 @@
-from sqlalchemy import Column, String, Integer, Text, DateTime, Date
-from ..database import Base
+from pydantic import BaseModel
+from datetime import datetime, date
+from typing import Optional
 
-# (1) subway_arrival_proc 테이블 ORM 모델
-class SubwayArrival(Base):
-    __tablename__ = "subway_arrival_proc"
 
-    area_nm = Column(String(50), primary_key=True)
-    station_nm = Column(String(100), primary_key=True)
-    line_num = Column(String(10), primary_key=True)
-    train_line_nm = Column(String(100), primary_key=True)
-    arrival_msg_1 = Column(Text)
-    arrival_msg_2 = Column(Text)
-    ingest_timestamp = Column(DateTime, primary_key=True)
 
-# (2) transit_ppltn_proc 테이블 ORM 모델 (대중교통 통합: 지하철 + 버스)
-class TransitPpltn(Base):
-    __tablename__ = "transit_ppltn_proc"
+# (1) subway_arrival_proc 응답 스키마 - 실시간 도착 정보
+class SubwayArrivalBase(BaseModel):
+    area_nm: str
+    station_nm: str
+    line_num: str
+    train_line_nm: str
+    arrival_msg_1: Optional[str] = None
+    arrival_msg_2: Optional[str] = None
+    ingest_timestamp: datetime
 
-    area_nm = Column(String(50), primary_key=True)
-    transport_type = Column(String(10), primary_key=True)  # 'subway' or 'bus'
-    data_date = Column(Date, primary_key=True)
-    hour_slot = Column(Integer, primary_key=True)
-    gton_avg = Column(Integer)
-    gtoff_avg = Column(Integer)
-    stn_cnt = Column(Integer)
-    last_updated = Column(DateTime)
+    class Config:
+        from_attributes = True
+
+# (1-1) 현황판용 간소화 응답 스키마 - 실시간 도착 정보
+class SubwayArrivalDisplay(BaseModel):
+    station_nm: str
+    line_num: str
+    train_line_nm: str
+    arrival_msg_1: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# (2) transit_ppltn_proc 응답 스키마 - 대중교통 승하차 평균 인원 (지하철 + 버스)
+class TransitPpltnBase(BaseModel):
+    area_nm: str
+    transport_type: str  # 'subway' or 'bus'
+    data_date: date
+    hour_slot: int
+    gton_avg: Optional[int] = None
+    gtoff_avg: Optional[int] = None
+    stn_cnt: Optional[int] = None
+    last_updated: datetime
+
+    class Config:
+        from_attributes = True

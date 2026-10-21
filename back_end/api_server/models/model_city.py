@@ -1,109 +1,96 @@
-from pydantic import BaseModel
-from datetime import datetime
-from typing import List, Optional
+from sqlalchemy import Column, String, Integer, DateTime, Float, Text
+from ..database import Base
 
 
 
-# (1) city_live_ppltn_proc 테이블 모델
-class LivePpltnProcBase(BaseModel):
-    area_nm: str
-    congest_lvl: str
-    congest_msg: str
-    ppltn_min: Optional[int] = None
-    ppltn_max: Optional[int] = None
-    ppltn_time: datetime
-    fcst_yn: str
-    ingest_timestamp: float # 원본 수집 시각
+# (1) city_live_ppltn_proc 테이블 매핑
+class LivePpltnProc(Base):
+    __tablename__ = "city_live_ppltn_proc"
 
-    class Config:
-        orm_mode = True # SQLAlchemy ORM 객체에서 Pydantic 모델로 변환 가능하도록 설정
+    area_nm = Column(String, primary_key=True)
+    congest_lvl = Column(String)
+    congest_msg = Column(String)
+    ppltn_min = Column(Integer)
+    ppltn_max = Column(Integer)
+    ppltn_time = Column(DateTime, primary_key=True)
+    fcst_yn = Column(String)
+    ingest_timestamp = Column(Float)
 
-# (2) city_live_ppltn_forecast 테이블 모델
-class LivePpltnForecastBase(BaseModel):
-    area_nm: str
-    base_ppltn_time: datetime
-    fcst_time: datetime
-    fcst_congest_lvl: str
-    fcst_min: int
-    fcst_max: int
+# (2) city_live_ppltn_forecast 테이블 매핑
+class LivePpltnForecast(Base):
+    __tablename__ = "city_live_ppltn_forecast"
 
-    class Config:
-        orm_mode = True
+    area_nm = Column(String, primary_key=True)
+    base_ppltn_time = Column(DateTime, primary_key=True)
+    fcst_time = Column(DateTime, primary_key=True)
+    fcst_congest_lvl = Column(String)
+    fcst_min = Column(Integer)
+    fcst_max = Column(Integer)
 
-# (3) city_road_traffic_stts_avg 테이블 모델
-class LiveRoadTrafficAvgBase(BaseModel):
-    area_nm: str
-    road_msg: Optional[str] = None
-    road_traffic_idx: Optional[str] = None
-    road_traffic_spd: Optional[int] = None
-    road_traffic_time: datetime
-    
-    class Config:
-        orm_mode = True
+# (3) city_road_traffic_stts_avg 테이블 매핑
+class LiveRoadTrafficAvg(Base):
+    __tablename__ = "city_road_traffic_stts_avg"
 
-# (4) city_weather_stts_proc 테이블 모델
-class CityWeatherProcBase(BaseModel):
-    area_nm: str
-    weather_time: datetime
-    temp: Optional[float] = None
-    max_temp: Optional[float] = None
-    min_temp: Optional[float] = None
-    humidity: Optional[float] = None
-    wind_dirct: Optional[str] = None
-    wind_spd: Optional[float] = None
-    precipitation: Optional[str] = None
-    precpt_type: Optional[str] = None
-    pcp_msg: Optional[str] = None
-    air_idx: Optional[str] = None
-    air_idx_main: Optional[str] = None
-    ingest_timestamp: float
+    area_nm = Column(String, primary_key=True)
+    road_msg = Column(Text)
+    road_traffic_idx = Column(String)
+    road_traffic_spd = Column(Integer)
+    road_traffic_time = Column(DateTime, primary_key=True)
+    ingest_timestamp = Column(Float)
 
-    class Config:
-        orm_mode = True
+# (4) city_weather_stts_proc 테이블 매핑 (기상 현황)
+class CityWeatherProc(Base):
+    __tablename__ = "city_weather_stts_proc"
 
-# (5) city_weather_stts_forecast 테이블 모델
-class CityWeatherForecastBase(BaseModel):
-    area_nm: str
-    fcst_dt: datetime
-    temp: Optional[float] = None
-    precipitation: Optional[str] = None
-    precpt_type: Optional[str] = None
-    rain_chance: Optional[int] = None
+    area_nm = Column(String, primary_key=True)
+    weather_time = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    max_temp = Column(Float)
+    min_temp = Column(Float)
+    humidity = Column(Float)
+    wind_dirct = Column(String)
+    wind_spd = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    pcp_msg = Column(Text)
+    air_idx = Column(String)
+    air_idx_main = Column(String)
+    ingest_timestamp = Column(Float, primary_key=True)
 
-    class Config:
-        orm_mode = True
+# (5) city_weather_stts_forecast 테이블 매핑 (기상 예측)
+class CityWeatherForecast(Base):
+    __tablename__ = "city_weather_stts_forecast"
 
-# (6) 대중교통 승하차 현황 응답 모델
-class TransitPassengerData(BaseModel):
-    transport_type: str  # 'subway' or 'bus'
-    get_on_min: int
-    get_on_max: int
-    get_off_min: int
-    get_off_max: int
-    station_count: int
+    area_nm = Column(String, primary_key=True)
+    fcst_dt = Column(DateTime, primary_key=True)
+    temp = Column(Float)
+    precipitation = Column(String)
+    precpt_type = Column(String)
+    rain_chance = Column(Integer)
+    ingest_timestamp = Column(Float, primary_key=True)
 
-class TransitPassengerResponse(BaseModel):
-    area_nm: str
-    subway: Optional[TransitPassengerData] = None
-    bus: Optional[TransitPassengerData] = None
+# (6) city_cultural_event_proc 테이블 매핑
+class CulturalEventProc(Base):
+    __tablename__ = "city_cultural_event_proc"
 
-    class Config:
-        orm_mode = True
+    area_nm = Column(String, primary_key=True)
+    event_nm = Column(Text, primary_key=True)
+    event_period = Column(String)
+    event_place = Column(Text)
+    event_x = Column(Float)
+    event_y = Column(Float)
+    thumbnail = Column(Text)
+    url = Column(Text)
+    pay_yn = Column(String)
+    event_etc_detail = Column(Text)
+    ingest_timestamp = Column(DateTime, primary_key=True)
 
+# (7) city_data_raw 테이블 매핑 (대중교통 승하차 데이터용)
+class CityDataRaw(Base):
+    __tablename__ = "city_data_raw"
 
-# (6) 문화행사 모델
-class CulturalEventBase(BaseModel):
-    area_nm: str
-    event_nm: str
-    event_period: Optional[str] = None
-    event_place: Optional[str] = None
-    event_x: Optional[float] = None
-    event_y: Optional[float] = None
-    thumbnail: Optional[str] = None
-    url: Optional[str] = None
-    pay_yn: Optional[str] = None
-    event_etc_detail: Optional[str] = None
-    ingest_timestamp: datetime
-
-    class Config:
-        orm_mode = True
+    area_nm = Column(String, primary_key=True)
+    area_cd = Column(String)
+    timestamp = Column(Float, primary_key=True)
+    live_sub_ppltn = Column(Text)
+    live_bus_ppltn = Column(Text)
