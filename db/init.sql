@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS traffic_incidents (
     PRIMARY KEY (acc_id, timestamp)
 );
 ALTER TABLE traffic_incidents ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+CREATE INDEX idx_traffic_incidents_timestamp ON traffic_incidents(timestamp);
 
 -- 실시간 도시데이터
 CREATE TABLE IF NOT EXISTS city_data_raw (

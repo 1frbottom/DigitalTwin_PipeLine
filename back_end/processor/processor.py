@@ -69,6 +69,7 @@ def write_incident_to_postgres(df, epoch_id):
         .save()
 
 query_incident = parsed_incident_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/incident") \
     .foreachBatch(write_incident_to_postgres) \
     .start()
 
@@ -118,6 +119,7 @@ def write_citydata_to_postgres(df, epoch_id):
       .save()
 
 query_city_data = parsed_stream_df_city_data.writeStream \
+    .option("checkpointLocation", "/tmp/chk/city_data") \
     .foreachBatch(write_citydata_to_postgres) \
     .start()
 
@@ -234,11 +236,13 @@ def write_forecast_to_postgres(df, epoch_id):
 
     # 두 개의 새로운 스트림 시작
 query_ppltn_proc = proc_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/ppltn_proc") \
     .outputMode("append") \
     .foreachBatch(write_proc_to_postgres) \
     .start()
 
 query_ppltn_forecast = forecast_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/ppltn_forecast") \
     .outputMode("append") \
     .foreachBatch(write_forecast_to_postgres) \
     .start()
@@ -300,6 +304,7 @@ def write_road_avg_to_postgres(df, epoch_id):
 
     # 스트림 시작
 query_road_avg = road_proc_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/road_avg") \
     .outputMode("append") \
     .foreachBatch(write_road_avg_to_postgres) \
     .start()
@@ -446,6 +451,7 @@ def write_subway_arrival_to_postgres(df, epoch_id):
 
     # 스트림 시작
 query_subway_arrival = subway_arrival_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/subway_arrival") \
     .outputMode("append") \
     .foreachBatch(write_subway_arrival_to_postgres) \
     .start()
@@ -559,12 +565,14 @@ def write_transit_ppltn_to_postgres(df, epoch_id):
 
 # 스트림 시작 (지하철)
 query_subway_ppltn = subway_ppltn_raw_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/subway_ppltn") \
     .outputMode("append") \
     .foreachBatch(write_transit_ppltn_to_postgres) \
     .start()
 
 # 스트림 시작 (버스)
 query_bus_ppltn = bus_ppltn_raw_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/bus_ppltn") \
     .outputMode("append") \
     .foreachBatch(write_transit_ppltn_to_postgres) \
     .start()
@@ -692,11 +700,13 @@ def write_weather_forecast_to_postgres(df, epoch_id):
 
     # 스트림 시작
 query_weather_proc = weather_proc_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/weather_proc") \
     .outputMode("append") \
     .foreachBatch(write_weather_proc_to_postgres) \
     .start()
 
 query_weather_forecast = weather_forecast_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/weather_forecast") \
     .outputMode("append") \
     .foreachBatch(write_weather_forecast_to_postgres) \
     .start()
@@ -782,6 +792,7 @@ def write_cultural_event_to_postgres(df, epoch_id):
 
     # 스트림 시작
 query_cultural_event = cultural_event_df.writeStream \
+    .option("checkpointLocation", "/tmp/chk/cultural_event") \
     .outputMode("append") \
     .foreachBatch(write_cultural_event_to_postgres) \
     .start()

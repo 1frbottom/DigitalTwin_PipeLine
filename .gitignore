@@ -2,6 +2,11 @@
 env_config.js
 .DS_Store
 
+# Claude
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
 ### Java ###
 # Compiled class file
 *.class

@@ -475,7 +475,7 @@ async function fetchForecastData() {
 async function fetchSubwayData() {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/subway/arrival/area?area_name=${TARGET_AREA_NAME}`
+      `${API_BASE_URL}/subway/arrival/latest?area_name=${TARGET_AREA_NAME}`
     );
     if (!response.ok) throw new Error("Subway API Error");
 
